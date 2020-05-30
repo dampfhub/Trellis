@@ -23,7 +23,6 @@ public:
 
 	Camera2D * Camera;
 	std::vector<GameObject *> Pieces;
-	GameObject * SelectionBox;
 	Texture2D Board_Texture;
 	SpriteRenderer * Renderer;
 	PageUI * UserInterface;

@@ -4,7 +4,6 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\GameObject.cpp" />
-    <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\imgui.cpp" />
     <ClCompile Include="src\imgui_demo.cpp" />
     <ClCompile Include="src\imgui_draw.cpp" />
@@ -24,83 +23,6 @@
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\UI.cpp" />
     <ClCompile Include="src\Util.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="camera.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="game.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="game_object.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imconfig.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imfilebrowser.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_impl_glfw.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_impl_opengl3.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_internal.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imstb_rectpack.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imstb_textedit.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="imstb_truetype.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="network_manager.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="page.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="page_ui.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="resource_manager.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="shader.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="sprite_renderer.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="stb_image.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="text_object.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="text_renderer.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="texture.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="ui.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="util.h">
-      <Filter>include</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ui.vert">
@@ -126,11 +48,85 @@
     <Filter Include="include">
       <UniqueIdentifier>{88d1b432-3413-4e8d-b3d3-748a71ce2b28}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src">
-      <UniqueIdentifier>{c4c11d0e-e65f-42f8-94d1-a28183c9c0b5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="shader">
       <UniqueIdentifier>{68f1d542-27d5-489b-a5fe-5190716b0d53}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\camera.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\game.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\game_object.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imconfig.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imfilebrowser.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui_impl_glfw.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui_impl_opengl3.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui_internal.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imstb_rectpack.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imstb_textedit.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imstb_truetype.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\network_manager.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\page.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\page_ui.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource_manager.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\shader.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sprite_renderer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\stb_image.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\text_object.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\text_renderer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\texture.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\util.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
