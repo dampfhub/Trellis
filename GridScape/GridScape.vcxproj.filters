@@ -67,9 +67,6 @@
     <ClCompile Include="Util.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="glad.c">
-      <Filter>src</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
