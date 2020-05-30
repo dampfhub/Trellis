@@ -1,72 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Camera.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="Game.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="GameObject.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_demo.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_draw.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_impl_glfw.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_impl_opengl3.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_widgets.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="NetworkManager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="Page.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="PageUI.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourceManager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="SpriteRenderer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="StbImage.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="TextObject.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="TextRenderer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="UI.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="Util.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
+    <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\GameObject.cpp" />
+    <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\imgui.cpp" />
+    <ClCompile Include="src\imgui_demo.cpp" />
+    <ClCompile Include="src\imgui_draw.cpp" />
+    <ClCompile Include="src\imgui_impl_glfw.cpp" />
+    <ClCompile Include="src\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="src\imgui_widgets.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\NetworkManager.cpp" />
+    <ClCompile Include="src\Page.cpp" />
+    <ClCompile Include="src\PageUI.cpp" />
+    <ClCompile Include="src\ResourceManager.cpp" />
+    <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\SpriteRenderer.cpp" />
+    <ClCompile Include="src\StbImage.cpp" />
+    <ClCompile Include="src\TextObject.cpp" />
+    <ClCompile Include="src\TextRenderer.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\UI.cpp" />
+    <ClCompile Include="src\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
