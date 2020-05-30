@@ -45,7 +45,6 @@ void Game::init_shaders() {
 void Game::init_textures() {
 	ResourceManager::LoadTexture("textures/grid.png", false, "grid");
 	ResourceManager::LoadTexture("textures/token.png", false, "goblin");
-	ResourceManager::LoadTexture("textures/selection.png", true, "selection");
 	ResourceManager::LoadTexture("textures/orcling.png", true, "orcling");
 }
 

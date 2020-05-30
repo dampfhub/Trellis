@@ -22,7 +22,6 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\GameObject.cpp" />
-    <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\imgui.cpp" />
     <ClCompile Include="src\imgui_demo.cpp" />
     <ClCompile Include="src\imgui_draw.cpp" />
@@ -44,39 +43,39 @@
     <ClCompile Include="src\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera.h" />
-    <ClInclude Include="game.h" />
-    <ClInclude Include="game_object.h" />
-    <ClInclude Include="imconfig.h" />
-    <ClInclude Include="imfilebrowser.h" />
-    <ClInclude Include="imgui.h" />
-    <ClInclude Include="imgui_impl_glfw.h" />
-    <ClInclude Include="imgui_impl_opengl3.h" />
-    <ClInclude Include="imgui_internal.h" />
-    <ClInclude Include="imstb_rectpack.h" />
-    <ClInclude Include="imstb_textedit.h" />
-    <ClInclude Include="imstb_truetype.h" />
-    <ClInclude Include="network_manager.h" />
-    <ClInclude Include="page.h" />
-    <ClInclude Include="page_ui.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="resource_manager.h" />
-    <ClInclude Include="shader.h" />
-    <ClInclude Include="sprite_renderer.h" />
-    <ClInclude Include="stb_image.h" />
-    <ClInclude Include="texture.h" />
-    <ClInclude Include="text_object.h" />
-    <ClInclude Include="text_renderer.h" />
-    <ClInclude Include="ui.h" />
-    <ClInclude Include="util.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Shaders\sprite.frag" />
     <None Include="Shaders\sprite.vert" />
     <None Include="shaders\text.frag" />
     <None Include="shaders\text.vert" />
     <None Include="ui.frag" />
     <None Include="ui.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\game.h" />
+    <ClInclude Include="include\game_object.h" />
+    <ClInclude Include="include\imconfig.h" />
+    <ClInclude Include="include\imfilebrowser.h" />
+    <ClInclude Include="include\imgui.h" />
+    <ClInclude Include="include\imgui_impl_glfw.h" />
+    <ClInclude Include="include\imgui_impl_opengl3.h" />
+    <ClInclude Include="include\imgui_internal.h" />
+    <ClInclude Include="include\imstb_rectpack.h" />
+    <ClInclude Include="include\imstb_textedit.h" />
+    <ClInclude Include="include\imstb_truetype.h" />
+    <ClInclude Include="include\network_manager.h" />
+    <ClInclude Include="include\page.h" />
+    <ClInclude Include="include\page_ui.h" />
+    <ClInclude Include="include\resource.h" />
+    <ClInclude Include="include\resource_manager.h" />
+    <ClInclude Include="include\shader.h" />
+    <ClInclude Include="include\sprite_renderer.h" />
+    <ClInclude Include="include\stb_image.h" />
+    <ClInclude Include="include\texture.h" />
+    <ClInclude Include="include\text_object.h" />
+    <ClInclude Include="include\text_renderer.h" />
+    <ClInclude Include="include\ui.h" />
+    <ClInclude Include="include\util.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

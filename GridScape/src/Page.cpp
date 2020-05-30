@@ -17,8 +17,6 @@ Page::Page(std::string name, Texture2D board_tex, SpriteRenderer * renderer,
 										  this->Size.y * this->TILE_DIMENSIONS),
 								glm::vec2(0.4f, 2.5f));
 	this->Camera->ScreenDims = glm::vec2(this->WindowWidth, this->WindowHeight);
-	this->SelectionBox = new GameObject(glm::vec2(0.0f), glm::vec2(0.0f),
-										ResourceManager::GetTexture("selection"), false);
 	this->UserInterface = new PageUI(this->WindowWidth, this->WindowHeight);
 }
 Page::~Page() {
@@ -26,7 +24,6 @@ Page::~Page() {
 		delete piece;
 	}
 	delete this->Camera;
-	delete this->SelectionBox;
 }
 
 void Page::PlacePiece(GameObject * piece, bool grid_locked) {
@@ -54,19 +51,13 @@ void Page::UpdatePlacing(glm::ivec2 mouse_pos) {
 void Page::Draw(SpriteRenderer * sprite_renderer, TextRenderer * text_renderer) {
 	this->Renderer->View = this->Camera->View;
 	sprite_renderer->View = this->Camera->View;
-	this->Renderer->DrawSprite(this->Board_Texture, this->Position, this->Size * this->TILE_DIMENSIONS);
+	this->Renderer->DrawSprite(this->Board_Texture, this->Position, false, this->Size * this->TILE_DIMENSIONS);
 	for (GameObject * piece : this->Pieces) {
-		piece->Draw(sprite_renderer);
+		piece->Draw(sprite_renderer, piece == this->CurrentSelection);
 	}
 	// If placing a piece, it's not part of the board yet, draw it seperately
 	if (this->Placing)
-		this->CurrentSelection->Draw(sprite_renderer);
-	// Draw selection box if something is selected
-	if (this->CurrentSelection) {
-		this->SelectionBox->Position = this->CurrentSelection->Position;
-		this->SelectionBox->Size = this->CurrentSelection->Size;
-		this->SelectionBox->Draw(sprite_renderer);
-	}
+		this->CurrentSelection->Draw(sprite_renderer, true);
 	// Draw user interface
 	this->UserInterface->DrawPieceClickMenu();
 }
