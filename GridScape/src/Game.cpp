@@ -11,10 +11,11 @@
 SpriteRenderer * ObjectRenderer;
 UI * UserInterface;
 
-Game::Game(unsigned int width, unsigned int height)
-	: State(GAME_MENU),
-	  Keys(),
-	  ScreenDims(std::make_shared<std::pair<int, int>>(width, height)) {}
+Game & Game::getInstance() {
+    static Game instance; // Guaranteed to be destroyed.
+                          // Instantiated on first use.
+    return instance;
+}
 
 Game::~Game() {
 	for (Page * page : this->Pages) {
@@ -24,7 +25,8 @@ Game::~Game() {
 	delete UserInterface;
 }
 
-void Game::Init() {
+void Game::Init(int width, int height) {
+    this->ScreenDims = std::make_shared<std::pair<int, int>>(width, height);
 	this->init_shaders();
 	this->init_textures();
 	this->init_objects();

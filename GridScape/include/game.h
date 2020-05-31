@@ -19,26 +19,29 @@ enum GameState {
 // easy access to each of the components and manageability.
 class Game {
 public:
-	// game state
-	GameState               State;
-	bool                    Keys[1024];
-	bool                    LeftClickPress = false;
-	bool LeftClickHold = false;
-	bool LeftClickRelease = false;
-	bool RightClick = false;
-	bool MiddleClickPress = false;
-	bool MiddleClickHold = false;
-	glm::ivec2              MousePos;
-	int                     ScrollDirection;
+    Game(Game const&)           = delete; // Disallow copying
+    void operator=(Game const&) = delete;
 
-	Page * ActivePage;
-	std::vector<Page *>      Pages;
+    static Game &getInstance();
+
+	// game state
+	GameState           State;
+	bool                Keys[1024];
+	bool                LeftClickPress = false;
+	bool                LeftClickHold = false;
+	bool                LeftClickRelease = false;
+	bool                RightClick = false;
+	bool                MiddleClickPress = false;
+	bool                MiddleClickHold = false;
+	glm::ivec2          MousePos;
+	int                 ScrollDirection;
+	Page *              ActivePage;
+	std::vector<Page *> Pages;
 
 	// constructor/destructor
-	Game(unsigned int width, unsigned int height);
 	~Game();
 	// initialize game state (load all shaders/textures/levels)
-	void Init();
+	void Init(int width, int height);
 	// setters
 	void SetScreenDims(int width, int height);
 	// game loop
@@ -48,6 +51,8 @@ public:
 	void Render();
 
 private:
+    Game() {} // Constructor? (the {} brackets) are needed here.
+
     std::shared_ptr<std::pair<int, int>> ScreenDims;
 
 	void init_textures();
