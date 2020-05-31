@@ -8,8 +8,6 @@
 
 class PageUI {
 public:
-	unsigned int WindowWidth;
-	unsigned int WindowHeight;
 
 	bool ClickMenuActive = false;
 	bool MoveToFront = false;
@@ -19,9 +17,11 @@ public:
 	int PlayerPageView = 0;
 
 	~PageUI();
-	PageUI(unsigned int width, unsigned int height);
+	PageUI(std::shared_ptr<std::pair<int, int>> screenDims);
 	void DrawPieceClickMenu();
 	void ClearFlags();
+private:
+    std::shared_ptr<std::pair<int, int>> ScreenDims;
 };
 
 #endif

@@ -7,17 +7,10 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-Camera2D::Camera2D()
-	: Bounds(0.0f),
-	BoardDims(glm::vec2(0.0f)),
-	ZoomBounds(glm::vec2(0.0f, 0.0f)),
-	Position(glm::vec2(0.0f, 0.0f)),
-	Velocity(glm::vec2(0.0f, 0.0f)),
-	Zoom(1.0f),
-	Speed(1.0f),
-	ZoomSpeed(0.0f) {}
-
-Camera2D::Camera2D(float bounds, glm::vec2 board_dimensions, glm::vec2 zoom_bounds)
+Camera2D::Camera2D(float bounds,
+        glm::vec2 board_dimensions,
+        glm::vec2 zoom_bounds,
+        std::shared_ptr<std::pair<int, int>> screenDims)
 	: Bounds(bounds),
 	BoardDims(board_dimensions),
 	ZoomBounds(zoom_bounds),
@@ -25,7 +18,8 @@ Camera2D::Camera2D(float bounds, glm::vec2 board_dimensions, glm::vec2 zoom_boun
 	Velocity(glm::vec2(0.0f, 0.0f)),
 	Zoom(1.0f),
 	Speed(1.0f),
-	ZoomSpeed(0.0f) {}
+	ZoomSpeed(0.0f),
+	ScreenDims(screenDims){}
 
 void Camera2D::Update(float dt, glm::vec2 board_dims) {
 	this->BoardDims = board_dims;
@@ -43,10 +37,14 @@ void Camera2D::Update(float dt, glm::vec2 board_dims) {
 	// Comes from:
 	// Solve[m == (d - p)*z, p] // FullSimplify
 	// { { p->d - m / z } }
-	if ((this->BoardDims.x - this->Position.x) * this->Zoom < (this->ScreenDims.x - this->Bounds))
-		this->Position.x = this->BoardDims.x - (this->ScreenDims.x - this->Bounds) / this->Zoom;
-	if ((this->BoardDims.y - this->Position.y) * this->Zoom < (this->ScreenDims.y - this->Bounds))
-		this->Position.y = this->BoardDims.y - (this->ScreenDims.y - this->Bounds) / this->Zoom;
+	if ((this->BoardDims.x - this->Position.x) * this->Zoom <
+	        (this->ScreenDims->first - this->Bounds))
+		this->Position.x = this->BoardDims.x -
+		        (this->ScreenDims->first - this->Bounds) / this->Zoom;
+	if ((this->BoardDims.y - this->Position.y) * this->Zoom <
+	        (this->ScreenDims->second - this->Bounds))
+		this->Position.y = this->BoardDims.y -
+		        (this->ScreenDims->second - this->Bounds) / this->Zoom;
 	// Check if camera would move out of bounds
 	if (this->Position.x < -this->Bounds / this->Zoom)
 		this->Position.x = -this->Bounds / this->Zoom;

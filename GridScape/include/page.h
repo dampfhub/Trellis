@@ -17,8 +17,6 @@ public:
 
 	glm::vec2 Position, Size;
 
-	unsigned int WindowWidth, WindowHeight;
-
 	bool Placing = false;
 
 	Camera2D * Camera;
@@ -31,7 +29,7 @@ public:
 
 	~Page();
 	Page(std::string name, Texture2D board_tex, SpriteRenderer * renderer,
-		 unsigned int width, unsigned int height,
+		 std::shared_ptr<std::pair<int, int>> screenDims,
 		 glm::vec2 pos = glm::vec2(0.0f, 0.0f),
 		 glm::vec2 size = glm::vec2(100.0f, 100.0f));
 
@@ -58,6 +56,7 @@ public:
 private:
 	GameObject * CurrentSelection = nullptr;
 	glm::ivec2 DragOrigin = glm::ivec2(0);
+	std::shared_ptr<std::pair<int, int>> ScreenDims;
 
 	void SnapPieceToGrid(GameObject * piece);
 	glm::vec2 ScreenPosToWorldPos(glm::ivec2 pos);

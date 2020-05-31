@@ -29,7 +29,6 @@ public:
 	bool MiddleClickPress = false;
 	bool MiddleClickHold = false;
 	glm::ivec2              MousePos;
-	unsigned int            Width, Height;
 	int                     ScrollDirection;
 
 	Page * ActivePage;
@@ -40,6 +39,8 @@ public:
 	~Game();
 	// initialize game state (load all shaders/textures/levels)
 	void Init();
+	// setters
+	void SetScreenDims(int width, int height);
 	// game loop
 	void ProcessInput(float dt);
 	void ProcessMouse(float dt);
@@ -47,9 +48,13 @@ public:
 	void Render();
 
 private:
+    std::shared_ptr<std::pair<int, int>> ScreenDims;
+
 	void init_textures();
 	void init_shaders();
 	void init_objects();
+
+	void set_projection();
 
 	void ProcessUIEvents();
 
