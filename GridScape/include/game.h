@@ -1,8 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -26,32 +24,21 @@ public:
 
 	// game state
 	GameState           State;
-	bool                Keys[1024];
-	bool                LeftClickPress = false;
-	bool                LeftClickHold = false;
-	bool                LeftClickRelease = false;
-	bool                RightClick = false;
-	bool                MiddleClickPress = false;
-	bool                MiddleClickHold = false;
+    enum { NONE, PRESS, HOLD, RELEASE } LeftClick, RightClick, MiddleClick;
 	glm::ivec2          MousePos;
 	int                 ScrollDirection;
 	Page *              ActivePage;
 	std::vector<Page *> Pages;
-
-	// constructor/destructor
-	~Game();
-	// initialize game state (load all shaders/textures/levels)
-	void Init(int width, int height);
 	// setters
 	void SetScreenDims(int width, int height);
 	// game loop
-	void ProcessInput(float dt);
-	void ProcessMouse(float dt);
 	void Update(float dt);
 	void Render();
 
 private:
-    Game() {} // Constructor? (the {} brackets) are needed here.
+    Game();
+    // destructor
+    ~Game();
 
     std::shared_ptr<std::pair<int, int>> ScreenDims;
 

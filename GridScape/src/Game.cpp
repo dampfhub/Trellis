@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "game.h"
+#include "glfw_handler.h"
 #include "sprite_renderer.h"
 #include "resource_manager.h"
 #include "page.h"
@@ -17,24 +18,87 @@ Game & Game::getInstance() {
     return instance;
 }
 
+static void
+close_window(int key, int scancode, int action, int mods) {
+    GLFW &glfw = GLFW::getInstance();
+    glfw.SetWindowShouldClose(1);
+}
+
+static void window_size_callback(int width, int height) {
+    Game::getInstance().SetScreenDims(width, height);
+}
+
+static void mouse_pos_callback(double x, double y) {
+    Game &game = Game::getInstance();
+    game.MousePos.x = x;
+    game.MousePos.y = y;
+}
+
+static void left_click_press(int key, int action, int mod) {
+    Game &game = Game::getInstance();
+    game.LeftClick = Game::PRESS;
+}
+
+static void left_click_release(int key, int action, int mod) {
+    Game &game = Game::getInstance();
+    game.LeftClick = Game::RELEASE;
+}
+
+static void right_click_press(int key, int action, int mod) {
+    Game &game = Game::getInstance();
+    game.RightClick = Game::PRESS;
+}
+
+static void right_click_release(int key, int action, int mod) {
+    Game &game = Game::getInstance();
+    game.RightClick = Game::RELEASE;
+}
+
+static void middle_click_press(int key, int action, int mod) {
+    Game &game = Game::getInstance();
+    game.MiddleClick = Game::PRESS;
+}
+
+static void middle_click_release(int key, int action, int mod) {
+    Game &game = Game::getInstance();
+    game.MiddleClick = Game::RELEASE;
+}
+
+void scroll_callback(double xoffset, double yoffset) {
+    Game &game = Game::getInstance();
+    Game::getInstance().ScrollDirection = (int)yoffset;
+}
+
+Game::Game() {
+    this->ScreenDims = std::make_shared<std::pair<int, int>>(GLFW::SCREEN_WIDTH, GLFW::SCREEN_HEIGHT);
+    this->init_shaders();
+    this->init_textures();
+    this->init_objects();
+
+    GLFW &glfw = GLFW::getInstance();
+    glfw.RegisterWindowSizeCallback(window_size_callback);
+    glfw.RegisterKey(GLFW_KEY_ESCAPE, close_window);
+    glfw.RegisterMousePosCallback(mouse_pos_callback);
+    glfw.RegisterScroll(scroll_callback);
+    glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_LEFT, left_click_press);
+    glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_LEFT, left_click_release);
+    glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_RIGHT, right_click_press);
+    glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_RIGHT, right_click_release);
+    glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_MIDDLE, middle_click_press);
+    glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_MIDDLE, middle_click_release);
+
+    // Set projection matrix
+    this->set_projection();
+    glm::mat4 view = glm::mat4(1.0f);
+    ResourceManager::GetShader("sprite").SetMatrix4("view", view, true);
+}
+
 Game::~Game() {
 	for (Page * page : this->Pages) {
 		delete page;
 	}
 	delete ObjectRenderer;
 	delete UserInterface;
-}
-
-void Game::Init(int width, int height) {
-    this->ScreenDims = std::make_shared<std::pair<int, int>>(width, height);
-	this->init_shaders();
-	this->init_textures();
-	this->init_objects();
-
-	// Set projection matrix
-	this->set_projection();
-	glm::mat4 view = glm::mat4(1.0f);
-	ResourceManager::GetShader("sprite").SetMatrix4("view", view, true);
 }
 
 void Game::SetScreenDims(int width, int height) {
@@ -85,37 +149,40 @@ void Game::Update(float dt) {
 	this->ActivePage->Update(dt);
 	if (this->ActivePage->Placing)
 		this->ActivePage->UpdatePlacing(this->MousePos);
-}
 
-void Game::ProcessInput(float dt) {
-	if (this->Keys[GLFW_KEY_DELETE]) {
+	switch (this->LeftClick) {
+	    case PRESS:
+            this->ActivePage->HandleLeftClickPress(this->MousePos);
+            this->LeftClick = HOLD;
+            break;
+	    case HOLD:
+            this->ActivePage->HandleLeftClickHold(this->MousePos);
+            break;
+	    case RELEASE:
+            this->ActivePage->HandleLeftClickRelease(this->MousePos);
+            break;
+	    default:
+	        break;
 	}
-}
-
-void Game::ProcessMouse(float dt) {
-	if (this->LeftClickPress) {
-		this->ActivePage->HandleLeftClickPress(this->MousePos);
-		this->LeftClickPress = false;
-	} else if (this->LeftClickHold) {
-		this->ActivePage->HandleLeftClickHold(this->MousePos);
-	} else if (this->LeftClickRelease) {
-		this->ActivePage->HandleLeftClickRelease(this->MousePos);
-		this->LeftClickRelease = false;
+    switch (this->RightClick) {
+        case PRESS:
+            this->ActivePage->HandleRightClick(this->MousePos);
+            break;
+        default:
+            break;
+    }
+    switch (this->MiddleClick) {
+	    case PRESS:
+            this->ActivePage->HandleMiddleClickPress(this->MousePos);
+            this->MiddleClick = HOLD;
+            break;
+	    case HOLD:
+            this->ActivePage->HandleMiddleClickHold(this->MousePos);
 	}
-	if (this->RightClick) {
-		this->ActivePage->HandleRightClick(this->MousePos);
-		this->RightClick = false;
-	}
-	if (this->MiddleClickPress) {
-		this->ActivePage->HandleMiddleClickPress(this->MousePos);
-		this->MiddleClickPress = false;
-	} else if (this->MiddleClickHold) {
-		this->ActivePage->HandleMiddleClickHold(this->MousePos);
-	}
-	if (this->ScrollDirection != 0) {
-		this->ActivePage->HandleScrollWheel(this->ScrollDirection);
-		this->ScrollDirection = 0;
-	}
+    if (this->ScrollDirection != 0) {
+        this->ActivePage->HandleScrollWheel(this->ScrollDirection);
+        this->ScrollDirection = 0;
+    }
 }
 
 void Game::Render() {
