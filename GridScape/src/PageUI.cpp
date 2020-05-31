@@ -1,10 +1,12 @@
+#include <memory>
+#include <utility>
 #include "page_ui.h"
 
 PageUI::~PageUI() {
 }
 
-PageUI::PageUI(unsigned int width, unsigned int height) 
-	: WindowWidth(width), WindowHeight(height) {
+PageUI::PageUI(std::shared_ptr<std::pair<int, int>> screenDims)
+	: ScreenDims(screenDims) {
 }
 
 void PageUI::DrawPieceClickMenu() {

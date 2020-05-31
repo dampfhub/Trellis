@@ -8,16 +8,17 @@
 #include <glm/gtx/string_cast.hpp>
 
 Page::Page(std::string name, Texture2D board_tex, SpriteRenderer * renderer,
-		   unsigned int width, unsigned int height, glm::vec2 pos, glm::vec2 size)
+		   std::shared_ptr<std::pair<int, int>> screenDims, glm::vec2 pos,
+		   glm::vec2 size)
 	: Name(name), Board_Texture(board_tex), Renderer(renderer),
-	WindowWidth(width), WindowHeight(height), Position(pos), Size(size) {
+	ScreenDims(screenDims), Position(pos), Size(size) {
 	this->Renderer->Resize((int)this->Size.x);
 	this->Camera = new Camera2D(200.0f,
 								glm::vec2(this->Size.x * this->TILE_DIMENSIONS,
 										  this->Size.y * this->TILE_DIMENSIONS),
-								glm::vec2(0.4f, 2.5f));
-	this->Camera->ScreenDims = glm::vec2(this->WindowWidth, this->WindowHeight);
-	this->UserInterface = new PageUI(this->WindowWidth, this->WindowHeight);
+								glm::vec2(0.4f, 2.5f),
+								this->ScreenDims);
+	this->UserInterface = new PageUI(this->ScreenDims);
 }
 Page::~Page() {
 	for (GameObject * piece : this->Pieces) {

@@ -6,8 +6,8 @@ UI::~UI() {
 	delete this->FileDialog;
 }
 
-UI::UI(unsigned int width, unsigned int height) 
-	: WindowWidth(width), WindowHeight(height) {
+UI::UI(std::shared_ptr<std::pair<int, int>> screenDims)
+	: ScreenDims(screenDims) {
 	this->FileDialog = new ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
 }
 
@@ -26,7 +26,7 @@ void UI::DrawMenu(std::vector<Page *> pages, Page * active_page) {
 				 ImGuiWindowFlags_NoResize |
 				 ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
-	ImGui::SetWindowSize(ImVec2(150.0f, (float)this->WindowHeight));
+	ImGui::SetWindowSize(ImVec2(150.0f, (float)this->ScreenDims->second));
 	ImGui::SetNextItemWidth(100.0f);
 	if (ImGui::Button("Add")) {
 		ImGui::OpenPopup("add_menu");

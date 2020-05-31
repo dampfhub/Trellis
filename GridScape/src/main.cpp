@@ -12,6 +12,7 @@
 
 // GLFW function declerations
 void framebuffer_size_callback(GLFWwindow * window, int width, int height);
+void window_size_callback(GLFWwindow * window, int width, int height);
 void key_callback(GLFWwindow * window, int key, int scancode, int action, int mode);
 void mouse_button_callback(GLFWwindow * window, int button, int action, int mods);
 void cursor_position_callback(GLFWwindow * window, double xpos, double ypos);
@@ -34,7 +35,7 @@ int main(int argc, char * argv[]) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, false);
+	glfwWindowHint(GLFW_RESIZABLE, true);
 
 	//GLFWwindow * window = glfwCreateWindow(mode->width, mode->height, "Dnd", glfwGetPrimaryMonitor(), nullptr);
 	GLFWwindow * window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Dnd", nullptr, nullptr);
@@ -77,6 +78,7 @@ int main(int argc, char * argv[]) {
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetCursorPosCallback(window, cursor_position_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetWindowSizeCallback(window, window_size_callback);
 
 	// OpenGL configuration
 	// --------------------
@@ -228,4 +230,8 @@ void scroll_callback(GLFWwindow * window, double xoffset, double yoffset) {
 		return;
 	}
 	Dnd.ScrollDirection = (int)yoffset;
+}
+
+void window_size_callback(GLFWwindow * window, int width, int height) {
+    Dnd.SetScreenDims(width, height);
 }

@@ -12,9 +12,9 @@ SpriteRenderer * ObjectRenderer;
 UI * UserInterface;
 
 Game::Game(unsigned int width, unsigned int height)
-	: State(GAME_MENU), Keys(), Width(width), Height(height) {
-
-}
+	: State(GAME_MENU),
+	  Keys(),
+	  ScreenDims(std::make_shared<std::pair<int, int>>(width, height)) {}
 
 Game::~Game() {
 	for (Page * page : this->Pages) {
@@ -29,12 +29,16 @@ void Game::Init() {
 	this->init_textures();
 	this->init_objects();
 
-	// Set projection matrix (should never change)
-	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(this->Width),
-									  static_cast<float>(this->Height), 0.0f, -1.0f, 1.0f);
-	ResourceManager::GetShader("sprite").SetMatrix4("projection", projection, true);
+	// Set projection matrix
+	this->set_projection();
 	glm::mat4 view = glm::mat4(1.0f);
 	ResourceManager::GetShader("sprite").SetMatrix4("view", view, true);
+}
+
+void Game::SetScreenDims(int width, int height) {
+    this->ScreenDims->first = width;
+    this->ScreenDims->second = height;
+    this->set_projection();
 }
 
 void Game::init_shaders() {
@@ -51,9 +55,9 @@ void Game::init_textures() {
 void Game::init_objects() {
 	ObjectRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
 	SpriteRenderer * BoardRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"), 20);
-	UserInterface = new UI(this->Width, this->Height);
+	UserInterface = new UI(this->ScreenDims);
 	this->ActivePage = new Page("Default", ResourceManager::GetTexture("grid"), BoardRenderer,
-								this->Width, this->Height,
+								this->ScreenDims,
 								glm::vec2(0.0f, 0.0f), glm::vec2(20.0f, 20.0f));
 	this->Pages.push_back(this->ActivePage);
 	GameObject * test = new GameObject(glm::vec2(1.0f, 1.0f), glm::vec2(98.0f, 98.0f),
@@ -62,6 +66,16 @@ void Game::init_objects() {
 									  ResourceManager::GetTexture("orcling"));
 	this->ActivePage->PlacePiece(test);
 	this->ActivePage->PlacePiece(orc);
+}
+
+void Game::set_projection() {
+    glm::mat4 projection = glm::ortho(0.0f,
+            static_cast<float>(this->ScreenDims->first),
+            static_cast<float>(this->ScreenDims->second),
+            0.0f,
+            -1.0f,
+            1.0f);
+    ResourceManager::GetShader("sprite").SetMatrix4("projection", projection, true);
 }
 
 void Game::Update(float dt) {
@@ -130,6 +144,6 @@ void Game::ProcessUIEvents() {
 Page * Game::MakePage(std::string name) {
 	SpriteRenderer * BoardRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"), 20);
 	return new Page(name, ResourceManager::GetTexture("grid"), BoardRenderer,
-					this->Width, this->Height,
+					this->ScreenDims,
 					glm::vec2(0.0f, 0.0f), glm::vec2(20.0f, 20.0f));
 }
