@@ -59,7 +59,7 @@ void UI::DrawMenu(std::vector<Page *> pages, Page * active_page) {
 		if (ImGui::InputText("##edit", this->PageNameBuf, IM_ARRAYSIZE(this->PageNameBuf), ImGuiInputTextFlags_EnterReturnsTrue)) {
 			ImGui::CloseCurrentPopup(); 
 			this->PageName = this->PageNameBuf;
-			strcpy_s(this->PageNameBuf, "");
+			strcpy(this->PageNameBuf, "");
 			this->AddPage = true;
 			this->PageAddOpen = false;
 		}
@@ -67,7 +67,7 @@ void UI::DrawMenu(std::vector<Page *> pages, Page * active_page) {
 		if (ImGui::Button("OK", ImVec2(120, 0))) { 
 			ImGui::CloseCurrentPopup(); 
 			this->PageName = this->PageNameBuf;
-			strcpy_s(this->PageNameBuf, "");
+			strcpy(this->PageNameBuf, "");
 			this->AddPage = true;
 			this->PageAddOpen = false;
 		}
@@ -88,7 +88,7 @@ void UI::DrawMenu(std::vector<Page *> pages, Page * active_page) {
     }
 	if (ImGui::Button("Page Settings")) {
 		this->PageSettingsOpen = !this->PageSettingsOpen;
-		strcpy_s(this->PageNameBuf, active_page->Name.c_str());
+		strcpy(this->PageNameBuf, active_page->Name.c_str());
 		this->PageSize = (int)active_page->Size.x;
 	}
     if (ImGui::IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
