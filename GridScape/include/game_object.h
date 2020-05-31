@@ -18,6 +18,10 @@ public:
 	bool Clickable;
 
 	bool FollowMouse = false;
+	bool ScaleMouse = false;
+	std::pair<int, int> ScaleEdges;
+	glm::vec2 initialSize;
+	glm::vec2 initialPos;
 
 	GameObject();
 	GameObject(glm::vec2 pos, glm::vec2 size, Texture2D sprite, 
