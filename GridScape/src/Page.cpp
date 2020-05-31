@@ -92,9 +92,32 @@ void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
 	this->CurrentSelection = nullptr;
 	for (GameObject * piece : this->Pieces) {
 		if (piece->CheckContainment(world_mouse) && piece->Clickable) {
-			this->CurrentSelection = piece;
-			this->CurrentSelection->FollowMouse = true;
-			this->DragOrigin = this->CurrentSelection->DistanceFromTopLeft(world_mouse);
+			auto click_pos = piece->DistanceFromTopLeft(world_mouse);
+			auto click_ratio = click_pos / piece->Size;
+			// Check if the user is clicking on any of the sprite's edges /
+			// corners
+            piece->ScaleEdges = std::make_pair(0, 0);
+			if (click_ratio.x <= TILE_SCALE_RATIO) {
+                piece->ScaleMouse = true;
+                piece->ScaleEdges.first = -1;
+			}else if (1 - click_ratio.x <= TILE_SCALE_RATIO) {
+                piece->ScaleMouse = true;
+                piece->ScaleEdges.first = 1;
+			}
+            if (click_ratio.y <= TILE_SCALE_RATIO) {
+                piece->ScaleMouse = true;
+                piece->ScaleEdges.second = -1;
+            }else if (1 - click_ratio.y <= TILE_SCALE_RATIO) {
+                piece->ScaleMouse = true;
+                piece->ScaleEdges.second = 1;
+            }
+            piece->initialSize = piece->Size;
+            piece->initialPos = piece->Position;
+            // If not scaling, enable dragging instead
+            piece->FollowMouse = !piece->ScaleMouse;
+            this->CurrentSelection = piece;
+			this->DragOrigin = click_pos;
+			break;
 		}
 	}
 }
@@ -104,6 +127,37 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
 	if (this->CurrentSelection) {
 		if (this->CurrentSelection->FollowMouse) {
 			this->CurrentSelection->Position = world_mouse - (glm::vec2)this->DragOrigin;
+		} else if (this->CurrentSelection->ScaleMouse) {
+		    auto diff = this->CurrentSelection->DistanceFromTopLeft(world_mouse) -
+		            (glm::vec2)this->DragOrigin;
+		    switch (this->CurrentSelection->ScaleEdges.first) {
+		        case 1:
+		            this->CurrentSelection->Size.x =
+		                    this->CurrentSelection->initialSize.x + diff.x;
+		            break;
+		        case -1:
+                    this->CurrentSelection->Position.x = world_mouse.x -
+                            this->DragOrigin.x;
+                    this->CurrentSelection->Size.x =
+                            this->CurrentSelection->initialSize.x +
+                            this->CurrentSelection->initialPos.x -
+                            this->CurrentSelection->Position.x;
+		            break;
+		    }
+		    switch(this->CurrentSelection->ScaleEdges.second) {
+		        case 1:
+                    this->CurrentSelection->Size.y =
+                            this->CurrentSelection->initialSize.y + diff.y;
+                    break;
+                case -1:
+                    this->CurrentSelection->Position.y = world_mouse.y -
+                            this->DragOrigin.y;
+                    this->CurrentSelection->Size.y =
+                            this->CurrentSelection->initialSize.y +
+                                    this->CurrentSelection->initialPos.y -
+                                    this->CurrentSelection->Position.y;
+                    break;
+		    }
 		}
 	}
 }
@@ -112,9 +166,12 @@ void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
 	glm::vec2 world_mouse = this->ScreenPosToWorldPos(mouse_pos);
 	if (this->CurrentSelection) {
 		if (this->CurrentSelection->FollowMouse) {
-			this->SnapPieceToGrid(this->CurrentSelection);
-			this->CurrentSelection->FollowMouse = false;
+		    // TODO: Re-enable snapping on release once a snap-modifier key
+		    // is added
+		    // this->SnapPieceToGrid(this->CurrentSelection);
 		}
+        this->CurrentSelection->FollowMouse = false;
+		this->CurrentSelection->ScaleMouse = false;
 	}
 }
 

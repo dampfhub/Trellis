@@ -13,7 +13,8 @@
 
 class Page {
 public:
-	const float TILE_DIMENSIONS = 100.0f;
+    static constexpr float TILE_DIMENSIONS = 100.0f;
+    static constexpr float TILE_SCALE_RATIO = 0.05;
 
 	glm::vec2 Position, Size;
 
