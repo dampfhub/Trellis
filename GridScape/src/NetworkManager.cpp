@@ -1,7 +1,14 @@
 #include "network_manager.h"
 #include <iostream>
 
-void NetworkManager::Initialize() {
+NetworkManager & NetworkManager::getInstance() {
+    static NetworkManager instance; // Guaranteed to be destroyed.
+                                    // Instantiated on first use.
+    return instance;
+}
+
+
+NetworkManager::NetworkManager() {
 	WSAData wsa_data;
 	if (WSAStartup(MAKEWORD(1, 1), &wsa_data) != 0) {
 		std::cout << "Wsa startup failed" << std::endl;

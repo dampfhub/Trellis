@@ -23,8 +23,6 @@ const unsigned int SCREEN_WIDTH = 1600;
 // The height of the screen
 const unsigned int SCREEN_HEIGHT = 1000;
 
-Game Dnd(0, 0);
-
 int main(int argc, char * argv[]) {
 	glfwInit();
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -40,7 +38,7 @@ int main(int argc, char * argv[]) {
 	//GLFWwindow * window = glfwCreateWindow(mode->width, mode->height, "Dnd", glfwGetPrimaryMonitor(), nullptr);
 	GLFWwindow * window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Dnd", nullptr, nullptr);
 	//Dnd = Game(mode->width, mode->height);
-	Dnd = Game(SCREEN_WIDTH, SCREEN_HEIGHT);
+	Game &Dnd = Game::getInstance();
 	glfwMakeContextCurrent(window);
 
 	// glad: load all OpenGL function pointersmode->height
@@ -89,7 +87,7 @@ int main(int argc, char * argv[]) {
 
 	// initialize game
 	// ---------------
-	Dnd.Init();
+	Dnd.Init(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	// Set window icon 
 	GLFWimage icons[1];
@@ -168,9 +166,9 @@ void key_callback(GLFWwindow * window, int key, int scancode, int action, int mo
 		glfwSetWindowShouldClose(window, true);
 	if (key >= 0 && key < 1024) {
 		if (action == GLFW_PRESS)
-			Dnd.Keys[key] = true;
+			Game::getInstance().Keys[key] = true;
 		else if (action == GLFW_RELEASE)
-			Dnd.Keys[key] = false;
+            Game::getInstance().Keys[key] = false;
 	}
 }
 
@@ -190,27 +188,27 @@ void mouse_button_callback(GLFWwindow * window, int button, int action, int mods
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
 		if (action == GLFW_PRESS) {
-			Dnd.LeftClickPress = true;
-			Dnd.LeftClickHold = true;
+            Game::getInstance().LeftClickPress = true;
+            Game::getInstance().LeftClickHold = true;
 		} else {
-			Dnd.LeftClickHold = false;
-			Dnd.LeftClickRelease = true;
+            Game::getInstance().LeftClickHold = false;
+            Game::getInstance().LeftClickRelease = true;
 		}
 	}
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-		Dnd.RightClick = true;
+        Game::getInstance().RightClick = true;
 	}
 	if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
 		if (action == GLFW_PRESS) {
-			Dnd.MiddleClickPress = true;
-			Dnd.MiddleClickHold = true;
+            Game::getInstance().MiddleClickPress = true;
+            Game::getInstance().MiddleClickHold = true;
 		} else if (action == GLFW_RELEASE) {
-			Dnd.MiddleClickHold = false;
+            Game::getInstance().MiddleClickHold = false;
 		}
 	}
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);
-	Dnd.MousePos = glm::ivec2((int)x, (int)y);
+    Game::getInstance().MousePos = glm::ivec2((int)x, (int)y);
 }
 
 void cursor_position_callback(GLFWwindow * window, double xpos, double ypos) {
@@ -219,7 +217,7 @@ void cursor_position_callback(GLFWwindow * window, double xpos, double ypos) {
 		io.MousePos = ImVec2(xpos, ypos);
 		return;
 	}
-	Dnd.MousePos = glm::ivec2((int)xpos, (int)ypos);
+    Game::getInstance().MousePos = glm::ivec2((int)xpos, (int)ypos);
 }
 
 void scroll_callback(GLFWwindow * window, double xoffset, double yoffset) {
@@ -229,9 +227,9 @@ void scroll_callback(GLFWwindow * window, double xoffset, double yoffset) {
 		io.MouseWheel += (float)yoffset;
 		return;
 	}
-	Dnd.ScrollDirection = (int)yoffset;
+    Game::getInstance().ScrollDirection = (int)yoffset;
 }
 
 void window_size_callback(GLFWwindow * window, int width, int height) {
-    Dnd.SetScreenDims(width, height);
+    Game::getInstance().SetScreenDims(width, height);
 }
