@@ -6,7 +6,7 @@
 * glm
 * freetype
 
-## Easy Contribution Guide
+## Quickstart Contribution Guide
 * Clone repo
 * Get vcpkg
   * https://github.com/microsoft/vcpkg
