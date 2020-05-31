@@ -17,6 +17,10 @@
 // public constructor is defined.
 class ResourceManager {
 public:
+    ResourceManager(ResourceManager const&) = delete; // Disallow copying
+    void operator=(ResourceManager const&)  = delete;
+    static ResourceManager &getInstance();
+
     // resource storage
     static std::map<std::string, Shader>    Shaders;
     static std::map<std::string, Texture2D> Textures;

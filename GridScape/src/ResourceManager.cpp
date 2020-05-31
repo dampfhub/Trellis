@@ -10,6 +10,11 @@
 std::map<std::string, Texture2D>    ResourceManager::Textures;
 std::map<std::string, Shader>       ResourceManager::Shaders;
 
+ResourceManager &ResourceManager::getInstance() {
+    static ResourceManager instance; // Guaranteed to be destroyed.
+                                     // Instantiated on first use.
+    return instance;
+}
 
 Shader ResourceManager::LoadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, std::string name) {
     Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
