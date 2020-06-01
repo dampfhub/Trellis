@@ -20,53 +20,54 @@ Game & Game::getInstance() {
 
 static void
 close_window(int key, int scancode, int action, int mods) {
-    GLFW &glfw = GLFW::getInstance();
+    static GLFW &glfw = GLFW::getInstance();
     glfw.SetWindowShouldClose(1);
 }
 
 static void window_size_callback(int width, int height) {
-    Game::getInstance().SetScreenDims(width, height);
+    static Game &game = Game::getInstance();
+    game.SetScreenDims(width, height);
 }
 
 static void mouse_pos_callback(double x, double y) {
-    Game &game = Game::getInstance();
+    static Game &game = Game::getInstance();
     game.MousePos.x = x;
     game.MousePos.y = y;
 }
 
 static void left_click_press(int key, int action, int mod) {
-    Game &game = Game::getInstance();
+    static Game &game = Game::getInstance();
     game.LeftClick = Game::PRESS;
 }
 
 static void left_click_release(int key, int action, int mod) {
-    Game &game = Game::getInstance();
+    static Game &game = Game::getInstance();
     game.LeftClick = Game::RELEASE;
 }
 
 static void right_click_press(int key, int action, int mod) {
-    Game &game = Game::getInstance();
+    static Game &game = Game::getInstance();
     game.RightClick = Game::PRESS;
 }
 
 static void right_click_release(int key, int action, int mod) {
-    Game &game = Game::getInstance();
+    static Game &game = Game::getInstance();
     game.RightClick = Game::RELEASE;
 }
 
 static void middle_click_press(int key, int action, int mod) {
-    Game &game = Game::getInstance();
+    static Game &game = Game::getInstance();
     game.MiddleClick = Game::PRESS;
 }
 
 static void middle_click_release(int key, int action, int mod) {
-    Game &game = Game::getInstance();
+    static Game &game = Game::getInstance();
     game.MiddleClick = Game::RELEASE;
 }
 
 void scroll_callback(double xoffset, double yoffset) {
-    Game &game = Game::getInstance();
-    Game::getInstance().ScrollDirection = (int)yoffset;
+    static Game &game = Game::getInstance();
+    game.ScrollDirection = (int)yoffset;
 }
 
 Game::Game() {
@@ -77,7 +78,7 @@ Game::Game() {
 
     GLFW &glfw = GLFW::getInstance();
     glfw.RegisterWindowSizeCallback(window_size_callback);
-    glfw.RegisterKey(GLFW_KEY_ESCAPE, close_window);
+    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
     glfw.RegisterMousePosCallback(mouse_pos_callback);
     glfw.RegisterScroll(scroll_callback);
     glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_LEFT, left_click_press);

@@ -51,3 +51,32 @@ void GUI::Render() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
+int GUI::MousePress(int button) {
+    ImGuiIO & io = ImGui::GetIO();
+    io.MouseDown[button] = true;
+    if (io.WantCaptureMouse) {
+        return 1;
+    }
+    return 0;
+}
+
+void GUI::MouseRelease(int button) {
+    ImGuiIO & io = ImGui::GetIO();
+    io.MouseDown[button] = false;
+}
+
+
+int GUI::KeyPress(int key) {
+    ImGuiIO & io = ImGui::GetIO();
+    io.KeysDown[key] = true;
+    if (io.WantCaptureKeyboard) {
+        return 1;
+    }
+    return 0;
+}
+
+void GUI::KeyRelease(int key) {
+    ImGuiIO & io = ImGui::GetIO();
+    io.KeysDown[key] = false;
+}

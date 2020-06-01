@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 
 #include "glfw_handler.h"
+#include "gui.h"
 
 keyfunc   key_press_callbacks     [GLFW_KEY_LAST + 1]          = {nullptr};
 keyfunc   key_release_callbacks   [GLFW_KEY_LAST + 1]          = {nullptr};
@@ -24,11 +25,16 @@ static void window_size_handler(GLFWwindow *window, int width, int height) {
 }
 
 static void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    static GUI &gui = GUI::getInstance();
     if (action == GLFW_PRESS) {
+        if (gui.KeyPress(key)) {
+            return;
+        }
         if (key_press_callbacks[key] != nullptr) {
             key_press_callbacks[key](key, scancode, action, mods);
         }
     } else if (action == GLFW_RELEASE) {
+        gui.KeyRelease(key);
         if (key_release_callbacks[key] != nullptr) {
             key_release_callbacks[key](key, scancode, action, mods);
         }
@@ -36,11 +42,16 @@ static void key_handler(GLFWwindow *window, int key, int scancode, int action, i
 }
 
 static void mouse_handler(GLFWwindow *window, int button, int action, int mods) {
+    static GUI &gui = GUI::getInstance();
     if (action == GLFW_PRESS) {
+        if (gui.MousePress(button)) {
+            return;
+        }
         if (mouse_press_callbacks[button] != nullptr) {
             mouse_press_callbacks[button](button, action, mods);
         }
     } else if (action == GLFW_RELEASE) {
+        gui.MouseRelease(button);
         if (mouse_release_callbacks[button] != nullptr) {
             mouse_release_callbacks[button](button, action, mods);
         }
