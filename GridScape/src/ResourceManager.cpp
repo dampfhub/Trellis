@@ -34,8 +34,8 @@ Texture2D ResourceManager::GetTexture(std::string name) {
     return Textures[name];
 }
 
-void ResourceManager::Clear() {
-    // (properly) delete all shaders	
+ResourceManager::~ResourceManager() {
+    // (properly) delete all shaders
     for (auto iter : Shaders)
         glDeleteProgram(iter.second.ID);
     // (properly) delete all textures
