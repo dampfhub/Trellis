@@ -48,6 +48,8 @@ private:
 
 	void ProcessUIEvents();
 
+	void UpdateMouse();
+
 	Page * MakePage(std::string name);
 };
 

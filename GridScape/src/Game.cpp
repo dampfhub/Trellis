@@ -143,12 +143,8 @@ void Game::set_projection() {
     ResourceManager::GetShader("sprite").SetMatrix4("projection", projection, true);
 }
 
-void Game::Update(float dt) {
+void Game::UpdateMouse() {
     static GUI &gui = GUI::getInstance();
-	this->ProcessUIEvents();
-	this->ActivePage->Update(dt);
-	if (this->ActivePage->Placing)
-		this->ActivePage->UpdatePlacing(this->MousePos);
     switch(this->ActivePage->MouseHoverSelection(this->MousePos)) {
         case CENTER:
             gui.SetCursor(ImGuiMouseCursor_Hand);
@@ -168,20 +164,20 @@ void Game::Update(float dt) {
         default:
             gui.SetCursor(ImGuiMouseCursor_Arrow);
     }
-	switch (this->LeftClick) {
-	    case PRESS:
+    switch (this->LeftClick) {
+        case PRESS:
             this->ActivePage->HandleLeftClickPress(this->MousePos);
             this->LeftClick = HOLD;
             break;
-	    case HOLD:
+        case HOLD:
             this->ActivePage->HandleLeftClickHold(this->MousePos);
             break;
-	    case RELEASE:
+        case RELEASE:
             this->ActivePage->HandleLeftClickRelease(this->MousePos);
             break;
-	    default:
-	        break;
-	}
+        default:
+            break;
+    }
     switch (this->RightClick) {
         case PRESS:
             this->ActivePage->HandleRightClick(this->MousePos);
@@ -190,17 +186,25 @@ void Game::Update(float dt) {
             break;
     }
     switch (this->MiddleClick) {
-	    case PRESS:
+        case PRESS:
             this->ActivePage->HandleMiddleClickPress(this->MousePos);
             this->MiddleClick = HOLD;
             break;
-	    case HOLD:
+        case HOLD:
             this->ActivePage->HandleMiddleClickHold(this->MousePos);
-	}
+    }
     if (this->ScrollDirection != 0) {
         this->ActivePage->HandleScrollWheel(this->ScrollDirection);
         this->ScrollDirection = 0;
     }
+}
+
+void Game::Update(float dt) {
+	this->ProcessUIEvents();
+	this->ActivePage->Update(dt);
+	if (this->ActivePage->Placing)
+		this->ActivePage->UpdatePlacing(this->MousePos);
+    this->UpdateMouse();
 }
 
 void Game::Render() {
