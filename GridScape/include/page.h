@@ -11,6 +11,10 @@
 #include "text_renderer.h"
 #include "page_ui.h"
 
+enum MouseHoverType {
+    NONE, EW, NS, NESW, NWSE, CENTER
+};
+
 class Page {
 public:
     static constexpr float TILE_DIMENSIONS = 100.0f;
@@ -30,7 +34,6 @@ public:
 
 	~Page();
 	Page(std::string name, Texture2D board_tex, SpriteRenderer * renderer,
-		 std::shared_ptr<std::pair<int, int>> screenDims,
 		 glm::vec2 pos = glm::vec2(0.0f, 0.0f),
 		 glm::vec2 size = glm::vec2(100.0f, 100.0f));
 
@@ -54,10 +57,10 @@ public:
 
 	void Draw(SpriteRenderer * sprite_renderer, TextRenderer * text_renderer);
 
+    MouseHoverType MouseHoverSelection(glm::ivec2 mouse_pos);
 private:
 	GameObject * CurrentSelection = nullptr;
 	glm::ivec2 DragOrigin = glm::ivec2(0);
-	std::shared_ptr<std::pair<int, int>> ScreenDims;
 
 	void SnapPieceToGrid(GameObject * piece);
 	glm::vec2 ScreenPosToWorldPos(glm::ivec2 pos);

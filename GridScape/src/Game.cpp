@@ -8,6 +8,7 @@
 #include "game_object.h"
 #include "ui.h"
 #include "util.h"
+#include "gui.h"
 
 SpriteRenderer * ObjectRenderer;
 UI * UserInterface;
@@ -71,12 +72,11 @@ void scroll_callback(double xoffset, double yoffset) {
 }
 
 Game::Game() {
-    this->ScreenDims = std::make_shared<std::pair<int, int>>(GLFW::SCREEN_WIDTH, GLFW::SCREEN_HEIGHT);
+    GLFW &glfw = GLFW::getInstance();
     this->init_shaders();
     this->init_textures();
     this->init_objects();
 
-    GLFW &glfw = GLFW::getInstance();
     glfw.RegisterWindowSizeCallback(window_size_callback);
     glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
     glfw.RegisterMousePosCallback(mouse_pos_callback);
@@ -103,8 +103,6 @@ Game::~Game() {
 }
 
 void Game::SetScreenDims(int width, int height) {
-    this->ScreenDims->first = width;
-    this->ScreenDims->second = height;
     this->set_projection();
 }
 
@@ -122,9 +120,8 @@ void Game::init_textures() {
 void Game::init_objects() {
 	ObjectRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
 	SpriteRenderer * BoardRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"), 20);
-	UserInterface = new UI(this->ScreenDims);
+	UserInterface = new UI();
 	this->ActivePage = new Page("Default", ResourceManager::GetTexture("grid"), BoardRenderer,
-								this->ScreenDims,
 								glm::vec2(0.0f, 0.0f), glm::vec2(20.0f, 20.0f));
 	this->Pages.push_back(this->ActivePage);
 	GameObject * test = new GameObject(glm::vec2(1.0f, 1.0f), glm::vec2(98.0f, 98.0f),
@@ -136,9 +133,10 @@ void Game::init_objects() {
 }
 
 void Game::set_projection() {
+    static GLFW &glfw = GLFW::getInstance();
     glm::mat4 projection = glm::ortho(0.0f,
-            static_cast<float>(this->ScreenDims->first),
-            static_cast<float>(this->ScreenDims->second),
+            static_cast<float>(glfw.SCREEN_WIDTH),
+            static_cast<float>(glfw.SCREEN_HEIGHT),
             0.0f,
             -1.0f,
             1.0f);
@@ -146,11 +144,30 @@ void Game::set_projection() {
 }
 
 void Game::Update(float dt) {
+    static GUI &gui = GUI::getInstance();
 	this->ProcessUIEvents();
 	this->ActivePage->Update(dt);
 	if (this->ActivePage->Placing)
 		this->ActivePage->UpdatePlacing(this->MousePos);
-
+    switch(this->ActivePage->MouseHoverSelection(this->MousePos)) {
+        case CENTER:
+            gui.SetCursor(ImGuiMouseCursor_Hand);
+            break;
+        case EW:
+            gui.SetCursor(ImGuiMouseCursor_ResizeEW);
+            break;
+        case NS:
+            gui.SetCursor(ImGuiMouseCursor_ResizeNS);
+            break;
+        case NESW:
+            gui.SetCursor(ImGuiMouseCursor_ResizeNESW);
+            break;
+        case NWSE:
+            gui.SetCursor(ImGuiMouseCursor_ResizeNWSE);
+            break;
+        default:
+            gui.SetCursor(ImGuiMouseCursor_Arrow);
+    }
 	switch (this->LeftClick) {
 	    case PRESS:
             this->ActivePage->HandleLeftClickPress(this->MousePos);
@@ -214,6 +231,5 @@ void Game::ProcessUIEvents() {
 Page * Game::MakePage(std::string name) {
 	SpriteRenderer * BoardRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"), 20);
 	return new Page(name, ResourceManager::GetTexture("grid"), BoardRenderer,
-					this->ScreenDims,
 					glm::vec2(0.0f, 0.0f), glm::vec2(20.0f, 20.0f));
 }

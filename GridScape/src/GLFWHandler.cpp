@@ -3,14 +3,14 @@
 #include "glfw_handler.h"
 #include "gui.h"
 
-keyfunc   key_press_callbacks     [GLFW_KEY_LAST + 1]          = {nullptr};
-keyfunc   key_release_callbacks   [GLFW_KEY_LAST + 1]          = {nullptr};
-mousefunc mouse_press_callbacks   [GLFW_MOUSE_BUTTON_LAST + 1] = {nullptr};
-mousefunc mouse_release_callbacks [GLFW_MOUSE_BUTTON_LAST + 1] = {nullptr};
+static keyfunc   key_press_callbacks     [GLFW_KEY_LAST + 1]          = {nullptr};
+static keyfunc   key_release_callbacks   [GLFW_KEY_LAST + 1]          = {nullptr};
+static mousefunc mouse_press_callbacks   [GLFW_MOUSE_BUTTON_LAST + 1] = {nullptr};
+static mousefunc mouse_release_callbacks [GLFW_MOUSE_BUTTON_LAST + 1] = {nullptr};
 
-scrollfunc    scroll_callback      = nullptr;
-windowsizefun window_size_callback = nullptr;
-mouseposfunc  mouse_pos_callback   = nullptr;
+static scrollfunc    scroll_callback      = nullptr;
+static windowsizefun window_size_callback = nullptr;
+static mouseposfunc  mouse_pos_callback   = nullptr;
 
 GLFW &GLFW::getInstance() {
     static GLFW instance; // Guaranteed to be destroyed.
@@ -19,6 +19,9 @@ GLFW &GLFW::getInstance() {
 }
 
 static void window_size_handler(GLFWwindow *window, int width, int height) {
+    static GLFW &glfw = GLFW::getInstance();
+    glfw.SCREEN_WIDTH = width;
+    glfw.SCREEN_HEIGHT = height;
     if (window_size_callback) {
         window_size_callback(width, height);
     }

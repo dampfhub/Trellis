@@ -1,6 +1,8 @@
 #ifndef GUI_H
 #define GUI_H
 
+#include "imgui.h"
+
 class GUI {
 public:
     GUI(GUI const&) = delete; // Disallow copying
@@ -16,6 +18,8 @@ public:
     // Returns 1 if key was captured, 0 otherwise
     int KeyPress(int key);
     void KeyRelease(int key);
+
+    void SetCursor(ImGuiMouseCursor_ cursor);
 
 private:
     GUI();

@@ -17,11 +17,9 @@ public:
 	int PlayerPageView = 0;
 
 	~PageUI();
-	PageUI(std::shared_ptr<std::pair<int, int>> screenDims);
+	PageUI();
 	void DrawPieceClickMenu();
 	void ClearFlags();
-private:
-    std::shared_ptr<std::pair<int, int>> ScreenDims;
 };
 
 #endif

@@ -36,10 +36,10 @@ public:
     void RegisterWindowSizeCallback(windowsizefun callback);
 
 
-    // The Width of the screen
-    static const unsigned int SCREEN_WIDTH = 1600;
+    // The width of the screen
+    int SCREEN_WIDTH = 1600;
     // The height of the screen
-    static const unsigned int SCREEN_HEIGHT = 1000;
+    int SCREEN_HEIGHT = 1000;
 
 private:
     GLFW();

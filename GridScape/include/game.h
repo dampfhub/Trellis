@@ -40,8 +40,6 @@ private:
     // destructor
     ~Game();
 
-    std::shared_ptr<std::pair<int, int>> ScreenDims;
-
 	void init_textures();
 	void init_shaders();
 	void init_objects();

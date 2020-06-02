@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "glfw_handler.h"
 
 #include <iostream>
 
@@ -6,8 +7,7 @@ UI::~UI() {
 	delete this->FileDialog;
 }
 
-UI::UI(std::shared_ptr<std::pair<int, int>> screenDims)
-	: ScreenDims(screenDims) {
+UI::UI() {
 	this->FileDialog = new ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
 }
 
@@ -22,11 +22,12 @@ void UI::Draw(std::vector<Page *> pages, Page * active_page) {
 }
 
 void UI::DrawMenu(std::vector<Page *> pages, Page * active_page) {
+    GLFW &glfw = GLFW::getInstance();
 	ImGui::Begin("D&D", nullptr,
 				 ImGuiWindowFlags_NoResize |
 				 ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
-	ImGui::SetWindowSize(ImVec2(150.0f, (float)this->ScreenDims->second));
+	ImGui::SetWindowSize(ImVec2(150.0f, (float)glfw.SCREEN_HEIGHT));
 	ImGui::SetNextItemWidth(100.0f);
 	if (ImGui::Button("Add")) {
 		ImGui::OpenPopup("add_menu");

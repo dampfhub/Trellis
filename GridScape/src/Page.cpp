@@ -7,18 +7,15 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-Page::Page(std::string name, Texture2D board_tex, SpriteRenderer * renderer,
-		   std::shared_ptr<std::pair<int, int>> screenDims, glm::vec2 pos,
+Page::Page(std::string name, Texture2D board_tex, SpriteRenderer * renderer, glm::vec2 pos,
 		   glm::vec2 size)
-	: Name(name), Board_Texture(board_tex), Renderer(renderer),
-	ScreenDims(screenDims), Position(pos), Size(size) {
+	: Name(name), Board_Texture(board_tex), Renderer(renderer), Position(pos), Size(size) {
 	this->Renderer->Resize((int)this->Size.x);
 	this->Camera = new Camera2D(200.0f,
 								glm::vec2(this->Size.x * this->TILE_DIMENSIONS,
 										  this->Size.y * this->TILE_DIMENSIONS),
-								glm::vec2(0.4f, 2.5f),
-								this->ScreenDims);
-	this->UserInterface = new PageUI(this->ScreenDims);
+								glm::vec2(0.4f, 2.5f));
+	this->UserInterface = new PageUI();
 }
 Page::~Page() {
 	for (GameObject * piece : this->Pieces) {
@@ -78,6 +75,41 @@ void Page::HandleUIEvents() {
 		this->Pieces.insert(this->Pieces.begin(), this->CurrentSelection);
 	}
 	this->UserInterface->ClearFlags();
+}
+
+MouseHoverType Page::MouseHoverSelection(glm::ivec2 mouse_pos) {
+    glm::vec2 world_mouse = this->ScreenPosToWorldPos(mouse_pos);
+    if (this->CurrentSelection == nullptr ||
+            !this->CurrentSelection->CheckContainment(world_mouse)) {
+        return NONE;
+    }
+    glm::vec2 click_pos = this->CurrentSelection->DistanceFromTopLeft(world_mouse);
+    glm::vec2 click_ratio = click_pos / this->CurrentSelection->Size;
+    if (click_ratio.x <= TILE_SCALE_RATIO) {
+        if (click_ratio.y <= TILE_SCALE_RATIO) {
+            return NWSE;
+        } else if (1 - click_ratio.y <= TILE_SCALE_RATIO) {
+            return NESW;
+        } else {
+            return EW;
+        }
+    } else if (1 - click_ratio.x <= TILE_SCALE_RATIO) {
+        if (click_ratio.y <= TILE_SCALE_RATIO) {
+            return NESW;
+        } else if (1 - click_ratio.y <= TILE_SCALE_RATIO) {
+            return NWSE;
+        } else {
+            return EW;
+        }
+    } else {
+        if (click_ratio.y <= TILE_SCALE_RATIO) {
+            return NS;
+        } else if (1 - click_ratio.y <= TILE_SCALE_RATIO) {
+            return NS;
+        } else {
+            return CENTER;
+        }
+    }
 }
 
 void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {

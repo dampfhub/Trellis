@@ -19,16 +19,13 @@ public:
 
 	Camera2D(float bounds,
 	        glm::vec2 board_dimensions,
-	        glm::vec2 zoom_bounds,
-	        std::shared_ptr<std::pair<int, int>> screenDims);
+	        glm::vec2 zoom_bounds);
 
 	void Update(float dt, glm::vec2 board_dims);
 	void Move(glm::vec2 mv);
 
 	void ZoomIn();
 	void ZoomOut();
-private:
-	std::shared_ptr<std::pair<int, int>> ScreenDims;
 };
 
 #endif
