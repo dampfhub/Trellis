@@ -27,7 +27,7 @@ public:
 	GameObject(glm::vec2 pos, glm::vec2 size, Texture2D sprite, 
 		bool clickable = true, glm::vec3 color = glm::vec3(1.0f));
 
-	void Draw(SpriteRenderer *renderer, bool draw_border);
+	void Draw(SpriteRenderer *renderer, int border_pixel_width);
 	bool CheckContainment(glm::vec2 pos);
 	//bool CheckBorderContainment(glm::vec2 pos);
 	glm::vec2 DistanceFromTopLeft(glm::vec2 pos);

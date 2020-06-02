@@ -1,5 +1,6 @@
 #include "sprite_renderer.h"
 #include "resource_manager.h"
+#include "glfw_handler.h"
 
 SpriteRenderer::SpriteRenderer(Shader shader, int tile_factor) {
     this->shader = shader;
@@ -10,8 +11,9 @@ SpriteRenderer::~SpriteRenderer() {
     glDeleteVertexArrays(1, &this->quadVAO);
 }
 
-void SpriteRenderer::DrawSprite(Texture2D texture, glm::vec2 position, bool draw_border,
+void SpriteRenderer::DrawSprite(Texture2D texture, glm::vec2 position, int border_pixel_width,
                                 glm::vec2 size, float rotate, glm::vec3 color) {
+    static GLFW &glfw = GLFW::getInstance();
     // prepare transformations
     this->shader.Use();
     glm::mat4 model = glm::mat4(1.0f);
@@ -25,16 +27,13 @@ void SpriteRenderer::DrawSprite(Texture2D texture, glm::vec2 position, bool draw
 
     this->shader.SetMatrix4("view", this->View);
     this->shader.SetMatrix4("model", model);
+    this->shader.SetVector2f("screenRes", glm::vec2(glfw.SCREEN_WIDTH, glfw.SCREEN_HEIGHT));
 
     // render textured quad
     this->shader.SetVector3f("spriteColor", color);
 
     this->shader.SetFloat("aspect", 1.0f);
-    if (draw_border) {
-        this->shader.SetFloat("border_width", 0.05f);
-    } else {
-        this->shader.SetFloat("border_width", 0.00f);
-    }
+    this->shader.SetInteger("border_width", border_pixel_width);
 
     glActiveTexture(GL_TEXTURE0);
     texture.Bind();

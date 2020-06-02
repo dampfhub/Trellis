@@ -51,7 +51,11 @@ void Page::Draw(SpriteRenderer * sprite_renderer, TextRenderer * text_renderer) 
 	sprite_renderer->View = this->Camera->View;
 	this->Renderer->DrawSprite(this->Board_Texture, this->Position, false, this->Size * this->TILE_DIMENSIONS);
 	for (GameObject * piece : this->Pieces) {
-		piece->Draw(sprite_renderer, piece == this->CurrentSelection);
+	    int border_pixel_width =
+	            piece == this->CurrentSelection
+	            ? this->BorderWidth
+	            : 0;
+		piece->Draw(sprite_renderer, border_pixel_width);
 	}
 	// If placing a piece, it's not part of the board yet, draw it seperately
 	if (this->Placing)
@@ -85,26 +89,26 @@ MouseHoverType Page::MouseHoverSelection(glm::ivec2 mouse_pos) {
     }
     glm::vec2 click_pos = this->CurrentSelection->DistanceFromTopLeft(world_mouse);
     glm::vec2 click_ratio = click_pos / this->CurrentSelection->Size;
-    if (click_ratio.x <= TILE_SCALE_RATIO) {
-        if (click_ratio.y <= TILE_SCALE_RATIO) {
+    if (click_pos.x <= this->BorderWidth) {
+        if (click_pos.y <= this->BorderWidth) {
             return NWSE;
-        } else if (1 - click_ratio.y <= TILE_SCALE_RATIO) {
+        } else if (this->CurrentSelection->Size.y - click_pos.y <= this->BorderWidth) {
             return NESW;
         } else {
             return EW;
         }
-    } else if (1 - click_ratio.x <= TILE_SCALE_RATIO) {
-        if (click_ratio.y <= TILE_SCALE_RATIO) {
+    } else if (this->CurrentSelection->Size.x - click_pos.x <= this->BorderWidth) {
+        if (click_pos.y <= this->BorderWidth) {
             return NESW;
-        } else if (1 - click_ratio.y <= TILE_SCALE_RATIO) {
+        } else if (this->CurrentSelection->Size.y - click_pos.y <= this->BorderWidth) {
             return NWSE;
         } else {
             return EW;
         }
     } else {
-        if (click_ratio.y <= TILE_SCALE_RATIO) {
+        if (click_pos.y <= this->BorderWidth) {
             return NS;
-        } else if (1 - click_ratio.y <= TILE_SCALE_RATIO) {
+        } else if (this->CurrentSelection->Size.y - click_pos.y <= this->BorderWidth) {
             return NS;
         } else {
             return CENTER;
@@ -129,17 +133,17 @@ void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
 			// Check if the user is clicking on any of the sprite's edges /
 			// corners
             piece->ScaleEdges = std::make_pair(0, 0);
-			if (click_ratio.x <= TILE_SCALE_RATIO) {
+			if (click_pos.x <= this->BorderWidth) {
                 piece->ScaleMouse = true;
                 piece->ScaleEdges.first = -1;
-			}else if (1 - click_ratio.x <= TILE_SCALE_RATIO) {
+			}else if (piece->Size.x - click_pos.x <= this->BorderWidth) {
                 piece->ScaleMouse = true;
                 piece->ScaleEdges.first = 1;
 			}
-            if (click_ratio.y <= TILE_SCALE_RATIO) {
+            if (click_pos.y <= this->BorderWidth) {
                 piece->ScaleMouse = true;
                 piece->ScaleEdges.second = -1;
-            }else if (1 - click_ratio.y <= TILE_SCALE_RATIO) {
+            }else if (piece->Size.y - click_pos.y <= this->BorderWidth) {
                 piece->ScaleMouse = true;
                 piece->ScaleEdges.second = 1;
             }
@@ -165,25 +169,35 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
 		    switch (this->CurrentSelection->ScaleEdges.first) {
 		        case 1:
 		            this->CurrentSelection->Size.x =
-		                    this->CurrentSelection->initialSize.x + diff.x;
+		                    fmax(this->CurrentSelection->initialSize.x + diff.x,
+		                            2 * this->BorderWidth + 1);
 		            break;
 		        case -1:
-                    this->CurrentSelection->Position.x = world_mouse.x -
-                            this->DragOrigin.x;
+                    this->CurrentSelection->Position.x = fmin(
+                            world_mouse.x -
+                            this->DragOrigin.x,
+                            this->CurrentSelection->initialPos.x +
+                                this->CurrentSelection->initialSize.x -
+                                2 * this->BorderWidth - 1);
                     this->CurrentSelection->Size.x =
                             this->CurrentSelection->initialSize.x +
-                            this->CurrentSelection->initialPos.x -
-                            this->CurrentSelection->Position.x;
+                                this->CurrentSelection->initialPos.x -
+                                this->CurrentSelection->Position.x;
 		            break;
 		    }
 		    switch(this->CurrentSelection->ScaleEdges.second) {
 		        case 1:
-                    this->CurrentSelection->Size.y =
-                            this->CurrentSelection->initialSize.y + diff.y;
+                    this->CurrentSelection->Size.y = fmax(
+                            this->CurrentSelection->initialSize.y + diff.y,
+                            2 * this->BorderWidth + 1);
                     break;
                 case -1:
-                    this->CurrentSelection->Position.y = world_mouse.y -
-                            this->DragOrigin.y;
+                    this->CurrentSelection->Position.y = fmin(
+                            world_mouse.y -
+                                    this->DragOrigin.y,
+                            this->CurrentSelection->initialPos.y +
+                                    this->CurrentSelection->initialSize.y -
+                                    2 * this->BorderWidth - 1);
                     this->CurrentSelection->Size.y =
                             this->CurrentSelection->initialSize.y +
                                     this->CurrentSelection->initialPos.y -

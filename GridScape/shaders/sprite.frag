@@ -1,27 +1,26 @@
 #version 330 core
 in vec2 TexCoords;
+in vec4 screen_corners;
 out vec4 color;
 
 uniform sampler2D image;
 uniform vec3 spriteColor;
-uniform float border_width;
+uniform int border_width;
 uniform float aspect;  // ratio of width to height
+uniform vec2 screenRes;
 
-void main() {    
-   float maxX = 1.0 - border_width;
-   float minX = border_width;
-   float maxY = maxX / aspect;
-   float minY = minX / aspect;
-
+void main() {
 	if (border_width == 0) {
 		color = vec4(spriteColor, 1.0) * texture(image, TexCoords);
 		return;
 	}
-
-   if (TexCoords.x <= maxX && TexCoords.x >= minX &&
-       TexCoords.y <= maxY && TexCoords.y >= minY) {
-        color = vec4(spriteColor, 1.0) * texture(image, TexCoords);
-    } else {
+    if (abs(gl_FragCoord.x - screen_corners.x) < border_width ||
+        abs(gl_FragCoord.y - screen_corners.y) < border_width ||
+        abs(screen_corners.z - gl_FragCoord.x) < border_width ||
+        abs(screen_corners.w - gl_FragCoord.y) < border_width) {
         color = vec4(0.0, 0.5, 0.5, 1.0);
+        return;
     }
+    color = vec4(spriteColor, 1.0) * texture(image, TexCoords);
+
 }  
