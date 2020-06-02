@@ -65,9 +65,7 @@ void Page::Draw(SpriteRenderer * sprite_renderer, TextRenderer * text_renderer) 
 
 void Page::HandleUIEvents() {
 	if (this->UserInterface->MoveToFront) {
-	    if (CurrentSelection != Pieces.begin()) {
-            Pieces.splice(Pieces.begin(), Pieces, CurrentSelection);
-        }
+	    Pieces.splice(Pieces.begin(), Pieces, CurrentSelection);
 	} else if (this->UserInterface->MoveToBack) {
         Pieces.splice(Pieces.end(), Pieces, CurrentSelection);
 	}
