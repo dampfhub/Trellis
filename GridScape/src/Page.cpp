@@ -1,11 +1,7 @@
-#include <iostream>
-
 #include "page.h"
 #include "resource_manager.h"
 #include "text_renderer.h"
 #include "text_object.h"
-
-#include <glm/gtx/string_cast.hpp>
 
 Page::Page(std::string name, Texture2D board_tex, SpriteRenderer * renderer, glm::vec2 pos,
 		   glm::vec2 size)
@@ -237,17 +233,10 @@ void Page::HandleMiddleClickHold(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleScrollWheel(int scroll_direction) {
-	if (this->CurrentSelection) {
-		if (scroll_direction == 1)
-			this->CurrentSelection->Size += 5;
-		else if (scroll_direction == -1)
-			this->CurrentSelection->Size -= 5;
-	} else {
-		if (scroll_direction == 1)
-			this->Camera->ZoomIn();
-		else if (scroll_direction == -1)
-			this->Camera->ZoomOut();
-	}
+    if (scroll_direction == 1)
+        this->Camera->ZoomIn();
+    else if (scroll_direction == -1)
+        this->Camera->ZoomOut();
 }
 
 void Page::SnapPieceToGrid(GameObject * piece) {

@@ -135,8 +135,8 @@ void Game::init_objects() {
 void Game::set_projection() {
     static GLFW &glfw = GLFW::getInstance();
     glm::mat4 projection = glm::ortho(0.0f,
-            static_cast<float>(glfw.SCREEN_WIDTH),
-            static_cast<float>(glfw.SCREEN_HEIGHT),
+            static_cast<float>(glfw.GetScreenWidth()),
+            static_cast<float>(glfw.GetScreenHeight()),
             0.0f,
             -1.0f,
             1.0f);

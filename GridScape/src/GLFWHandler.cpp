@@ -12,6 +12,11 @@ static scrollfunc    scroll_callback      = nullptr;
 static windowsizefun window_size_callback = nullptr;
 static mouseposfunc  mouse_pos_callback   = nullptr;
 
+// The width of the screen
+static int screen_width = 1600;
+// The height of the screen
+static int screen_height = 1000;
+
 GLFW &GLFW::getInstance() {
     static GLFW instance; // Guaranteed to be destroyed.
                           // Instantiated on first use.
@@ -20,8 +25,8 @@ GLFW &GLFW::getInstance() {
 
 static void window_size_handler(GLFWwindow *window, int width, int height) {
     static GLFW &glfw = GLFW::getInstance();
-    glfw.SCREEN_WIDTH = width;
-    glfw.SCREEN_HEIGHT = height;
+    screen_width = width;
+    screen_height = height;
     if (window_size_callback) {
         window_size_callback(width, height);
     }
@@ -91,7 +96,7 @@ GLFW::GLFW() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, true);
 
-    window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Dnd", nullptr, nullptr);
+    window = glfwCreateWindow(screen_width, screen_height, "Dnd", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
     glfwSetKeyCallback(window, key_handler);
@@ -185,4 +190,12 @@ void GLFW::RegisterMousePosCallback(mouseposfunc callback) {
 
 void GLFW::RegisterWindowSizeCallback(windowsizefun callback) {
     window_size_callback = callback;
+}
+
+int GLFW::GetScreenWidth() {
+    return screen_width;
+}
+
+int GLFW::GetScreenHeight() {
+    return screen_height;
 }
