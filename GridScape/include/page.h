@@ -1,7 +1,7 @@
 #ifndef PAGE_H
 #define PAGE_H
 
-#include <vector>
+#include <list>
 #include <memory>
 #include <string>
 
@@ -24,7 +24,6 @@ public:
 	bool Placing = false;
 
 	Camera2D * Camera;
-	std::vector<GameObject *> Pieces;
 	Texture2D Board_Texture;
 	SpriteRenderer * Renderer;
 	PageUI * UserInterface;
@@ -58,7 +57,8 @@ public:
 
     MouseHoverType MouseHoverSelection(glm::ivec2 mouse_pos);
 private:
-	GameObject * CurrentSelection = nullptr;
+    std::list<GameObject *> Pieces;
+	std::list<GameObject*>::iterator CurrentSelection = Pieces.end();
 	glm::ivec2 DragOrigin = glm::ivec2(0);
 	int BorderWidth = 5;
 
