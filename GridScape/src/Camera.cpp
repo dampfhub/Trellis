@@ -37,13 +37,13 @@ void Camera2D::Update(float dt, glm::vec2 board_dims) {
 	// Solve[m == (d - p)*z, p] // FullSimplify
 	// { { p->d - m / z } }
 	if ((this->BoardDims.x - this->Position.x) * this->Zoom <
-	        ((float)glfw.SCREEN_WIDTH - this->Bounds))
+	        ((float)glfw.GetScreenWidth() - this->Bounds))
 		this->Position.x = this->BoardDims.x -
-		        ((float)glfw.SCREEN_WIDTH - this->Bounds) / this->Zoom;
+		        ((float)glfw.GetScreenWidth() - this->Bounds) / this->Zoom;
 	if ((this->BoardDims.y - this->Position.y) * this->Zoom <
-	        ((float)glfw.SCREEN_HEIGHT - this->Bounds))
+	        ((float)glfw.GetScreenHeight() - this->Bounds))
 		this->Position.y = this->BoardDims.y -
-		        ((float)glfw.SCREEN_HEIGHT - this->Bounds) / this->Zoom;
+		        ((float)glfw.GetScreenHeight() - this->Bounds) / this->Zoom;
 	// Check if camera would move out of bounds
 	if (this->Position.x < -this->Bounds / this->Zoom)
 		this->Position.x = -this->Bounds / this->Zoom;

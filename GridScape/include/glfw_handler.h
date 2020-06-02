@@ -35,11 +35,8 @@ public:
 
     void RegisterWindowSizeCallback(windowsizefun callback);
 
-
-    // The width of the screen
-    int SCREEN_WIDTH = 1600;
-    // The height of the screen
-    int SCREEN_HEIGHT = 1000;
+    int GetScreenWidth();
+    int GetScreenHeight();
 
 private:
     GLFW();

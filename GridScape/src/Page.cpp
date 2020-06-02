@@ -1,11 +1,7 @@
-#include <iostream>
-
 #include "page.h"
 #include "resource_manager.h"
 #include "text_renderer.h"
 #include "text_object.h"
-
-#include <glm/gtx/string_cast.hpp>
 
 Page::Page(std::string name, Texture2D board_tex, SpriteRenderer * renderer, glm::vec2 pos,
 		   glm::vec2 size)

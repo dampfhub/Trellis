@@ -27,7 +27,7 @@ void UI::DrawMenu(std::vector<Page *> pages, Page * active_page) {
 				 ImGuiWindowFlags_NoResize |
 				 ImGuiWindowFlags_NoMove);
 	ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
-	ImGui::SetWindowSize(ImVec2(150.0f, (float)glfw.SCREEN_HEIGHT));
+	ImGui::SetWindowSize(ImVec2(150.0f, (float)glfw.GetScreenHeight()));
 	ImGui::SetNextItemWidth(100.0f);
 	if (ImGui::Button("Add")) {
 		ImGui::OpenPopup("add_menu");
