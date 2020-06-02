@@ -54,7 +54,7 @@ void Page::Draw(SpriteRenderer * sprite_renderer, TextRenderer * text_renderer) 
 	// Draw sprites back-to-front, so the "top" sprite is drawn above the others
 	for (auto it = Pieces.rbegin(); it != Pieces.rend(); it++) {
 	    int border_pixel_width =
-                (*it) == (*CurrentSelection)
+                CurrentSelection != Pieces.end() && (*it) == (*CurrentSelection)
 	            ? this->BorderWidth
 	            : 0;
 		(*it)->Draw(sprite_renderer, border_pixel_width);
