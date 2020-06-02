@@ -18,7 +18,6 @@ enum MouseHoverType {
 class Page {
 public:
     static constexpr float TILE_DIMENSIONS = 100.0f;
-    static constexpr float TILE_SCALE_RATIO = 0.05;
 
 	glm::vec2 Position, Size;
 
@@ -61,6 +60,7 @@ public:
 private:
 	GameObject * CurrentSelection = nullptr;
 	glm::ivec2 DragOrigin = glm::ivec2(0);
+	int BorderWidth = 5;
 
 	void SnapPieceToGrid(GameObject * piece);
 	glm::vec2 ScreenPosToWorldPos(glm::ivec2 pos);

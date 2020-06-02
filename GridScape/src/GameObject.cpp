@@ -6,8 +6,8 @@ GameObject::GameObject()
 GameObject::GameObject(glm::vec2 pos, glm::vec2 size, Texture2D sprite, bool clickable, glm::vec3 color) 
 	: Position(pos), Size(size), Color(color), Rotation(0.0f), Sprite(sprite), Clickable(clickable) { }
 
-void GameObject::Draw(SpriteRenderer *renderer, bool draw_border) {
-	renderer->DrawSprite(this->Sprite, this->Position, draw_border, this->Size, this->Rotation, this->Color);
+void GameObject::Draw(SpriteRenderer *renderer, int border_pixel_width) {
+	renderer->DrawSprite(this->Sprite, this->Position, border_pixel_width, this->Size, this->Rotation, this->Color);
 }
 
 bool GameObject::CheckContainment(glm::vec2 pos) {
