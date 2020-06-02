@@ -30,7 +30,7 @@ public:
 	int PlayerPageView = 0;
 
 	~UI();
-	UI(std::shared_ptr<std::pair<int, int>> screenDims);
+	UI();
 	void Draw(std::vector <Page *> pages, Page * active_page);
 	void DrawMenu(std::vector <Page *> pages, Page * active_page);
 	void DrawPageSelect(std::vector<Page *> pages, Page * active_page);
@@ -41,6 +41,5 @@ public:
 
 private:
 	char PageNameBuf[128] = "";
-	std::shared_ptr<std::pair<int, int>> ScreenDims;
 };
 #endif

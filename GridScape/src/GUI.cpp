@@ -80,3 +80,7 @@ void GUI::KeyRelease(int key) {
     ImGuiIO & io = ImGui::GetIO();
     io.KeysDown[key] = false;
 }
+
+void GUI::SetCursor(ImGuiMouseCursor_ cursor) {
+    ImGui::SetMouseCursor(cursor);
+}

@@ -5,8 +5,7 @@
 PageUI::~PageUI() {
 }
 
-PageUI::PageUI(std::shared_ptr<std::pair<int, int>> screenDims)
-	: ScreenDims(screenDims) {
+PageUI::PageUI() {
 }
 
 void PageUI::DrawPieceClickMenu() {
