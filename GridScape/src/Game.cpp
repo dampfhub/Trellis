@@ -70,6 +70,15 @@ void scroll_callback(double xoffset, double yoffset) {
     game.ScrollDirection = (int)yoffset;
 }
 
+void snap_callback(int key, int scancode, int action, int mod) {
+    static Game &game = Game::GetInstance();
+    if (action == GLFW_PRESS) {
+        game.snapping = false;
+    } else if (action == GLFW_RELEASE) {
+        game.snapping = true;
+    }
+}
+
 Game::Game() {
     GLFW &glfw = GLFW::GetInstance();
     this->init_shaders();
@@ -86,6 +95,7 @@ Game::Game() {
     glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_RIGHT, right_click_release);
     glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_MIDDLE, middle_click_press);
     glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_MIDDLE, middle_click_release);
+    glfw.RegisterKey(GLFW_KEY_LEFT_ALT, snap_callback);
 
     // Set projection matrix
     this->set_projection();

@@ -77,7 +77,7 @@ private:
     glm::ivec2 DragOrigin = glm::ivec2(0);
     int BorderWidth = 5;
 
-    void SnapPieceToGrid(GameObject *piece);
+    void SnapPieceToGrid(GameObject *piece, int increments);
 
     glm::vec2 ScreenPosToWorldPos(glm::ivec2 pos);
 

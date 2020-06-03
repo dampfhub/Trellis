@@ -8,8 +8,7 @@
 
 // Represents the current state of the game
 enum GameState {
-	GAME_ACTIVE,
-	GAME_MENU
+    GAME_ACTIVE, GAME_MENU
 };
 
 // Game holds all game-related state and functionality.
@@ -17,41 +16,51 @@ enum GameState {
 // easy access to each of the components and manageability.
 class Game {
 public:
-    Game(Game const&)           = delete; // Disallow copying
-    void operator=(Game const&) = delete;
+    Game(Game const &) = delete; // Disallow copying
+    void operator=(Game const &) = delete;
 
     static Game &GetInstance();
 
-	// game state
-	GameState           State;
-    enum { NONE, PRESS, HOLD, RELEASE } LeftClick, RightClick, MiddleClick;
-	glm::ivec2          MousePos;
-	int                 ScrollDirection;
-	Page *              ActivePage;
-	std::vector<Page *> Pages;
-	// setters
-	void SetScreenDims(int width, int height);
-	// game loop
-	void Update(float dt);
-	void Render();
+    // game state
+    GameState State;
+    enum {
+        NONE, PRESS, HOLD, RELEASE
+    } LeftClick, RightClick, MiddleClick;
+    glm::ivec2 MousePos;
+    int ScrollDirection;
+    Page *ActivePage;
+    std::vector<Page *> Pages;
+    bool snapping = true;
+    
+    // setters
+    void SetScreenDims(int width, int height);
+
+    // game loop
+    void Update(float dt);
+
+    void Render();
 
 private:
     Game();
+
     // destructor
     ~Game();
 
-	void init_textures();
-	void init_shaders();
-	void init_objects();
+    void init_textures();
 
-	void set_projection();
+    void init_shaders();
 
-	void ProcessUIEvents();
+    void init_objects();
 
-	void UpdateMouse();
+    void set_projection();
+
+    void ProcessUIEvents();
+
+    void UpdateMouse();
+
     MouseHoverType current_hover_type = MouseHoverType::NONE;
 
-	Page * MakePage(std::string name);
+    Page *MakePage(std::string name);
 };
 
 #endif
