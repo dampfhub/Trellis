@@ -1,7 +1,7 @@
 #include <glad/glad.h>
 
 #include "glfw_handler.h"
-#include "gui.h"
+#include "GUI.h"
 
 static keyfunc key_press_callbacks[GLFW_KEY_LAST + 1] = { nullptr };
 static keyfunc key_release_callbacks[GLFW_KEY_LAST + 1] = { nullptr };
@@ -37,7 +37,7 @@ static void window_size_handler(GLFWwindow *window, int width, int height) {
 static void key_handler(
         GLFWwindow *window, int key, int scancode, int action, int mods) {
     (void)window;
-    static Gui &gui = Gui::GetInstance();
+    static GUI &gui = GUI::GetInstance();
     if (action == GLFW_PRESS) {
         if (gui.KeyPress(key)) {
             return;
@@ -56,7 +56,7 @@ static void key_handler(
 static void mouse_handler(
         GLFWwindow *window, int button, int action, int mods) {
     (void)window;
-    static Gui &gui = Gui::GetInstance();
+    static GUI &gui = GUI::GetInstance();
     if (action == GLFW_PRESS) {
         if (gui.MousePress(button)) {
             return;

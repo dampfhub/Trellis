@@ -1,16 +1,16 @@
-#include "gui.h"
+#include "GUI.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "glfw_handler.h"
 
-Gui &Gui::GetInstance() {
-    static Gui instance; // Guaranteed to be destroyed.
+GUI &GUI::GetInstance() {
+    static GUI instance; // Guaranteed to be destroyed.
     // Instantiated on first use.
     return instance;
 }
 
-Gui::Gui() {
+GUI::GUI() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -36,24 +36,24 @@ Gui::Gui() {
     io.Fonts->AddFontFromFileTTF("fonts/Roboto.TTF", 20.0f);
 }
 
-Gui::~Gui() {
+GUI::~GUI() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
-void Gui::NewFrame() {
+void GUI::NewFrame() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void Gui::Render() {
+void GUI::Render() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-int Gui::MousePress(int button) {
+int GUI::MousePress(int button) {
     ImGuiIO &io = ImGui::GetIO();
     io.MouseDown[button] = true;
     if (io.WantCaptureMouse) {
@@ -62,12 +62,12 @@ int Gui::MousePress(int button) {
     return 0;
 }
 
-void Gui::MouseRelease(int button) {
+void GUI::MouseRelease(int button) {
     ImGuiIO &io = ImGui::GetIO();
     io.MouseDown[button] = false;
 }
 
-int Gui::KeyPress(int key) {
+int GUI::KeyPress(int key) {
     ImGuiIO &io = ImGui::GetIO();
     io.KeysDown[key] = true;
     if (io.WantCaptureKeyboard) {
@@ -76,11 +76,11 @@ int Gui::KeyPress(int key) {
     return 0;
 }
 
-void Gui::KeyRelease(int key) {
+void GUI::KeyRelease(int key) {
     ImGuiIO &io = ImGui::GetIO();
     io.KeysDown[key] = false;
 }
 
-void Gui::SetCursor(ImGuiMouseCursor_ cursor) {
+void GUI::SetCursor(ImGuiMouseCursor_ cursor) {
     ImGui::SetMouseCursor(cursor);
 }

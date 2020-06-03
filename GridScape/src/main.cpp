@@ -2,7 +2,7 @@
 #include "glfw_handler.h"
 #include "resource_manager.h"
 #include "stb_image.h"
-#include "gui.h"
+#include "GUI.h"
 
 #include <iostream>
 
@@ -16,7 +16,7 @@ int main() {
         return -1;
     }
 
-    Gui &gui = Gui::GetInstance();
+    GUI &gui = GUI::GetInstance();
     Game &Dnd = Game::GetInstance();
 
     glEnable(GL_BLEND);

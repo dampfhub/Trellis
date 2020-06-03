@@ -20,9 +20,5 @@ TextObject::TextObject(
 
 void TextObject::Draw(TextRenderer *renderer) {
     renderer->RenderText(
-            this->Text,
-            this->Position.x,
-            this->Position.y,
-            this->Scale,
-            this->Color);
+            Text, Position.x, Position.y, Scale, Color);
 }
