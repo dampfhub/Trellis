@@ -156,7 +156,10 @@ void Game::set_projection() {
 
 void Game::UpdateMouse() {
     static GUI &gui = GUI::GetInstance();
-    switch (this->ActivePage->MouseHoverSelection(this->MousePos)) {
+    if (this->LeftClick != HOLD) {
+        this->current_hover_type = this->ActivePage->MouseHoverSelection(this->MousePos);
+    }
+    switch (this->current_hover_type) {
         case CENTER:
             gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
@@ -167,10 +170,10 @@ void Game::UpdateMouse() {
             gui.SetCursor(ImGuiMouseCursor_ResizeNS);
             break;
         case NESW:
-            gui.SetCursor(ImGuiMouseCursor_ResizeNESW);
+            gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
         case NWSE:
-            gui.SetCursor(ImGuiMouseCursor_ResizeNWSE);
+            gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
         default:
             gui.SetCursor(ImGuiMouseCursor_Arrow);
