@@ -3,6 +3,8 @@
 #include "text_renderer.h"
 #include "text_object.h"
 #include "glfw_handler.h"
+#include "game.h"
+
 #include <iostream>
 
 Page::Page(
@@ -159,11 +161,17 @@ void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
+    static Game &game = Game::GetInstance();
+    int inc = game.snapping
+              ? 1
+              : 8;
+    float closest;
     glm::vec2 world_mouse = this->ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
         GameObject *piece = *CurrentSelection;
         if (piece->FollowMouse) {
             piece->Position = world_mouse - (glm::vec2)this->DragOrigin;
+            this->SnapPieceToGrid(*CurrentSelection, inc);
         } else if (piece->ScaleMouse) {
             glm::vec2 diff = piece->DistanceFromTopLeft(world_mouse) -
                     (glm::vec2)this->DragOrigin;
@@ -171,30 +179,48 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
                 case 1:
                     piece->Size.x = fmax(
                             piece->initialSize.x + diff.x,
-                            2 * this->BorderWidth + 1);
+                            TILE_DIMENSIONS / (float)inc);
+                    closest = floor(
+                            piece->Size.x / (TILE_DIMENSIONS / (float)inc) +
+                                    0.5);
+                    piece->Size.x = closest * TILE_DIMENSIONS / (float)inc - 2;
                     break;
                 case -1:
-                    piece->Position.x = fmin(
-                            world_mouse.x - this->DragOrigin.x,
+                    piece->Size.x = fmax(
+                            this->DragOrigin.x + piece->initialPos.x +
+                                    piece->initialSize.x - world_mouse.x,
+                            TILE_DIMENSIONS / (float)inc);
+                    closest = floor(
+                            piece->Size.x / (TILE_DIMENSIONS / (float)inc) +
+                                    0.5);
+                    piece->Size.x = closest * TILE_DIMENSIONS / (float)inc - 2;
+                    piece->Position.x =
                             piece->initialPos.x + piece->initialSize.x -
-                                    2 * this->BorderWidth - 1);
-                    piece->Size.x = piece->initialSize.x + piece->initialPos.x -
-                            piece->Position.x;
+                                    piece->Size.x;
                     break;
             }
             switch (piece->ScaleEdges.second) {
                 case 1:
                     piece->Size.y = fmax(
                             piece->initialSize.y + diff.y,
-                            2 * this->BorderWidth + 1);
+                            TILE_DIMENSIONS / (float)inc);
+                    closest = floor(
+                            piece->Size.y / (TILE_DIMENSIONS / (float)inc) +
+                                    0.5);
+                    piece->Size.y = closest * TILE_DIMENSIONS / (float)inc - 2;
                     break;
                 case -1:
-                    piece->Position.y = fmin(
-                            world_mouse.y - this->DragOrigin.y,
+                    piece->Size.y = fmax(
+                            this->DragOrigin.y + piece->initialPos.y +
+                                    piece->initialSize.y - world_mouse.y,
+                            TILE_DIMENSIONS / (float)inc);
+                    closest = floor(
+                            piece->Size.y / (TILE_DIMENSIONS / (float)inc) +
+                                    0.5);
+                    piece->Size.y = closest * TILE_DIMENSIONS / (float)inc - 2;
+                    piece->Position.y =
                             piece->initialPos.y + piece->initialSize.y -
-                                    2 * this->BorderWidth - 1);
-                    piece->Size.y = piece->initialSize.y + piece->initialPos.y -
-                            piece->Position.y;
+                                    piece->Size.y;
                     break;
             }
         }
@@ -210,9 +236,13 @@ void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleRightClick(glm::ivec2 mouse_pos) {
-    (void)mouse_pos;
+    glm::vec2 world_mouse = this->ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
-        this->UserInterface->ClickMenuActive = true;
+        if ((*CurrentSelection)->CheckContainment(world_mouse)) {
+            UserInterface->ClickMenuActive = true;
+        } else {
+            CurrentSelection = Pieces.end();
+        }
     }
 }
 
@@ -234,26 +264,14 @@ void Page::HandleScrollWheel(glm::ivec2 mouse_pos, int scroll_direction) {
             this->Camera->CalculateView(this->Size * this->TILE_DIMENSIONS);
 }
 
-void Page::SnapPieceToGrid(GameObject *piece) {
-    float closest_x =
-            (float)floor(piece->Position.x / this->TILE_DIMENSIONS + 0.5);
+void Page::SnapPieceToGrid(GameObject *piece, int increments) {
+    float closest_x = (float)floor(
+            piece->Position.x / (TILE_DIMENSIONS / (float)increments) + 0.5);
     float closest_y = (float)floor(
-            piece->Position.y / this->TILE_DIMENSIONS + 0.5);
-    if (closest_x > this->Size.x) {
-        closest_x = this->Size.x - 1;
-    }
-    if (closest_x < 0) {
-        closest_x = 0;
-    }
-    if (closest_y > this->Size.y) {
-        closest_x = this->Size.y - 1;
-    }
-    if (closest_y < 0) {
-        closest_y = 0;
-    }
+            piece->Position.y / (TILE_DIMENSIONS / (float)increments) + 0.5);
     piece->Position = glm::vec2(
-            closest_x * this->TILE_DIMENSIONS + 1,
-            closest_y * this->TILE_DIMENSIONS + 1);
+            closest_x * TILE_DIMENSIONS / (float)increments + 1,
+            closest_y * TILE_DIMENSIONS / (float)increments + 1);
 }
 
 glm::vec2 Page::ScreenPosToWorldPos(glm::ivec2 pos) {
