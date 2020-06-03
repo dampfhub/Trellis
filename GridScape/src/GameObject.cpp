@@ -23,18 +23,12 @@ GameObject::GameObject(
 
 void GameObject::Draw(SpriteRenderer *renderer, int border_pixel_width) {
     renderer->DrawSprite(
-            this->Sprite,
-            this->Position,
-            border_pixel_width,
-            this->Size,
-            this->Rotation,
-            this->Color);
+            Sprite, Position, border_pixel_width, Size, Rotation, Color);
 }
 
 bool GameObject::CheckContainment(glm::vec2 pos) {
-    if (pos.x >= this->Position.x && pos.x <= this->Position.x + this->Size.x) {
-        if (pos.y >= this->Position.y &&
-                pos.y <= this->Position.y + this->Size.y) {
+    if (pos.x >= Position.x && pos.x <= Position.x + Size.x) {
+        if (pos.y >= Position.y && pos.y <= Position.y + Size.y) {
             return true;
         }
     }
@@ -42,5 +36,5 @@ bool GameObject::CheckContainment(glm::vec2 pos) {
 }
 
 glm::vec2 GameObject::DistanceFromTopLeft(glm::vec2 pos) {
-    return pos - this->Position;
+    return pos - Position;
 }

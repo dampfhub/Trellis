@@ -3,12 +3,12 @@
 #include "glfw_handler.h"
 
 SpriteRenderer::SpriteRenderer(Shader shader, int tile_factor) {
-    this->shader = shader;
-    this->initRenderData(tile_factor);
+    sprite_shader = shader;
+    init_render_data(tile_factor);
 }
 
 SpriteRenderer::~SpriteRenderer() {
-    glDeleteVertexArrays(1, &this->quadVAO);
+    glDeleteVertexArrays(1, &quad_VAO);
 }
 
 void SpriteRenderer::DrawSprite(
@@ -20,7 +20,7 @@ void SpriteRenderer::DrawSprite(
         glm::vec3 color) {
     static GLFW &glfw = GLFW::GetInstance();
     // prepare transformations
-    this->shader.Use();
+    sprite_shader.Use();
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(
             model, glm::vec3(
@@ -42,31 +42,31 @@ void SpriteRenderer::DrawSprite(
 
     model = glm::scale(model, glm::vec3(size, 1.0f)); // last scale
 
-    this->shader.SetMatrix4("view", this->View);
-    this->shader.SetMatrix4("model", model);
-    this->shader.SetVector2f(
+    sprite_shader.SetMatrix4("view", View);
+    sprite_shader.SetMatrix4("model", model);
+    sprite_shader.SetVector2f(
             "screenRes",
             glm::vec2(glfw.GetScreenWidth(), glfw.GetScreenHeight()));
 
     // render textured quad
-    this->shader.SetVector3f("spriteColor", color);
+    sprite_shader.SetVector3f("spriteColor", color);
 
-    this->shader.SetFloat("aspect", 1.0f);
-    this->shader.SetInteger("border_width", border_pixel_width);
+    sprite_shader.SetFloat("aspect", 1.0f);
+    sprite_shader.SetInteger("border_width", border_pixel_width);
 
     glActiveTexture(GL_TEXTURE0);
     texture.Bind();
 
-    glBindVertexArray(this->quadVAO);
+    glBindVertexArray(quad_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
 
 void SpriteRenderer::Resize(int size) {
-    this->initRenderData(size);
+    init_render_data(size);
 }
 
-void SpriteRenderer::initRenderData(int tile_factor) {
+void SpriteRenderer::init_render_data(int tile_factor) {
     // configure VAO/VBO
     unsigned int VBO;
     float tex_coord = 1.0f * tile_factor;
@@ -98,13 +98,13 @@ void SpriteRenderer::initRenderData(int tile_factor) {
             tex_coord,
             0.0f };
 
-    glGenVertexArrays(1, &this->quadVAO);
+    glGenVertexArrays(1, &quad_VAO);
     glGenBuffers(1, &VBO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindVertexArray(this->quadVAO);
+    glBindVertexArray(quad_VAO);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(
             0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);

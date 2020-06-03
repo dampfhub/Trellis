@@ -3,12 +3,12 @@
 
 #include "imgui.h"
 
-class Gui {
+class GUI {
 public:
-    Gui(Gui const &) = delete; // Disallow copying
-    void operator=(Gui const &) = delete;
+    GUI(GUI const &) = delete; // Disallow copying
+    void operator=(GUI const &) = delete;
 
-    static Gui &GetInstance();
+    static GUI &GetInstance();
 
     void NewFrame();
 
@@ -27,9 +27,9 @@ public:
     void SetCursor(ImGuiMouseCursor_ cursor);
 
 private:
-    Gui();
+    GUI();
 
-    ~Gui();
+    ~GUI();
 };
 
 #endif //GUI_H

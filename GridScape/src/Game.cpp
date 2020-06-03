@@ -8,7 +8,7 @@
 #include "game_object.h"
 #include "ui.h"
 #include "util.h"
-#include "gui.h"
+#include "GUI.h"
 
 SpriteRenderer *ObjectRenderer;
 UI *UserInterface;
@@ -102,6 +102,10 @@ void scroll_callback(double xoffset, double yoffset) {
 }
 
 void snap_callback(int key, int scancode, int action, int mod) {
+    (void)key;
+    (void)scancode;
+    (void)mod;
+
     static Game &game = Game::GetInstance();
     if (action == GLFW_PRESS) {
         game.snapping = false;
@@ -112,9 +116,9 @@ void snap_callback(int key, int scancode, int action, int mod) {
 
 Game::Game() {
     GLFW &glfw = GLFW::GetInstance();
-    this->init_shaders();
-    this->init_textures();
-    this->init_objects();
+    init_shaders();
+    init_textures();
+    init_objects();
 
     glfw.RegisterWindowSizeCallback(window_size_callback);
     glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
@@ -129,13 +133,13 @@ Game::Game() {
     glfw.RegisterKey(GLFW_KEY_LEFT_ALT, snap_callback);
 
     // Set projection matrix
-    this->set_projection();
+    set_projection();
     glm::mat4 view = glm::mat4(1.0f);
     ResourceManager::GetShader("sprite").SetMatrix4("view", view, true);
 }
 
 Game::~Game() {
-    for (Page *page : this->Pages) {
+    for (Page *page : Pages) {
         delete page;
     }
     delete ObjectRenderer;
@@ -146,7 +150,7 @@ void Game::SetScreenDims(int width, int height) {
     (void)width;
     (void)height;
 
-    this->set_projection();
+    set_projection();
 }
 
 void Game::init_shaders() {
@@ -166,13 +170,13 @@ void Game::init_objects() {
     SpriteRenderer *BoardRenderer =
             new SpriteRenderer(ResourceManager::GetShader("sprite"), 20);
     UserInterface = new UI();
-    this->ActivePage = new Page(
+    ActivePage = new Page(
             "Default",
             ResourceManager::GetTexture("grid"),
             BoardRenderer,
             glm::vec2(0.0f, 0.0f),
             glm::vec2(20.0f, 20.0f));
-    this->Pages.push_back(this->ActivePage);
+    Pages.push_back(ActivePage);
     GameObject *test = new GameObject(
             glm::vec2(1.0f, 1.0f),
             glm::vec2(98.0f, 98.0f),
@@ -181,8 +185,8 @@ void Game::init_objects() {
             glm::vec2(2.0f, 1.0f),
             glm::vec2(98.0f, 98.0f),
             ResourceManager::GetTexture("orcling"));
-    this->ActivePage->PlacePiece(test);
-    this->ActivePage->PlacePiece(orc);
+    ActivePage->PlacePiece(test);
+    ActivePage->PlacePiece(orc);
 }
 
 void Game::set_projection() {
@@ -199,12 +203,11 @@ void Game::set_projection() {
 }
 
 void Game::UpdateMouse() {
-    static Gui &gui = Gui::GetInstance();
-    if (this->LeftClick != HOLD) {
-        this->current_hover_type =
-                this->ActivePage->MouseHoverSelection(this->MousePos);
+    static GUI &gui = GUI::GetInstance();
+    if (LeftClick != HOLD) {
+        current_hover_type = ActivePage->MouseHoverSelection(MousePos);
     }
-    switch (this->current_hover_type) {
+    switch (current_hover_type) {
         case CENTER:
             gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
@@ -223,62 +226,61 @@ void Game::UpdateMouse() {
         default:
             gui.SetCursor(ImGuiMouseCursor_Arrow);
     }
-    switch (this->LeftClick) {
+    switch (LeftClick) {
         case PRESS:
-            this->ActivePage->HandleLeftClickPress(this->MousePos);
-            this->LeftClick = HOLD;
+            ActivePage->HandleLeftClickPress(MousePos);
+            LeftClick = HOLD;
             break;
         case HOLD:
-            this->ActivePage->HandleLeftClickHold(this->MousePos);
+            ActivePage->HandleLeftClickHold(MousePos);
             break;
         case RELEASE:
-            this->ActivePage->HandleLeftClickRelease(this->MousePos);
+            ActivePage->HandleLeftClickRelease(MousePos);
             break;
         default:
             break;
     }
-    switch (this->RightClick) {
+    switch (RightClick) {
         case PRESS:
-            this->ActivePage->HandleRightClick(this->MousePos);
+            ActivePage->HandleRightClick(MousePos);
             break;
         default:
             break;
     }
-    switch (this->MiddleClick) {
+    switch (MiddleClick) {
         case PRESS:
-            this->ActivePage->HandleMiddleClickPress(this->MousePos);
-            this->MiddleClick = HOLD;
+            ActivePage->HandleMiddleClickPress(MousePos);
+            MiddleClick = HOLD;
             break;
         case HOLD:
-            this->ActivePage->HandleMiddleClickHold(this->MousePos);
+            ActivePage->HandleMiddleClickHold(MousePos);
             break;
         case NONE:
         case RELEASE:
             break;
     }
-    if (this->ScrollDirection != 0) {
-        this->ActivePage
-                ->HandleScrollWheel(this->MousePos, this->ScrollDirection);
-        this->ScrollDirection = 0;
+    if (ScrollDirection != 0) {
+        ActivePage->HandleScrollWheel(MousePos, ScrollDirection);
+        ScrollDirection = 0;
     }
 }
 
 void Game::Update(float dt) {
-    this->ProcessUIEvents();
-    this->ActivePage->Update(dt);
-    if (this->ActivePage->Placing) {
-        this->ActivePage->UpdatePlacing(this->MousePos);
+    ProcessUIEvents();
+    ActivePage->Update(dt);
+    if (ActivePage->Placing) {
+        ActivePage->UpdatePlacing(MousePos);
     }
-    this->UpdateMouse();
+    UpdateMouse();
 }
 
 void Game::Render() {
-    this->ActivePage->Draw(ObjectRenderer, nullptr);
-    UserInterface->Draw(this->Pages, this->ActivePage);
+    ActivePage->Draw(ObjectRenderer, nullptr);
+    UserInterface->Draw(Pages, ActivePage);
 }
 
 void Game::ProcessUIEvents() {
-    this->ActivePage = UserInterface->GetActivePage(this->Pages);
+    ActivePage = UserInterface->GetActivePage(Pages);
     if (UserInterface->FileDialog->HasSelected()) {
         std::string file_name = Util::PathBaseName(
                 UserInterface->FileDialog->GetSelected().string());
@@ -286,7 +288,7 @@ void Game::ProcessUIEvents() {
                 UserInterface->FileDialog->GetSelected().string().c_str(),
                 Util::IsPng(file_name),
                 file_name);
-        this->ActivePage->BeginPlacePiece(
+        ActivePage->BeginPlacePiece(
                 new GameObject(
                         glm::vec2(0.0f, 0.0f),
                         glm::vec2(98.0f, 98.0f),
@@ -294,10 +296,10 @@ void Game::ProcessUIEvents() {
         UserInterface->FileDialog->ClearSelected();
     }
     if (UserInterface->AddPage) {
-        Page *new_page = this->MakePage(UserInterface->PageName);
-        this->Pages.push_back(new_page);
-        this->ActivePage = new_page;
-        UserInterface->ActivePage = this->Pages.size() - 1;
+        Page *new_page = MakePage(UserInterface->PageName);
+        Pages.push_back(new_page);
+        ActivePage = new_page;
+        UserInterface->ActivePage = Pages.size() - 1;
     }
     UserInterface->ClearFlags();
 }

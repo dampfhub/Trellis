@@ -70,7 +70,7 @@ Shader ResourceManager::loadShaderFromFile(
         // convert stream into string
         vertexCode = vShaderStream.str();
         fragmentCode = fShaderStream.str();
-        // if geometry shader path is present, also load a geometry shader
+        // if geometry sprite_shader path is present, also load a geometry sprite_shader
         if (gShaderFile != nullptr) {
             std::ifstream geometryShaderFile(gShaderFile);
             std::stringstream gShaderStream;
@@ -79,12 +79,14 @@ Shader ResourceManager::loadShaderFromFile(
             geometryCode = gShaderStream.str();
         }
     } catch (std::exception &e) {
-        std::cout << "ERROR::SHADER: Failed to read shader files" << std::endl;
+        std::cout
+                << "ERROR::SHADER: Failed to read sprite_shader files"
+                << std::endl;
     }
     const char *vShaderCode = vertexCode.c_str();
     const char *fShaderCode = fragmentCode.c_str();
     const char *gShaderCode = geometryCode.c_str();
-    // 2. now create shader object from source code
+    // 2. now create sprite_shader object from source code
     Shader shader;
     shader.Compile(
             vShaderCode,
