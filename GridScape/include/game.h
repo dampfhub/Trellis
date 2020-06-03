@@ -49,6 +49,7 @@ private:
 	void ProcessUIEvents();
 
 	void UpdateMouse();
+    MouseHoverType current_hover_type = MouseHoverType::NONE;
 
 	Page * MakePage(std::string name);
 };
