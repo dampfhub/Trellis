@@ -11,23 +11,42 @@ SpriteRenderer::~SpriteRenderer() {
     glDeleteVertexArrays(1, &this->quadVAO);
 }
 
-void SpriteRenderer::DrawSprite(Texture2D texture, glm::vec2 position, int border_pixel_width,
-                                glm::vec2 size, float rotate, glm::vec3 color) {
-    static GLFW &glfw = GLFW::getInstance();
+void SpriteRenderer::DrawSprite(
+        Texture2D texture,
+        glm::vec2 position,
+        int border_pixel_width,
+        glm::vec2 size,
+        float rotate,
+        glm::vec3 color) {
+    static GLFW &glfw = GLFW::GetInstance();
     // prepare transformations
     this->shader.Use();
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(position, 0.0f));  // first translate (transformations are: scale happens first, then rotation, and then final translation happens; reversed order)
+    model = glm::translate(
+            model, glm::vec3(
+                    position,
+                    0.0f));  // first translate (transformations are: scale happens first, then rotation, and then final translation happens; reversed order)
 
-    model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f)); // move origin of rotation to center of quad
-    model = glm::rotate(model, glm::radians(rotate), glm::vec3(0.0f, 0.0f, 1.0f)); // then rotate
-    model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f)); // move origin back
+    model = glm::translate(
+            model, glm::vec3(
+                    0.5f * size.x,
+                    0.5f * size.y,
+                    0.0f)); // move origin of rotation to center of quad
+    model = glm::rotate(
+            model,
+            glm::radians(rotate),
+            glm::vec3(0.0f, 0.0f, 1.0f)); // then rotate
+    model = glm::translate(
+            model, glm::vec3(
+                    -0.5f * size.x, -0.5f * size.y, 0.0f)); // move origin back
 
     model = glm::scale(model, glm::vec3(size, 1.0f)); // last scale
 
     this->shader.SetMatrix4("view", this->View);
     this->shader.SetMatrix4("model", model);
-    this->shader.SetVector2f("screenRes", glm::vec2(glfw.GetScreenWidth(), glfw.GetScreenHeight()));
+    this->shader.SetVector2f(
+                    "screenRes",
+                    glm::vec2(glfw.GetScreenWidth(), glfw.GetScreenHeight()));
 
     // render textured quad
     this->shader.SetVector3f("spriteColor", color);
@@ -52,15 +71,32 @@ void SpriteRenderer::initRenderData(int tile_factor) {
     unsigned int VBO;
     float tex_coord = 1.0f * tile_factor;
     float vertices[] = {
-        // pos      // tex
-        0.0f, 1.0f, 0.0f,      tex_coord,
-        1.0f, 0.0f, tex_coord, 0.0f,
-        0.0f, 0.0f, 0.0f,      0.0f,
+            // pos      // tex
+            0.0f,
+            1.0f,
+            0.0f,
+            tex_coord,
+            1.0f,
+            0.0f,
+            tex_coord,
+            0.0f,
+            0.0f,
+            0.0f,
+            0.0f,
+            0.0f,
 
-        0.0f, 1.0f, 0.0f,      tex_coord,
-        1.0f, 1.0f, tex_coord, tex_coord,
-        1.0f, 0.0f, tex_coord, 0.0f
-    };
+            0.0f,
+            1.0f,
+            0.0f,
+            tex_coord,
+            1.0f,
+            1.0f,
+            tex_coord,
+            tex_coord,
+            1.0f,
+            0.0f,
+            tex_coord,
+            0.0f };
 
     glGenVertexArrays(1, &this->quadVAO);
     glGenBuffers(1, &VBO);
@@ -70,7 +106,8 @@ void SpriteRenderer::initRenderData(int tile_factor) {
 
     glBindVertexArray(this->quadVAO);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glVertexAttribPointer(
+            0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }

@@ -13,7 +13,7 @@ class GLFW {
 public:
     GLFW(GLFW const&) = delete; // Disallow copying
     void operator=(GLFW const&) = delete;
-    static GLFW &getInstance();
+    static GLFW &GetInstance();
 
     int WindowShouldClose() const;
     void SetWindowShouldClose(int value);

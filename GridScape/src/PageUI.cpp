@@ -9,20 +9,20 @@ PageUI::PageUI() {
 }
 
 void PageUI::DrawPieceClickMenu() {
-	if (this->ClickMenuActive) {
-		ImGui::OpenPopup("right_click_menu");
-		this->ClickMenuActive = false;
-	}
-	if (ImGui::BeginPopup("right_click_menu")) {
-		ImGui::Text("Piece Options");
-		ImGui::Separator();
-		this->MoveToFront = ImGui::Selectable("Move To Front");
-		this->MoveToBack = ImGui::Selectable("Move To Back");
-		ImGui::EndPopup();
-	}
+    if (this->ClickMenuActive) {
+        ImGui::OpenPopup("right_click_menu");
+        this->ClickMenuActive = false;
+    }
+    if (ImGui::BeginPopup("right_click_menu")) {
+        ImGui::Text("Piece Options");
+        ImGui::Separator();
+        this->MoveToFront = ImGui::Selectable("Move To Front");
+        this->MoveToBack = ImGui::Selectable("Move To Back");
+        ImGui::EndPopup();
+    }
 }
 
 void PageUI::ClearFlags() {
-	this->MoveToBack = false;
-	this->MoveToFront = false;
+    this->MoveToBack = false;
+    this->MoveToFront = false;
 }

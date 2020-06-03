@@ -20,7 +20,7 @@ public:
     Game(Game const&)           = delete; // Disallow copying
     void operator=(Game const&) = delete;
 
-    static Game &getInstance();
+    static Game &GetInstance();
 
 	// game state
 	GameState           State;

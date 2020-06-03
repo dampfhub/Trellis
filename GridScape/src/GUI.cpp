@@ -4,16 +4,17 @@
 #include "imgui_impl_opengl3.h"
 #include "glfw_handler.h"
 
-GUI & GUI::getInstance() {
+GUI &GUI::GetInstance() {
     static GUI instance; // Guaranteed to be destroyed.
-                         // Instantiated on first use.
+    // Instantiated on first use.
     return instance;
 }
 
 GUI::GUI() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO & io = ImGui::GetIO(); (void)io;
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigWindowsMoveFromTitleBarOnly = true;
@@ -26,7 +27,7 @@ GUI::GUI() {
     ImGui::GetStyle().WindowTitleAlign = ImVec2(0.5f, 0.5f);
     ImGui::GetStyle().WindowBorderSize = 0.0f;
 
-    GLFW &glfw = GLFW::getInstance();
+    GLFW &glfw = GLFW::GetInstance();
 
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(glfw.GetWindow(), true);
@@ -53,7 +54,7 @@ void GUI::Render() {
 }
 
 int GUI::MousePress(int button) {
-    ImGuiIO & io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     io.MouseDown[button] = true;
     if (io.WantCaptureMouse) {
         return 1;
@@ -62,13 +63,12 @@ int GUI::MousePress(int button) {
 }
 
 void GUI::MouseRelease(int button) {
-    ImGuiIO & io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     io.MouseDown[button] = false;
 }
 
-
 int GUI::KeyPress(int key) {
-    ImGuiIO & io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     io.KeysDown[key] = true;
     if (io.WantCaptureKeyboard) {
         return 1;
@@ -77,7 +77,7 @@ int GUI::KeyPress(int key) {
 }
 
 void GUI::KeyRelease(int key) {
-    ImGuiIO & io = ImGui::GetIO();
+    ImGuiIO &io = ImGui::GetIO();
     io.KeysDown[key] = false;
 }
 
