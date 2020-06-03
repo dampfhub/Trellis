@@ -204,31 +204,10 @@ void Game::set_projection() {
 
 void Game::UpdateMouse() {
     static GUI &gui = GUI::GetInstance();
-    if (LeftClick != HOLD) {
-        current_hover_type = ActivePage->MouseHoverSelection(MousePos);
-    }
-    switch (current_hover_type) {
-        case CENTER:
-            gui.SetCursor(ImGuiMouseCursor_Hand);
-            break;
-        case EW:
-            gui.SetCursor(ImGuiMouseCursor_ResizeEW);
-            break;
-        case NS:
-            gui.SetCursor(ImGuiMouseCursor_ResizeNS);
-            break;
-        case NESW:
-        case NWSE:
-            gui.SetCursor(ImGuiMouseCursor_Hand);
-            break;
-        case NONE:
-            break;
-        default:
-            gui.SetCursor(ImGuiMouseCursor_Arrow);
-    }
     switch (LeftClick) {
         case PRESS:
             ActivePage->HandleLeftClickPress(MousePos);
+            current_hover_type = ActivePage->MouseHoverSelection(MousePos);
             LeftClick = HOLD;
             break;
         case HOLD:
@@ -236,6 +215,7 @@ void Game::UpdateMouse() {
             break;
         case RELEASE:
             ActivePage->HandleLeftClickRelease(MousePos);
+            current_hover_type = ActivePage->MouseHoverSelection(MousePos);
             break;
         default:
             break;
@@ -262,6 +242,25 @@ void Game::UpdateMouse() {
     if (ScrollDirection != 0) {
         ActivePage->HandleScrollWheel(MousePos, ScrollDirection);
         ScrollDirection = 0;
+    }
+    switch (current_hover_type) {
+        case CENTER:
+            gui.SetCursor(ImGuiMouseCursor_Hand);
+            break;
+        case EW:
+            gui.SetCursor(ImGuiMouseCursor_ResizeEW);
+            break;
+        case NS:
+            gui.SetCursor(ImGuiMouseCursor_ResizeNS);
+            break;
+        case NESW:
+        case NWSE:
+            gui.SetCursor(ImGuiMouseCursor_Hand);
+            break;
+        case NONE:
+            break;
+        default:
+            gui.SetCursor(ImGuiMouseCursor_Arrow);
     }
 }
 
