@@ -1,5 +1,4 @@
 #include "network_manager.h"
-#include <iostream>
 
 NetworkManager &NetworkManager::GetInstance() {
     static NetworkManager instance; // Guaranteed to be destroyed.

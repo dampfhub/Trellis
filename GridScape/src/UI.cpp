@@ -22,6 +22,8 @@ void UI::Draw(std::vector<Page *> pages, Page *active_page) {
 }
 
 void UI::DrawMenu(std::vector<Page *> pages, Page *active_page) {
+    (void)pages;
+
     GLFW &glfw = GLFW::GetInstance();
     ImGui::Begin(
             "D&D",

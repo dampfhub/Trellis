@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-int main(int argc, char *argv[]) {
+int main() {
     GLFW &glfw = GLFW::GetInstance();
 
     // glad: load all OpenGL function pointersmode->height
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    GUI &gui = GUI::GetInstance();
+    Gui &gui = Gui::GetInstance();
     Game &Dnd = Game::GetInstance();
 
     glEnable(GL_BLEND);
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     while (!glfw.WindowShouldClose()) {
         // calculate delta time
         // --------------------
-        float currentFrame = (float)glfwGetTime();
+        auto currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         glfwPollEvents();

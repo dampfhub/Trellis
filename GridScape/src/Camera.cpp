@@ -4,12 +4,8 @@
 static const float DELTA_ZOOM = 1.05f;
 
 Camera2D::Camera2D(
-        float bounds,
-        glm::vec2 board_dimensions,
-        glm::vec2 zoom_bounds) : Bounds(bounds),
-        ZoomBounds(zoom_bounds),
-        Position(glm::vec2(0.0f, 0.0f)),
-        ZoomFactor(1.0f) {
+        float bounds, glm::vec2 zoom_bounds) : Bounds(bounds),
+        ZoomBounds(zoom_bounds) {
 }
 
 void Camera2D::Move(glm::vec2 delta_mv) {
