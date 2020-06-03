@@ -1,8 +1,7 @@
-#include <iostream>
-
 #include "camera.h"
 #include "glfw_handler.h"
-#include <iostream>
+
+static const float DELTA_ZOOM = 1.05f;
 
 Camera2D::Camera2D(
         float bounds,
@@ -17,27 +16,24 @@ void Camera2D::Move(glm::vec2 delta_mv) {
     this->Position -= delta_mv;
 }
 
-void Camera2D::Zoom(glm::ivec2 pos, int direction) {
+void Camera2D::Zoom(glm::ivec2 mouse_pos, int direction) {
+    glm::vec2 mouse_to_board = -this->Position - (glm::vec2)mouse_pos;
     if (direction == 1) {
-        this->ZoomFactor += 0.05f;
-        this->Position += (glm::vec2)pos * 0.05f;
+        if (this->ZoomFactor <= this->ZoomBounds.y) {
+            this->ZoomFactor *= DELTA_ZOOM;
+            mouse_to_board *= DELTA_ZOOM;
+        }
     } else if (direction == -1) {
-        this->ZoomFactor -= 0.05f;
-        this->Position -= (glm::vec2)pos * 0.05f;
+        if (this->ZoomFactor >= this->ZoomBounds.x) {
+            this->ZoomFactor /= DELTA_ZOOM;
+            mouse_to_board /= DELTA_ZOOM;
+        }
     }
-    this->MousePos = pos;
+    this->Position = -(glm::vec2)mouse_pos - mouse_to_board;
 }
 
 glm::mat4 Camera2D::CalculateView(glm::vec2 board_dims) {
     static GLFW &glfw = GLFW::GetInstance();
-
-    // Check if would zoom out of zoom bounds
-    if (this->ZoomFactor < this->ZoomBounds.x) {
-        this->ZoomFactor = this->ZoomBounds.x;
-    }
-    if (this->ZoomFactor > this->ZoomBounds.y) {
-        this->ZoomFactor = this->ZoomBounds.y;
-    }
 
     // Scuffed right boundary equation (<3 Taylor)
     // Comes from:
@@ -62,7 +58,6 @@ glm::mat4 Camera2D::CalculateView(glm::vec2 board_dims) {
     }
 
     glm::mat4 view = glm::mat4(1.0f);
-    glm::vec4 mouse_screen = glm::vec4(this->MousePos, 0.0f, 1.0f);
     // Translate on camera position
     view = glm::translate(view, glm::vec3(-this->Position, 0.0f));
     // Scale based on camera zoom
