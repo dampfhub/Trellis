@@ -11,7 +11,7 @@ public:
     NetworkManager(NetworkManager const&) = delete; // Disallow copying
     void operator=(NetworkManager const&) = delete;
 
-    static NetworkManager &getInstance();
+    static NetworkManager &GetInstance();
 private:
 	NetworkManager();
 };

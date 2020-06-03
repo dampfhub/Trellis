@@ -19,7 +19,7 @@ class ResourceManager {
 public:
     ResourceManager(ResourceManager const&) = delete; // Disallow copying
     void operator=(ResourceManager const&)  = delete;
-    static ResourceManager &getInstance();
+    static ResourceManager &GetInstance();
 
     // resource storage
     static std::map<std::string, Shader>    Shaders;

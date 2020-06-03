@@ -3,28 +3,30 @@
 #include "glfw_handler.h"
 #include "gui.h"
 
-static keyfunc   key_press_callbacks     [GLFW_KEY_LAST + 1]          = {nullptr};
-static keyfunc   key_release_callbacks   [GLFW_KEY_LAST + 1]          = {nullptr};
-static mousefunc mouse_press_callbacks   [GLFW_MOUSE_BUTTON_LAST + 1] = {nullptr};
-static mousefunc mouse_release_callbacks [GLFW_MOUSE_BUTTON_LAST + 1] = {nullptr};
+static keyfunc key_press_callbacks[GLFW_KEY_LAST + 1] = { nullptr };
+static keyfunc key_release_callbacks[GLFW_KEY_LAST + 1] = { nullptr };
+static mousefunc
+        mouse_press_callbacks[GLFW_MOUSE_BUTTON_LAST + 1] = { nullptr };
+static mousefunc
+        mouse_release_callbacks[GLFW_MOUSE_BUTTON_LAST + 1] = { nullptr };
 
-static scrollfunc    scroll_callback      = nullptr;
+static scrollfunc scroll_callback = nullptr;
 static windowsizefun window_size_callback = nullptr;
-static mouseposfunc  mouse_pos_callback   = nullptr;
+static mouseposfunc mouse_pos_callback = nullptr;
 
 // The width of the screen
 static int screen_width = 1600;
 // The height of the screen
 static int screen_height = 1000;
 
-GLFW &GLFW::getInstance() {
+GLFW &GLFW::GetInstance() {
     static GLFW instance; // Guaranteed to be destroyed.
-                          // Instantiated on first use.
+    // Instantiated on first use.
     return instance;
 }
 
 static void window_size_handler(GLFWwindow *window, int width, int height) {
-    static GLFW &glfw = GLFW::getInstance();
+    static GLFW &glfw = GLFW::GetInstance();
     screen_width = width;
     screen_height = height;
     if (window_size_callback) {
@@ -32,8 +34,9 @@ static void window_size_handler(GLFWwindow *window, int width, int height) {
     }
 }
 
-static void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    static GUI &gui = GUI::getInstance();
+static void key_handler(
+        GLFWwindow *window, int key, int scancode, int action, int mods) {
+    static GUI &gui = GUI::GetInstance();
     if (action == GLFW_PRESS) {
         if (gui.KeyPress(key)) {
             return;
@@ -49,8 +52,9 @@ static void key_handler(GLFWwindow *window, int key, int scancode, int action, i
     }
 }
 
-static void mouse_handler(GLFWwindow *window, int button, int action, int mods) {
-    static GUI &gui = GUI::getInstance();
+static void mouse_handler(
+        GLFWwindow *window, int button, int action, int mods) {
+    static GUI &gui = GUI::GetInstance();
     if (action == GLFW_PRESS) {
         if (gui.MousePress(button)) {
             return;
@@ -78,7 +82,7 @@ static void mouse_pos_handler(GLFWwindow *window, double x, double y) {
     }
 }
 
-void framebuffer_size_callback(GLFWwindow * window, int width, int height) {
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
@@ -86,7 +90,7 @@ void framebuffer_size_callback(GLFWwindow * window, int width, int height) {
 
 GLFW::GLFW() {
     glfwInit();
-    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
     glfwWindowHint(GLFW_RED_BITS, mode->redBits);
     glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
     glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
@@ -96,7 +100,8 @@ GLFW::GLFW() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, true);
 
-    window = glfwCreateWindow(screen_width, screen_height, "Dnd", nullptr, nullptr);
+    window = glfwCreateWindow(
+            screen_width, screen_height, "Dnd", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
     glfwSetKeyCallback(window, key_handler);

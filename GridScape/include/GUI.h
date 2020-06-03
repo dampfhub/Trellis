@@ -7,7 +7,7 @@ class GUI {
 public:
     GUI(GUI const&) = delete; // Disallow copying
     void operator=(GUI const&) = delete;
-    static GUI &getInstance();
+    static GUI &GetInstance();
 
     void NewFrame();
     void Render();
