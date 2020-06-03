@@ -211,8 +211,13 @@ void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleRightClick(glm::ivec2 mouse_pos) {
+    glm::vec2 world_mouse = this->ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
-        this->UserInterface->ClickMenuActive = true;
+        if ((*CurrentSelection)->CheckContainment(world_mouse)) {
+            UserInterface->ClickMenuActive = true;
+        } else {
+            CurrentSelection = Pieces.end();
+        }
     }
 }
 
