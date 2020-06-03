@@ -7,11 +7,10 @@
 
 class TextObject {
 public:
-	glm::vec2 Position;
-	float Scale;
-	glm::vec3 Color;
-
 	std::string Text;
+    glm::vec2 Position;
+    float Scale;
+    glm::vec3 Color;
 
 	int Width;
 	int Height;

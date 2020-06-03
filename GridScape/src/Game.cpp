@@ -20,6 +20,11 @@ Game &Game::GetInstance() {
 }
 
 static void close_window(int key, int scancode, int action, int mods) {
+    (void)key;
+    (void)scancode;
+    (void)action;
+    (void)mods;
+
     static GLFW &glfw = GLFW::GetInstance();
     glfw.SetWindowShouldClose(1);
 }
@@ -36,36 +41,62 @@ static void mouse_pos_callback(double x, double y) {
 }
 
 static void left_click_press(int key, int action, int mod) {
+    (void)key;
+    (void)action;
+    (void)mod;
+
     static Game &game = Game::GetInstance();
     game.LeftClick = Game::PRESS;
 }
 
 static void left_click_release(int key, int action, int mod) {
+    (void)key;
+    (void)action;
+    (void)mod;
+
     static Game &game = Game::GetInstance();
     game.LeftClick = Game::RELEASE;
 }
 
 static void right_click_press(int key, int action, int mod) {
+    (void)key;
+    (void)action;
+    (void)mod;
+
     static Game &game = Game::GetInstance();
     game.RightClick = Game::PRESS;
 }
 
 static void right_click_release(int key, int action, int mod) {
+    (void)key;
+    (void)action;
+    (void)mod;
+
     static Game &game = Game::GetInstance();
     game.RightClick = Game::RELEASE;
 }
 
 static void middle_click_press(int key, int action, int mod) {
+    (void)key;
+    (void)action;
+    (void)mod;
+
     static Game &game = Game::GetInstance();
     game.MiddleClick = Game::PRESS;
 }
 
 static void middle_click_release(int key, int action, int mod) {
+    (void)key;
+    (void)action;
+    (void)mod;
+
     static Game &game = Game::GetInstance();
     game.MiddleClick = Game::RELEASE;
 }
 
 void scroll_callback(double xoffset, double yoffset) {
+    (void)xoffset;
+
     static Game &game = Game::GetInstance();
     game.ScrollDirection = (int)yoffset;
 }
@@ -102,6 +133,9 @@ Game::~Game() {
 }
 
 void Game::SetScreenDims(int width, int height) {
+    (void)width;
+    (void)height;
+
     this->set_projection();
 }
 
@@ -155,9 +189,10 @@ void Game::set_projection() {
 }
 
 void Game::UpdateMouse() {
-    static GUI &gui = GUI::GetInstance();
+    static Gui &gui = Gui::GetInstance();
     if (this->LeftClick != HOLD) {
-        this->current_hover_type = this->ActivePage->MouseHoverSelection(this->MousePos);
+        this->current_hover_type =
+                this->ActivePage->MouseHoverSelection(this->MousePos);
     }
     switch (this->current_hover_type) {
         case CENTER:
@@ -170,10 +205,10 @@ void Game::UpdateMouse() {
             gui.SetCursor(ImGuiMouseCursor_ResizeNS);
             break;
         case NESW:
-            gui.SetCursor(ImGuiMouseCursor_Hand);
-            break;
         case NWSE:
             gui.SetCursor(ImGuiMouseCursor_Hand);
+            break;
+        case NONE:
             break;
         default:
             gui.SetCursor(ImGuiMouseCursor_Arrow);
@@ -206,6 +241,10 @@ void Game::UpdateMouse() {
             break;
         case HOLD:
             this->ActivePage->HandleMiddleClickHold(this->MousePos);
+            break;
+        case NONE:
+        case RELEASE:
+            break;
     }
     if (this->ScrollDirection != 0) {
         this->ActivePage
@@ -254,7 +293,7 @@ void Game::ProcessUIEvents() {
 }
 
 Page *Game::MakePage(std::string name) {
-    SpriteRenderer *BoardRenderer =
+    auto BoardRenderer =
             new SpriteRenderer(ResourceManager::GetShader("sprite"), 20);
     return new Page(
             name,

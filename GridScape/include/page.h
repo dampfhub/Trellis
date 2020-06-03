@@ -19,18 +19,18 @@ class Page {
 public:
     static constexpr float TILE_DIMENSIONS = 100.0f;
 
-    glm::vec2 Position, Size;
-
     glm::mat4 View = glm::mat4(1.0f);
 
     bool Placing = false;
 
-    Camera2D *Camera;
+    std::string Name;
     Texture2D Board_Texture;
     SpriteRenderer *Renderer;
-    PageUI *UserInterface;
 
-    std::string Name;
+    glm::vec2 Position, Size;
+
+    Camera2D *Camera;
+    PageUI *UserInterface;
 
     ~Page();
 

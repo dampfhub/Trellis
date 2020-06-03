@@ -26,7 +26,7 @@ GLFW &GLFW::GetInstance() {
 }
 
 static void window_size_handler(GLFWwindow *window, int width, int height) {
-    static GLFW &glfw = GLFW::GetInstance();
+    (void)window;
     screen_width = width;
     screen_height = height;
     if (window_size_callback) {
@@ -36,7 +36,8 @@ static void window_size_handler(GLFWwindow *window, int width, int height) {
 
 static void key_handler(
         GLFWwindow *window, int key, int scancode, int action, int mods) {
-    static GUI &gui = GUI::GetInstance();
+    (void)window;
+    static Gui &gui = Gui::GetInstance();
     if (action == GLFW_PRESS) {
         if (gui.KeyPress(key)) {
             return;
@@ -54,7 +55,8 @@ static void key_handler(
 
 static void mouse_handler(
         GLFWwindow *window, int button, int action, int mods) {
-    static GUI &gui = GUI::GetInstance();
+    (void)window;
+    static Gui &gui = Gui::GetInstance();
     if (action == GLFW_PRESS) {
         if (gui.MousePress(button)) {
             return;
@@ -71,18 +73,21 @@ static void mouse_handler(
 }
 
 static void scroll_handler(GLFWwindow *window, double xoffset, double yoffset) {
+    (void)window;
     if (scroll_callback != nullptr) {
         scroll_callback(xoffset, yoffset);
     }
 }
 
 static void mouse_pos_handler(GLFWwindow *window, double x, double y) {
+    (void)window;
     if (mouse_pos_callback != nullptr) {
         mouse_pos_callback(x, y);
     }
 }
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+    (void)window;
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);

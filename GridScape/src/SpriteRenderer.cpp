@@ -45,8 +45,8 @@ void SpriteRenderer::DrawSprite(
     this->shader.SetMatrix4("view", this->View);
     this->shader.SetMatrix4("model", model);
     this->shader.SetVector2f(
-                    "screenRes",
-                    glm::vec2(glfw.GetScreenWidth(), glfw.GetScreenHeight()));
+            "screenRes",
+            glm::vec2(glfw.GetScreenWidth(), glfw.GetScreenHeight()));
 
     // render textured quad
     this->shader.SetVector3f("spriteColor", color);

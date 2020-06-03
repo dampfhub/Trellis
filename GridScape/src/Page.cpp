@@ -17,11 +17,7 @@ Page::Page(
         Size(size) {
     this->Renderer->Resize((int)this->Size.x);
     this->Camera = new Camera2D(
-            200.0f,
-            glm::vec2(
-                    this->Size.x * this->TILE_DIMENSIONS,
-                    this->Size.y * this->TILE_DIMENSIONS),
-            glm::vec2(0.4f, 2.5f));
+            200.0f, glm::vec2(0.4f, 2.5f));
     this->UserInterface = new PageUI();
 }
 
@@ -48,6 +44,7 @@ void Page::BeginPlacePiece(GameObject *piece) {
 }
 
 void Page::Update(float dt) {
+    (void)dt;
     this->HandleUIEvents();
 }
 
@@ -58,6 +55,7 @@ void Page::UpdatePlacing(glm::ivec2 mouse_pos) {
 }
 
 void Page::Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer) {
+    (void)text_renderer;
     this->Renderer->View = this->View;
     sprite_renderer->View = this->View;
     this->Renderer->DrawSprite(
@@ -204,6 +202,7 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
+    (void)mouse_pos;
     if (CurrentSelection != Pieces.end()) {
         (*CurrentSelection)->FollowMouse = false;
         (*CurrentSelection)->ScaleMouse = false;
@@ -211,6 +210,7 @@ void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleRightClick(glm::ivec2 mouse_pos) {
+    (void)mouse_pos;
     if (CurrentSelection != Pieces.end()) {
         this->UserInterface->ClickMenuActive = true;
     }

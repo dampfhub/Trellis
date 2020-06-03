@@ -4,13 +4,13 @@
 #include "imgui_impl_opengl3.h"
 #include "glfw_handler.h"
 
-GUI &GUI::GetInstance() {
-    static GUI instance; // Guaranteed to be destroyed.
+Gui &Gui::GetInstance() {
+    static Gui instance; // Guaranteed to be destroyed.
     // Instantiated on first use.
     return instance;
 }
 
-GUI::GUI() {
+Gui::Gui() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -36,24 +36,24 @@ GUI::GUI() {
     io.Fonts->AddFontFromFileTTF("fonts/Roboto.TTF", 20.0f);
 }
 
-GUI::~GUI() {
+Gui::~Gui() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
 
-void GUI::NewFrame() {
+void Gui::NewFrame() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void GUI::Render() {
+void Gui::Render() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-int GUI::MousePress(int button) {
+int Gui::MousePress(int button) {
     ImGuiIO &io = ImGui::GetIO();
     io.MouseDown[button] = true;
     if (io.WantCaptureMouse) {
@@ -62,12 +62,12 @@ int GUI::MousePress(int button) {
     return 0;
 }
 
-void GUI::MouseRelease(int button) {
+void Gui::MouseRelease(int button) {
     ImGuiIO &io = ImGui::GetIO();
     io.MouseDown[button] = false;
 }
 
-int GUI::KeyPress(int key) {
+int Gui::KeyPress(int key) {
     ImGuiIO &io = ImGui::GetIO();
     io.KeysDown[key] = true;
     if (io.WantCaptureKeyboard) {
@@ -76,11 +76,11 @@ int GUI::KeyPress(int key) {
     return 0;
 }
 
-void GUI::KeyRelease(int key) {
+void Gui::KeyRelease(int key) {
     ImGuiIO &io = ImGui::GetIO();
     io.KeysDown[key] = false;
 }
 
-void GUI::SetCursor(ImGuiMouseCursor_ cursor) {
+void Gui::SetCursor(ImGuiMouseCursor_ cursor) {
     ImGui::SetMouseCursor(cursor);
 }
