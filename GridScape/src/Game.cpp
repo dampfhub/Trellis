@@ -207,7 +207,7 @@ void Game::UpdateMouse() {
     switch (LeftClick) {
         case PRESS:
             ActivePage->HandleLeftClickPress(MousePos);
-            current_hover_type = ActivePage->MouseHoverSelection(MousePos);
+            current_hover_type = ActivePage->CurrentHoverType(MousePos);
             LeftClick = HOLD;
             break;
         case HOLD:
@@ -215,7 +215,7 @@ void Game::UpdateMouse() {
             break;
         case RELEASE:
             ActivePage->HandleLeftClickRelease(MousePos);
-            current_hover_type = ActivePage->MouseHoverSelection(MousePos);
+            current_hover_type = ActivePage->CurrentHoverType(MousePos);
             break;
         default:
             break;
@@ -247,18 +247,23 @@ void Game::UpdateMouse() {
         case CENTER:
             gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
-        case EW:
+        case E:
+        case W:
             gui.SetCursor(ImGuiMouseCursor_ResizeEW);
             break;
-        case NS:
+        case N:
+        case S:
             gui.SetCursor(ImGuiMouseCursor_ResizeNS);
             break;
-        case NESW:
-        case NWSE:
+        case NE:
+        case SW:
+            //Put NESW cursor here if one exists, otherwise use hand cursor
+        case NW:
+        case SE:
+            //Put NWSE cursor here if one exists, otherwise use hand cursor
             gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
         case NONE:
-            break;
         default:
             gui.SetCursor(ImGuiMouseCursor_Arrow);
     }

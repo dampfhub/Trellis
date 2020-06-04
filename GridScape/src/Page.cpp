@@ -40,6 +40,9 @@ void Page::BeginPlacePiece(GameObject *piece) {
     Pieces.push_front(piece);
     CurrentSelection = Pieces.begin();
     Placing = true;
+    piece->FollowMouse = true;
+    piece->initialSize = piece->Size;
+    piece->initialPos = piece->Position;
 }
 
 void Page::Update(float dt) {
@@ -48,9 +51,7 @@ void Page::Update(float dt) {
 }
 
 void Page::UpdatePlacing(glm::ivec2 mouse_pos) {
-    glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
-    (*CurrentSelection)->Position =
-            world_mouse - (*CurrentSelection)->Size / 2.0f;
+    MoveCurrentSelection(mouse_pos);
 }
 
 void Page::Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer) {
@@ -80,43 +81,50 @@ void Page::HandleUIEvents() {
     UserInterface->ClearFlags();
 }
 
-MouseHoverType Page::MouseHoverSelection(glm::ivec2 mouse_pos) {
-    glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
-    if (CurrentSelection == Pieces.end() ||
-            !(*CurrentSelection)->CheckContainment(world_mouse)) {
+MouseHoverType Page::HoverType(glm::ivec2 mouse_pos, GameObject *object) {
+    glm::ivec2 NW_corner_screen = WorldPosToScreenPos(object->Position);
+    glm::ivec2 SE_corner_screen = WorldPosToScreenPos(object->Position + object->Size);
+    if (mouse_pos.x < NW_corner_screen.x || mouse_pos.y < NW_corner_screen.y ||
+        mouse_pos.x > SE_corner_screen.x || mouse_pos.y > SE_corner_screen.y) {
         return NONE;
     }
-    GameObject *piece = *CurrentSelection;
-    glm::vec2 click_pos = piece->DistanceFromTopLeft(world_mouse);
+    glm::ivec2 size_screen = SE_corner_screen - NW_corner_screen;
+    glm::ivec2 click_pos = mouse_pos - (glm::ivec2)NW_corner_screen;
     if (click_pos.x <= BorderWidth) {
         if (click_pos.y <= BorderWidth) {
-            return NWSE;
-        } else if (piece->Size.y - click_pos.y <= BorderWidth) {
-            return NESW;
+            return NW;
+        } else if (size_screen.y - click_pos.y <= BorderWidth) {
+            return SW;
         } else {
-            return EW;
+            return W;
         }
-    } else if (piece->Size.x - click_pos.x <= BorderWidth) {
+    } else if (size_screen.x - click_pos.x <= BorderWidth) {
         if (click_pos.y <= BorderWidth) {
-            return NESW;
-        } else if (piece->Size.y - click_pos.y <= BorderWidth) {
-            return NWSE;
+            return NE;
+        } else if (size_screen.y - click_pos.y <= BorderWidth) {
+            return SE;
         } else {
-            return EW;
+            return E;
         }
     } else {
         if (click_pos.y <= BorderWidth) {
-            return NS;
-        } else if (piece->Size.y - click_pos.y <= BorderWidth) {
-            return NS;
+            return N;
+        } else if (size_screen.y - click_pos.y <= BorderWidth) {
+            return S;
         } else {
             return CENTER;
         }
     }
 }
 
+MouseHoverType Page::CurrentHoverType(glm::ivec2 mouse_pos) {
+    if (CurrentSelection == Pieces.end()) {
+        return NONE;
+    }
+    return HoverType(mouse_pos, *CurrentSelection);
+}
+
 void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
-    glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     CurrentSelection = Pieces.end();
     // Piece that is currently being placed
     if (Placing) {
@@ -124,37 +132,39 @@ void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
         return;
     }
     for (auto it = Pieces.begin(); it != Pieces.end(); it++) {
-        if ((*it)->CheckContainment(world_mouse) && (*it)->Clickable) {
-            glm::vec2 click_pos = (*it)->DistanceFromTopLeft(world_mouse);
-            // Check if the user is clicking on any of the sprite's edges /
-            // corners
-            (*it)->ScaleEdges = std::make_pair(0, 0);
-            if (click_pos.x <= BorderWidth) {
-                (*it)->ScaleMouse = true;
-                (*it)->ScaleEdges.first = -1;
-            } else if ((*it)->Size.x - click_pos.x <= BorderWidth) {
-                (*it)->ScaleMouse = true;
-                (*it)->ScaleEdges.first = 1;
+        MouseHoverType hover = HoverType(mouse_pos, *it);
+        if (hover != NONE && (*it)->Clickable) {
+            CurrentSelection = it;
+            GameObject *piece = *it;
+            if (hover == CENTER) {
+                piece->FollowMouse = true;
+                piece->ScaleMouse = false;
+            } else {
+                piece->FollowMouse = false;
+                piece->ScaleMouse = true;
+                if (hover == N || hover == NE || hover == NW) {
+                    (*it)->ScaleEdges.second = -1;
+                }
+                if (hover == E || hover == NE || hover == SE) {
+                    (*it)->ScaleEdges.first = 1;
+                }
+                if (hover == S || hover == SE || hover == SW) {
+                    (*it)->ScaleEdges.second = 1;
+                }
+                if (hover == W || hover == SW || hover == NW) {
+                    (*it)->ScaleEdges.first = -1;
+                }
             }
-            if (click_pos.y <= BorderWidth) {
-                (*it)->ScaleMouse = true;
-                (*it)->ScaleEdges.second = -1;
-            } else if ((*it)->Size.y - click_pos.y <= BorderWidth) {
-                (*it)->ScaleMouse = true;
-                (*it)->ScaleEdges.second = 1;
-            }
+
             (*it)->initialSize = (*it)->Size;
             (*it)->initialPos = (*it)->Position;
-            // If not scaling, enable dragging instead
-            (*it)->FollowMouse = !(*it)->ScaleMouse;
-            DragOrigin = click_pos;
-            CurrentSelection = it;
+            DragOrigin = ScreenPosToWorldPos(mouse_pos);
             break;
         }
     }
 }
 
-void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
+void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
     static Game &game = Game::GetInstance();
     int inc = game.snapping
               ? 1
@@ -163,11 +173,15 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
         GameObject *piece = *CurrentSelection;
-        if (piece->FollowMouse) {
-            piece->Position = world_mouse - (glm::vec2)DragOrigin;
+        if (Placing) {
+            piece->Position = world_mouse - piece->Size/2.0f;
+            SnapPieceToGrid(*CurrentSelection, inc);
+        } else if (piece->FollowMouse) {
+            piece->Position = piece->initialPos +
+                    world_mouse - (glm::vec2)DragOrigin;
             SnapPieceToGrid(*CurrentSelection, inc);
         } else if (piece->ScaleMouse) {
-            glm::vec2 diff = piece->DistanceFromTopLeft(world_mouse) -
+            glm::vec2 diff = world_mouse -
                     (glm::vec2)DragOrigin;
             switch (piece->ScaleEdges.first) {
                 case 1:
@@ -181,7 +195,7 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
                     break;
                 case -1:
                     piece->Size.x = fmax(
-                            DragOrigin.x + piece->initialPos.x +
+                            DragOrigin.x +
                                     piece->initialSize.x - world_mouse.x,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
@@ -205,7 +219,7 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
                     break;
                 case -1:
                     piece->Size.y = fmax(
-                            DragOrigin.y + piece->initialPos.y +
+                            DragOrigin.y +
                                     piece->initialSize.y - world_mouse.y,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
@@ -221,6 +235,10 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
     }
 }
 
+void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
+    MoveCurrentSelection(mouse_pos);
+}
+
 void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
     (void)mouse_pos;
     if (CurrentSelection != Pieces.end()) {
@@ -230,13 +248,11 @@ void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleRightClick(glm::ivec2 mouse_pos) {
-    glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
-    if (CurrentSelection != Pieces.end()) {
-        if ((*CurrentSelection)->CheckContainment(world_mouse)) {
-            UserInterface->ClickMenuActive = true;
-        } else {
-            CurrentSelection = Pieces.end();
-        }
+    MouseHoverType hover = CurrentHoverType(mouse_pos);
+    if (hover != NONE) {
+        UserInterface->ClickMenuActive = true;
+    } else {
+        CurrentSelection = Pieces.end();
     }
 }
 
@@ -269,4 +285,9 @@ void Page::SnapPieceToGrid(GameObject *piece, int increments) {
 glm::vec2 Page::ScreenPosToWorldPos(glm::ivec2 pos) {
     glm::vec4 world_pos = glm::inverse(View) * glm::vec4(pos, 0.0f, 1.0f);
     return glm::vec2(world_pos.x, world_pos.y);
+}
+
+glm::vec2 Page::WorldPosToScreenPos(glm::ivec2 pos) {
+    glm::vec4 screen_pos = View * glm::vec4(pos, 0.0f, 1.0f);
+    return glm::vec2(screen_pos.x, screen_pos.y);
 }
