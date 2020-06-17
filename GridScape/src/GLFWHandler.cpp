@@ -15,9 +15,9 @@ static windowsizefun window_size_callback = nullptr;
 static mouseposfunc mouse_pos_callback = nullptr;
 
 // The width of the screen
-static int screen_width = 1600;
+static int screen_width = 600;
 // The height of the screen
-static int screen_height = 1000;
+static int screen_height = 400;
 
 GLFW &GLFW::GetInstance() {
     static GLFW instance; // Guaranteed to be destroyed.

@@ -3,6 +3,7 @@
 #include "text_renderer.h"
 #include "text_object.h"
 #include "game.h"
+#include "network_manager.h"
 
 Page::Page(
         std::string name,
@@ -45,6 +46,12 @@ void Page::BeginPlacePiece(GameObject *piece) {
 void Page::Update(float dt) {
     (void)dt;
     HandleUIEvents();
+    /*
+    NetworkManager &nm = NetworkManager::GetInstance();
+    if (nm.Active() && !nm.IsHost()) {
+        //glm::vec2 t = nm.ReadMove();
+        Pieces.front()->Position = nm.ReadMove();
+    }*/
 }
 
 void Page::UpdatePlacing(glm::ivec2 mouse_pos) {
@@ -116,6 +123,8 @@ MouseHoverType Page::MouseHoverSelection(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
+    NetworkManager &nm = NetworkManager::GetInstance();
+    nm.StartServer(5005);
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     CurrentSelection = Pieces.end();
     // Piece that is currently being placed
@@ -163,6 +172,7 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
         GameObject *piece = *CurrentSelection;
+        glm::vec2 prev_pos = piece->Position;
         if (piece->FollowMouse) {
             piece->Position = world_mouse - (glm::vec2)DragOrigin;
             SnapPieceToGrid(*CurrentSelection, inc);
@@ -218,6 +228,11 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
                     break;
             }
         }
+        /*
+        NetworkManager &nm = NetworkManager::GetInstance();
+        if (nm.IsHost() && prev_pos != piece->Position) {
+            nm.SendMove(0, piece->Position);
+        }*/
     }
 }
 
@@ -230,6 +245,8 @@ void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleRightClick(glm::ivec2 mouse_pos) {
+    NetworkManager &nm = NetworkManager::GetInstance();
+    nm.StartClient("Test Client", "localhost", 5005);
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
         if ((*CurrentSelection)->CheckContainment(world_mouse)) {

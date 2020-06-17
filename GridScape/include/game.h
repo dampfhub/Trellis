@@ -31,7 +31,7 @@ public:
     Page *ActivePage;
     std::vector<Page *> Pages;
     bool snapping = true;
-    
+
     // setters
     void SetScreenDims(int width, int height);
 
