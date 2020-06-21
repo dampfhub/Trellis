@@ -4,16 +4,33 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <functional>
 #include <memory>
 #include <map>
 #include <deque>
+#include <queue>
 #include <array>
-#include <asio.hpp>
 #include <mutex>
+#include <algorithm>
+#include <set>
+#include <iterator>
 #include <glm/glm.hpp>
+#include <asio.hpp>
+
+#include "util.h"
 
 using asio::ip::tcp;
+
+class ClientConnection {
+public:
+    std::string Name;
+    int Uid;
+
+    ClientConnection() = default;
+
+    ClientConnection(std::string name, int uid) : Name(name),
+            Uid(uid) {
+    }
+};
 
 class NetworkManager {
 public:
@@ -24,46 +41,91 @@ public:
 
     void StartServer(int port);
 
-    void StartClient(std::string client_name, std::string hostname, int port);
-
-    bool IsHost();
+    void StartClient(
+            std::string client_name,
+            int client_uid,
+            std::string hostname,
+            int port);
 
     bool Active();
 
-    void SendMove(int piece_id, glm::vec2 new_pos);
+    class NetworkQueue {
+    public:
 
-    glm::vec2 ReadMove();
+        static std::shared_ptr<NetworkQueue> Subscribe(std::string cname);
 
-    asio::io_context context;
+        template<class T>
+        void Publish(const T &data, int uid = 0) {
+            static NetworkManager &nm = NetworkManager::GetInstance();
+            auto t = Util::serialize<T>(data);
+            std::vector<std::byte> v(t.begin(), t.end());
+            nm.net_obj->Write(Message(v, uid, channel_name));
+        }
 
+        template<>
+        void Publish<std::string>(const std::string &data, int uid) {
+            NetworkManager &nm = NetworkManager::GetInstance();
+            nm.net_obj->Write(Message(data, uid, channel_name));
+        }
+
+        ~NetworkQueue();
+
+        void Push(std::vector<std::byte> ar);
+
+        template<class T>
+        std::queue<T> Query() {
+            auto q = std::queue<T>();
+            if (mtx.try_lock()) {
+                if (should_clear) {
+                    mtx.unlock();
+                    return q;
+                }
+                should_clear = true;
+                for (auto &v : byte_ars) {
+                    q.push(Util::deserialize<T>(v));
+                }
+                mtx.unlock();
+            }
+            return q;
+        }
+
+    private:
+        NetworkQueue();
+
+        static NetworkManager &nm;
+        bool should_clear;
+        std::mutex mtx;
+        std::string channel_name;
+        std::weak_ptr<NetworkQueue> wptr;
+        std::vector<std::vector<std::byte>> byte_ars;
+    };
 
 private:
-
-    enum CommandEnum {
-        MOVE, CHAT, JOIN, CHANGE_UID
-    };
+    asio::io_context context;
 
     NetworkManager() = default;
 
     ~NetworkManager() = default;
 
+    std::map<std::string, std::vector<std::weak_ptr<NetworkQueue>>> queues;
+
     class MessageHeader {
     public:
-        static const int HeaderLength = 10;
+        static const size_t HeaderLength = 20;
 
-        int Uid;
-        int MessageLength;
-        CommandEnum Command;
+        uint16_t Uid;
+        uint16_t MessageLength;
+        std::string Channel;
 
         MessageHeader();
 
-        MessageHeader(int uid, int length, CommandEnum command);
+        MessageHeader(int uid, int length, std::string channel);
 
         ~MessageHeader() = default;
 
-        std::string Serialize();
+        std::array<std::byte, HeaderLength> Serialize();
 
-        static MessageHeader Deserialize(std::string str);
+        static MessageHeader Deserialize(std::array<std::byte, HeaderLength> bytes);
     };
 
     class Message {
@@ -75,28 +137,30 @@ private:
 
         Message();
 
-        Message(std::string msg, int uid, CommandEnum cmd);
+        Message(std::string msg, int uid, std::string channel);
 
-        std::string Serialize();
+        Message(std::vector<std::byte> msg, int uid, std::string channel);
+
+        std::vector<std::byte> Serialize();
 
         bool DecodeHeader();
 
-        char *Data();
+        void Clear();
 
-        char *Body();
+        std::byte *Data();
 
-        const std::string &Msg();
+        std::byte *Body();
+
+        const std::vector<std::byte> &Msg();
 
     private:
-        std::string msg;
-        std::array<char, MessageLengthMax> data = { 0 };
+        std::vector<std::byte> msg;
+        std::array<std::byte, MessageLengthMax> data{ };
     };
 
     class network_object {
     public:
-        typedef std::shared_ptr<tcp::socket> socket_ptr;
-
-        bool host;
+        using socket_ptr = std::shared_ptr<tcp::socket>;
 
         glm::vec2 move;
 
@@ -119,13 +183,17 @@ private:
 
         void handle_read_header(
                 const socket_ptr &sock,
+                Message &buf,
                 const asio::error_code &error,
                 size_t bytes);
 
         void handle_read_body(
                 const socket_ptr &sock,
+                Message &buf,
                 const asio::error_code &error,
                 size_t bytes);
+
+        int uid;
 
     protected:
         asio::io_context &context;
@@ -140,7 +208,16 @@ private:
 
         void handle_header_action(const socket_ptr &sock) override;
 
-        server(asio::io_context &con, int port_num);
+        void handle_read_header_connect(
+                const socket_ptr &sock,
+                Message &buf,
+                const asio::error_code &error,
+                size_t bytes);
+
+        server(
+                asio::io_context &con,
+                int port_num,
+                std::vector<uint64_t> known_uids = std::vector<uint64_t>());
 
         ~server();
 
@@ -150,6 +227,9 @@ private:
         tcp::acceptor acceptor;
         std::map<int, socket_ptr> socks;
         asio::thread_pool tp;
+        std::mutex mtx;
+        std::map<socket_ptr, Message> read_msgs;
+        std::vector<uint64_t> known_uids;
 
         void handle_accept(
                 socket_ptr new_sock, const asio::error_code &error);
@@ -165,6 +245,7 @@ private:
 
         client(
                 std::string client_name,
+                int client_uid,
                 asio::io_context &con,
                 std::string hostname,
                 int port_num);
