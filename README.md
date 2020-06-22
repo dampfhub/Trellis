@@ -1,4 +1,4 @@
-# GridScape
+# Trellis
 
 ## Dependencies
 * glfw3

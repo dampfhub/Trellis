@@ -12,7 +12,7 @@
 #include "page_ui.h"
 
 enum MouseHoverType {
-    NONE, EW, NS, NESW, NWSE, CENTER
+    NONE, N, E, S, W, NE, SE, SW, NW, CENTER
 };
 
 class Page {
@@ -69,7 +69,8 @@ public:
 
     void Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer);
 
-    MouseHoverType MouseHoverSelection(glm::ivec2 mouse_pos);
+    MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject *object);
+    MouseHoverType CurrentHoverType(glm::ivec2 mouse_pos);
 
     std::list<GameObject *> Pieces;
 
@@ -81,6 +82,9 @@ private:
     void SnapPieceToGrid(GameObject *piece, int increments);
 
     glm::vec2 ScreenPosToWorldPos(glm::ivec2 pos);
+    glm::vec2 WorldPosToScreenPos(glm::ivec2 pos);
+
+    void MoveCurrentSelection(glm::vec2 mouse_pos);
 
     void HandleUIEvents();
 };

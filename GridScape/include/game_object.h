@@ -29,7 +29,6 @@ public:
 		bool clickable = true, glm::vec3 color = glm::vec3(1.0f));
 
 	void Draw(SpriteRenderer *renderer, int border_pixel_width);
-	bool CheckContainment(glm::vec2 pos);
 	//bool CheckBorderContainment(glm::vec2 pos);
 	glm::vec2 DistanceFromTopLeft(glm::vec2 pos);
 };
