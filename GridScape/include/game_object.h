@@ -12,6 +12,7 @@ public:
 	glm::vec2 Position, Size;
 	glm::vec3 Color;
 	float	  Rotation;
+	uint64_t  Uid;
 
 	Texture2D Sprite;
 

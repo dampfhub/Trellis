@@ -71,8 +71,9 @@ public:
 
     MouseHoverType MouseHoverSelection(glm::ivec2 mouse_pos);
 
-private:
     std::list<GameObject *> Pieces;
+
+private:
     std::list<GameObject *>::iterator CurrentSelection = Pieces.end();
     glm::ivec2 DragOrigin = glm::ivec2(0);
     int BorderWidth = 5;

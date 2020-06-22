@@ -4,8 +4,32 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <random>
+#include <cmath>
 
 namespace Util {
+    class NetworkData {
+    public:
+        std::vector<std::byte> Data;
+        uint64_t Uid;
+
+        NetworkData() = default;
+
+        template<class T>
+        NetworkData(T data, uint64_t uid) : Data(Util::serialize_vec(data)),
+                Uid(uid) {
+        }
+
+        NetworkData(std::vector<std::byte> data, uint64_t uid) : Data(data),
+                Uid(uid) {
+        }
+
+        template<class T>
+        T Parse() {
+            return deserialize<T>(Data);
+        }
+    };
+
     std::string PathBaseName(std::string const &path);
 
     bool IsPng(std::string file);
@@ -71,7 +95,13 @@ namespace Util {
     }
 
     template<>
+    NetworkData deserialize<NetworkData>(const std::vector<std::byte> &bytes);
+
+    template<>
     std::string deserialize<std::string>(const std::vector<std::byte> &bytes);
+
+    template<>
+    std::vector<std::byte> serialize_vec<NetworkData>(const NetworkData &object);
 
     template<class T, size_t N1, size_t N2>
     std::array<T, N1 + N2> concat(
@@ -92,6 +122,8 @@ namespace Util {
         std::copy(a.begin() + S, a.end(), tail.begin());
         return std::make_pair(head, tail);
     }
+
+    uint64_t generate_uid();
 }
 
 #endif

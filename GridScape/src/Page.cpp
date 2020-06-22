@@ -3,7 +3,10 @@
 #include "text_renderer.h"
 #include "text_object.h"
 #include "game.h"
-#include "network_manager.h"
+#include "network_server.h"
+#include "network_client.h"
+
+NetworkClient *nc = nullptr;
 
 Page::Page(
         std::string name,
@@ -46,6 +49,10 @@ void Page::BeginPlacePiece(GameObject *piece) {
 void Page::Update(float dt) {
     (void)dt;
     HandleUIEvents();
+    if (nc) {
+        nc->GetPageChanges(*this);
+        nc->PublishPageChanges();
+    }
 }
 
 void Page::UpdatePlacing(glm::ivec2 mouse_pos) {
@@ -116,8 +123,19 @@ MouseHoverType Page::MouseHoverSelection(glm::ivec2 mouse_pos) {
     }
 }
 
+bool started_server = false;
+bool started_client = false;
+
 void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
+    if (!started_server && !started_client) {
+        nc = &NetworkServer::GetInstance();
+        ((NetworkServer *)nc)->Start(5005);
+        started_server = true;
+    }
+    if (Placing) {
+
+    }
     CurrentSelection = Pieces.end();
     // Piece that is currently being placed
     if (Placing) {
@@ -164,6 +182,7 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
         GameObject *piece = *CurrentSelection;
+        glm::vec2 prev_pos = piece->Position;
         if (piece->FollowMouse) {
             piece->Position = world_mouse - (glm::vec2)DragOrigin;
             SnapPieceToGrid(*CurrentSelection, inc);
@@ -219,6 +238,9 @@ void Page::HandleLeftClickHold(glm::ivec2 mouse_pos) {
                     break;
             }
         }
+        if (nc && piece->Position != prev_pos) {
+            nc->RegisterPageChange("MOVE_PIECE", piece->Uid, piece->Position);
+        }
     }
 }
 
@@ -232,6 +254,11 @@ void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
 
 void Page::HandleRightClick(glm::ivec2 mouse_pos) {
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
+    if (!started_client && !started_server) {
+        nc = &NetworkClient::GetInstance();
+        nc->Start("Test Client", "localhost", 5005);
+        started_client = true;
+    }
     if (CurrentSelection != Pieces.end()) {
         if ((*CurrentSelection)->CheckContainment(world_mouse)) {
             UserInterface->ClickMenuActive = true;

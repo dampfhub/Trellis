@@ -27,7 +27,7 @@ void NetworkManager::StartServer(int port) {
 
 void NetworkManager::StartClient(
         std::string client_name,
-        int client_uid,
+        uint64_t client_uid,
         std::string hostname,
         int port) {
     if (net_obj != nullptr) {
@@ -36,7 +36,7 @@ void NetworkManager::StartClient(
     std::cout << "Starting client" << std::endl;
     net_obj = std::make_unique<NetworkManager::client>(
             client_name, client_uid, context, hostname, port);
-    net_obj->uid = 0;
+    net_obj->uid = client_uid;
 }
 
 bool NetworkManager::Active() {
@@ -166,15 +166,11 @@ void NetworkManager::network_object::do_write(
 }
 
 NetworkManager::server::server(
-        asio::io_context &con,
-        int port,
-        std::vector<uint64_t> uids) : network_object(
+        asio::io_context &con, int port) : network_object(
         con),
         acceptor(
                 con, tcp::endpoint(tcp::v4(), port)),
-        tp(4),
-        known_uids(std::move(uids)) {
-
+        tp(4) {
     listen();
     asio::post(
             tp, [this]() {
@@ -253,22 +249,15 @@ void NetworkManager::server::handle_header_action(const socket_ptr &sock) {
     mtx.lock();
     static NetworkManager &nm = NetworkManager::GetInstance();
     // Service new clients
-    if (read_msg.Header.Channel == "JOIN_INTERNAL") {
+    if (read_msg.Header.Channel == "JOIN") {
         uint64_t uid = read_msg.Header.Uid;
-        if (uid == 0) {
-            // If no uid was provided, give them the next available one
-            uid = known_uids.size() + 1;
-            known_uids.push_back(uid);
-        }
         socks[uid] = sock;
         read_msgs[sock] = Message();
-        ClientConnection
-                con(Util::deserialize<std::string>(read_msg.Msg()), uid);
+        Util::NetworkData con(read_msg.Msg(), uid);
         // Push this into the CLIENT_JOIN channel so new clients can be tracked
-        for (auto &ptr : nm.queues["CLIENT_JOIN"]) {
+        for (auto &ptr : nm.queues["JOIN"]) {
             ptr.lock()->Push(Util::serialize_vec(con));
         }
-        WriteSocket(sock, Message("", uid, "JOIN_INTERNAL"));
         read_msg.Clear();
     } else {
         for (auto &ptr : nm.queues[read_msgs[sock].Header.Channel]) {
@@ -280,7 +269,7 @@ void NetworkManager::server::handle_header_action(const socket_ptr &sock) {
 
 NetworkManager::client::client(
         std::string client_name,
-        int client_uid,
+        uint64_t client_uid,
         asio::io_context &con,
         std::string hostname,
         int port_num) : network_object(
@@ -315,8 +304,7 @@ void NetworkManager::client::handle_connect(
         const asio::error_code &error, const tcp::endpoint &ep) {
     if (!error) {
         std::cout << "Connection Successful" << std::endl;
-        // After connecting client sends name and uid. Uid will be 0 if new client
-        WriteSocket(server_sock, Message(ClientName, uid, "JOIN_INTERNAL"));
+        WriteSocket(server_sock, Message(ClientName, uid, "JOIN"));
         asio::async_read(
                 *server_sock,
                 asio::buffer(read_msg.Data(), MessageHeader::HeaderLength),
@@ -333,15 +321,8 @@ void NetworkManager::client::handle_connect(
 
 void NetworkManager::client::handle_header_action(const socket_ptr &sock) {
     static NetworkManager &nm = NetworkManager::GetInstance();
-    if (read_msg.Header.Channel == "JOIN_INTERNAL") {
-        uid = read_msg.Header.Uid;
-        for (auto &ptr : nm.queues["CHANGE_UID"]) {
-            ptr.lock()->Push(Util::serialize_vec(uid));
-        }
-    } else {
-        for (auto &ptr : nm.queues[read_msg.Header.Channel]) {
-            ptr.lock()->Push(read_msg.Msg());
-        }
+    for (auto &ptr : nm.queues[read_msg.Header.Channel]) {
+        ptr.lock()->Push(read_msg.Msg());
     }
 }
 
@@ -352,7 +333,7 @@ NetworkManager::MessageHeader::MessageHeader() : Uid(0),
 }
 
 NetworkManager::MessageHeader::MessageHeader(
-        int uid, int length, std::string channel) : Uid(uid),
+        uint64_t uid, uint16_t length, std::string channel) : Uid(uid),
         MessageLength(length),
         Channel(channel) {
 
@@ -370,13 +351,16 @@ std::array<std::byte, NetworkManager::MessageHeader::HeaderLength> NetworkManage
 NetworkManager::MessageHeader NetworkManager::MessageHeader::Deserialize(
         std::array<std::byte, HeaderLength> bytes) {
     using namespace Util;
-    uint16_t uid, length;
+    uint64_t uid;
+    uint16_t length;
     std::string channel;
-    auto uid_pair = slice<2>(bytes);
-    uid = deserialize<uint16_t>(uid_pair.first);
-    auto length_pair = slice<2>(uid_pair.second);
+    auto uid_pair = slice<sizeof(uid)>(bytes);
+    uid = deserialize<uint64_t>(uid_pair.first);
+    auto length_pair = slice<sizeof(length)>(uid_pair.second);
     length = deserialize<uint16_t>(length_pair.first);
-    channel = deserialize<16>(length_pair.second);
+    channel = deserialize<
+            MessageHeader::HeaderLength - sizeof(uid) - sizeof(length)>(
+            length_pair.second);
     return NetworkManager::MessageHeader(uid, length, channel);
 }
 
@@ -386,7 +370,7 @@ NetworkManager::Message::Message() : msg(),
 }
 
 NetworkManager::Message::Message(
-        std::string to_send, int uid, std::string channel) : Header(
+        std::string to_send, uint64_t uid, std::string channel) : Header(
         uid, to_send.length() + 1, channel) {
     // TODO: consider making this check more permanent
     assert(to_send.length() + 1 <
@@ -398,7 +382,9 @@ NetworkManager::Message::Message(
 }
 
 NetworkManager::Message::Message(
-        std::vector<std::byte> to_send, int uid, std::string channel) : Header(
+        std::vector<std::byte> to_send,
+        uint64_t uid,
+        std::string channel) : Header(
         uid, to_send.size(), channel) {
     // TODO: consider making this check more permanent
     assert(to_send.size() < MessageLengthMax - MessageHeader::HeaderLength);

@@ -20,18 +20,6 @@
 
 using asio::ip::tcp;
 
-class ClientConnection {
-public:
-    std::string Name;
-    int Uid;
-
-    ClientConnection() = default;
-
-    ClientConnection(std::string name, int uid) : Name(name),
-            Uid(uid) {
-    }
-};
-
 class NetworkManager {
 public:
     NetworkManager(NetworkManager const &) = delete; // Disallow copying
@@ -43,7 +31,7 @@ public:
 
     void StartClient(
             std::string client_name,
-            int client_uid,
+            uint64_t client_uid,
             std::string hostname,
             int port);
 
@@ -57,14 +45,19 @@ public:
         template<class T>
         void Publish(const T &data, int uid = 0) {
             static NetworkManager &nm = NetworkManager::GetInstance();
-            auto t = Util::serialize<T>(data);
-            std::vector<std::byte> v(t.begin(), t.end());
+            auto v = Util::serialize_vec<T>(data);
+            Message m(v, uid, channel_name);
             nm.net_obj->Write(Message(v, uid, channel_name));
         }
 
         template<>
         void Publish<std::string>(const std::string &data, int uid) {
-            NetworkManager &nm = NetworkManager::GetInstance();
+            nm.net_obj->Write(Message(data, uid, channel_name));
+        }
+
+        template<>
+        void Publish<std::vector<std::byte>>(
+                const std::vector<std::byte> &data, int uid) {
             nm.net_obj->Write(Message(data, uid, channel_name));
         }
 
@@ -111,15 +104,15 @@ private:
 
     class MessageHeader {
     public:
-        static const size_t HeaderLength = 20;
+        static const size_t HeaderLength = 26;
 
-        uint16_t Uid;
+        uint64_t Uid;
         uint16_t MessageLength;
         std::string Channel;
 
         MessageHeader();
 
-        MessageHeader(int uid, int length, std::string channel);
+        MessageHeader(uint64_t uid, uint16_t length, std::string channel);
 
         ~MessageHeader() = default;
 
@@ -130,16 +123,16 @@ private:
 
     class Message {
     public:
-        static const int MessageLengthMax = 512;
+        static const size_t MessageLengthMax = 200000;
 
         MessageHeader Header;
         int Length;
 
         Message();
 
-        Message(std::string msg, int uid, std::string channel);
+        Message(std::string msg, uint64_t uid, std::string channel);
 
-        Message(std::vector<std::byte> msg, int uid, std::string channel);
+        Message(std::vector<std::byte> msg, uint64_t uid, std::string channel);
 
         std::vector<std::byte> Serialize();
 
@@ -193,7 +186,7 @@ private:
                 const asio::error_code &error,
                 size_t bytes);
 
-        int uid;
+        uint64_t uid;
 
     protected:
         asio::io_context &context;
@@ -215,9 +208,7 @@ private:
                 size_t bytes);
 
         server(
-                asio::io_context &con,
-                int port_num,
-                std::vector<uint64_t> known_uids = std::vector<uint64_t>());
+                asio::io_context &con, int port_num);
 
         ~server();
 
@@ -225,11 +216,10 @@ private:
 
     private:
         tcp::acceptor acceptor;
-        std::map<int, socket_ptr> socks;
+        std::map<uint64_t, socket_ptr> socks;
         asio::thread_pool tp;
         std::mutex mtx;
         std::map<socket_ptr, Message> read_msgs;
-        std::vector<uint64_t> known_uids;
 
         void handle_accept(
                 socket_ptr new_sock, const asio::error_code &error);
@@ -245,7 +235,7 @@ private:
 
         client(
                 std::string client_name,
-                int client_uid,
+                uint64_t client_uid,
                 asio::io_context &con,
                 std::string hostname,
                 int port_num);
