@@ -91,9 +91,11 @@ void Page::HandleUIEvents() {
 
 MouseHoverType Page::HoverType(glm::ivec2 mouse_pos, GameObject *object) {
     glm::ivec2 NW_corner_screen = WorldPosToScreenPos(object->Position);
-    glm::ivec2 SE_corner_screen = WorldPosToScreenPos(object->Position + object->Size);
+    glm::ivec2 SE_corner_screen =
+            WorldPosToScreenPos(object->Position + object->Size);
     if (mouse_pos.x < NW_corner_screen.x || mouse_pos.y < NW_corner_screen.y ||
-        mouse_pos.x > SE_corner_screen.x || mouse_pos.y > SE_corner_screen.y) {
+            mouse_pos.x > SE_corner_screen.x ||
+            mouse_pos.y > SE_corner_screen.y) {
         return NONE;
     }
     glm::ivec2 size_screen = SE_corner_screen - NW_corner_screen;
@@ -134,8 +136,8 @@ MouseHoverType Page::CurrentHoverType(glm::ivec2 mouse_pos) {
 
 bool started_server = false;
 bool started_client = false;
+
 void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
-    CurrentSelection = Pieces.end();
     if (!started_server && !started_client) {
         nc = &NetworkServer::GetInstance();
         ((NetworkServer *)nc)->Start(5005);
@@ -144,8 +146,12 @@ void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
     // Piece that is currently being placed
     if (Placing) {
         Placing = false;
+        GameObject *piece = (*CurrentSelection);
+        nc->RegisterPageChange("ADD_PIECE", piece->Uid, *piece);
+        CurrentSelection = Pieces.end();
         return;
     }
+    CurrentSelection = Pieces.end();
     for (auto it = Pieces.begin(); it != Pieces.end(); it++) {
         MouseHoverType hover = HoverType(mouse_pos, *it);
         if (hover != NONE && (*it)->Clickable) {
@@ -189,16 +195,16 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
     if (CurrentSelection != Pieces.end()) {
         GameObject *piece = *CurrentSelection;
         glm::vec2 prev_pos = piece->Position;
+        glm::vec2 prev_size = piece->Size;
         if (Placing) {
-            piece->Position = world_mouse - piece->Size/2.0f;
+            piece->Position = world_mouse - piece->Size / 2.0f;
             SnapPieceToGrid(*CurrentSelection, inc);
         } else if (piece->FollowMouse) {
-            piece->Position = piece->initialPos +
-                    world_mouse - (glm::vec2)DragOrigin;
+            piece->Position =
+                    piece->initialPos + world_mouse - (glm::vec2)DragOrigin;
             SnapPieceToGrid(*CurrentSelection, inc);
         } else if (piece->ScaleMouse) {
-            glm::vec2 diff = world_mouse -
-                    (glm::vec2)DragOrigin;
+            glm::vec2 diff = world_mouse - (glm::vec2)DragOrigin;
             switch (piece->ScaleEdges.first) {
                 case 1:
                     piece->Size.x = fmax(
@@ -211,8 +217,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                     break;
                 case -1:
                     piece->Size.x = fmax(
-                            DragOrigin.x +
-                                    piece->initialSize.x - world_mouse.x,
+                            DragOrigin.x + piece->initialSize.x - world_mouse.x,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
                             piece->Size.x / (TILE_DIMENSIONS / (float)inc) +
@@ -235,8 +240,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                     break;
                 case -1:
                     piece->Size.y = fmax(
-                            DragOrigin.y +
-                                    piece->initialSize.y - world_mouse.y,
+                            DragOrigin.y + piece->initialSize.y - world_mouse.y,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
                             piece->Size.y / (TILE_DIMENSIONS / (float)inc) +
@@ -250,6 +254,9 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
         }
         if (nc && piece->Position != prev_pos) {
             nc->RegisterPageChange("MOVE_PIECE", piece->Uid, piece->Position);
+        }
+        if (nc && piece->Size != prev_size) {
+            nc->RegisterPageChange("RESIZE_PIECE", piece->Uid, piece->Size);
         }
     }
 }

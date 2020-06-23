@@ -3,12 +3,15 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <vector>
 
 #include "stb_image.h"
+#include "util.h"
 
 // Instantiate static variables
 std::map<std::string, Texture2D>    ResourceManager::Textures;
 std::map<std::string, Shader>       ResourceManager::Shaders;
+std::map<uint64_t, ImageData>       ResourceManager::Images;
 
 ResourceManager &ResourceManager::GetInstance() {
     static ResourceManager instance; // Guaranteed to be destroyed.
@@ -39,13 +42,19 @@ Texture2D ResourceManager::GetTexture(std::string name) {
     return Textures[name];
 }
 
+Texture2D ResourceManager::GetTexture(uint64_t uid) {
+    return loadTextureFromUID(uid);
+}
+
 ResourceManager::~ResourceManager() {
     // (properly) delete all shaders
-    for (auto iter : Shaders)
+    for (auto iter : Shaders) {
         glDeleteProgram(iter.second.ID);
+    }
     // (properly) delete all textures
-    for (auto iter : Textures)
+    for (auto iter : Textures) {
         glDeleteTextures(1, &iter.second.ID);
+    }
 }
 
 Shader ResourceManager::loadShaderFromFile(
@@ -106,10 +115,31 @@ Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha) {
     }
     // load image
     int width, height, nrChannels;
-    unsigned char *data = stbi_load(file, &width, &height, &nrChannels, 0);
+    //unsigned char *data = stbi_load(file, &width, &height, &nrChannels, 0);
+    std::ifstream infile(file, std::ios_base::binary);
+    std::vector<unsigned char> buffer((std::istreambuf_iterator<char>(infile)),
+            (std::istreambuf_iterator<char>()));
+    unsigned char *data = stbi_load_from_memory(
+            buffer.data(), buffer.size(), &width, &height, &nrChannels, 0);
+    uint64_t uid = Util::generate_uid();
     // now generate texture
-    texture.Generate(width, height, data);
-    // and finally free image data
+    texture.Generate(width, height, data, uid);
+    Images[uid] = ImageData(alpha, buffer);
+    stbi_image_free(data);
+    return texture;
+}
+
+Texture2D ResourceManager::loadTextureFromUID(uint64_t uid) {
+    Texture2D texture;
+    ImageData d = Images[uid];
+    if (d.Alpha) {
+        texture.Internal_Format = GL_RGBA;
+        texture.Image_Format = GL_RGBA;
+    }
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load_from_memory(
+            d.Data.data(), d.Data.size(), &width, &height, &nrChannels, 0);
+    texture.Generate(width, height, data, uid);
     stbi_image_free(data);
     return texture;
 }

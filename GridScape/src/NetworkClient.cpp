@@ -1,5 +1,6 @@
 #include "network_client.h"
 #include "util.h"
+#include "resource_manager.h"
 
 NetworkClient &NetworkClient::GetInstance() {
     static NetworkClient instance; // Guaranteed to be destroyed.
@@ -26,28 +27,65 @@ void NetworkClient::PublishPageChanges() {
 }
 
 void NetworkClient::GetPageChanges(Page &pg) {
+    static ResourceManager &rm = ResourceManager::GetInstance();
     auto move_queue = subbed_queues["MOVE_PIECE"]->Query<Util::NetworkData>();
     while (!move_queue.empty()) {
         auto nd = move_queue.front();
-        std::cout << nd.Uid << std::endl;
-        for (GameObject *g : pg.Pieces) {
-            std::cout << g->Uid << std::endl;
-        }
-        // This obviously doesn't work because uids are completely client side right now
-        // TODO tomorrow
-        // * Establish a way to send images over the wire that doesn't interfere with rendering or movement
-        // * Send entire initial state of pieces from host to client on connect
-        // * * Probably do by creating an add piece command and sending each piece
-        return;
+        // Potentially add another map of piece UID to pieces in page for easier lookup
         auto it = std::find_if(
                 pg.Pieces.begin(), pg.Pieces.end(), [nd](GameObject *g) {
                     return g->Uid == nd.Uid;
                 });
         if (it != pg.Pieces.end()) {
-            std::cout << "exists" << std::endl;
             (*it)->Position = nd.Parse<glm::vec2>();
         }
         move_queue.pop();
+    }
+    auto resize_queue = subbed_queues["RESIZE_PIECE"]->Query<Util::NetworkData>();
+    while (!resize_queue.empty()) {
+        auto nd = resize_queue.front();
+        // Potentially add another map of piece UID to pieces in page for easier lookup
+        auto it = std::find_if(
+                pg.Pieces.begin(), pg.Pieces.end(), [nd](GameObject *g) {
+                    return g->Uid == nd.Uid;
+                });
+        if (it != pg.Pieces.end()) {
+            (*it)->Size = nd.Parse<glm::vec2>();
+        }
+        resize_queue.pop();
+    }
+    auto add_queue = subbed_queues["ADD_PIECE"]->Query<Util::NetworkData>();
+    while (!add_queue.empty()) {
+        auto nd = add_queue.front();
+        GameObject *g = new GameObject(nd.Parse<GameObject>());
+        if (rm.Images.find(g->Sprite.ImageUID) == rm.Images.end()) {
+            // Image isn't cached, need to request it
+            RegisterPageChange("IMAGE_REQUEST", g->Sprite.ImageUID, "");
+        }
+        pg.PlacePiece(g, false);
+        add_queue.pop();
+    }
+    auto image_queue = subbed_queues["IMAGE"]->Query<Util::NetworkData>();
+    while (!image_queue.empty()) {
+        auto nd = image_queue.front();
+        rm.Images[nd.Uid] = nd.Parse<ImageData>();
+        for (GameObject *go : pg.Pieces) {
+            if (go->Sprite.ImageUID == nd.Uid) {
+                std::cout << "Got UID: " << nd.Uid << std::endl;
+                go->Sprite = ResourceManager::GetTexture(nd.Uid);
+            }
+        }
+        image_queue.pop();
+    }
+    auto image_request_queue =
+            subbed_queues["IMAGE_REQUEST"]->Query<Util::NetworkData>();
+    while (!image_request_queue.empty()) {
+        auto nd = image_request_queue.front();
+        std::cout << "Got UID: " << nd.Uid << std::endl;
+        if (rm.Images.find(nd.Uid) != rm.Images.end()) {
+            RegisterPageChange("IMAGE", nd.Uid, rm.Images[nd.Uid]);
+        }
+        image_request_queue.pop();
     }
 }
 
@@ -59,4 +97,6 @@ void NetworkClient::InitSubs() {
     subbed_queues["ADD_PIECE"] =
             NetworkManager::NetworkQueue::Subscribe("ADD_PIECE");
     subbed_queues["IMAGE"] = NetworkManager::NetworkQueue::Subscribe("IMAGE");
+    subbed_queues["IMAGE_REQUEST"] =
+            NetworkManager::NetworkQueue::Subscribe("IMAGE_REQUEST");
 }

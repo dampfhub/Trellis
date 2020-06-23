@@ -123,6 +123,7 @@ void NetworkManager::network_object::handle_read_body(
         size_t bytes) {
     if (!error) {
         handle_header_action(sock);
+        buf.DataVec = std::vector<std::byte>(MessageHeader::HeaderLength);
         asio::async_read(
                 *sock,
                 asio::buffer(
@@ -209,6 +210,7 @@ void NetworkManager::server::handle_accept(
         const asio::error_code &error) {
     if (!error) {
         std::cout << "Got a connection" << std::endl;
+        read_msg.DataVec = std::vector<std::byte>(MessageHeader::HeaderLength);
         asio::async_read(
                 *new_sock,
                 asio::buffer(read_msg.Data(), MessageHeader::HeaderLength),
@@ -275,7 +277,7 @@ NetworkManager::client::client(
         int port_num) : network_object(
         con),
         resolver(con),
-        ClientName(std::move(client_name)) {
+        ClientName(client_name) {
     uid = client_uid;
     tcp::resolver::results_type
             endpoints = resolver.resolve(hostname, std::to_string(port_num));
@@ -305,6 +307,7 @@ void NetworkManager::client::handle_connect(
     if (!error) {
         std::cout << "Connection Successful" << std::endl;
         WriteSocket(server_sock, Message(ClientName, uid, "JOIN"));
+        read_msg.DataVec = std::vector<std::byte>(MessageHeader::HeaderLength);
         asio::async_read(
                 *server_sock,
                 asio::buffer(read_msg.Data(), MessageHeader::HeaderLength),
@@ -333,10 +336,9 @@ NetworkManager::MessageHeader::MessageHeader() : Uid(0),
 }
 
 NetworkManager::MessageHeader::MessageHeader(
-        uint64_t uid, uint16_t length, std::string channel) : Uid(uid),
+        uint64_t uid, uint64_t length, std::string channel) : Uid(uid),
         MessageLength(length),
         Channel(channel) {
-
 }
 
 std::array<std::byte, NetworkManager::MessageHeader::HeaderLength> NetworkManager::MessageHeader::Serialize() {
@@ -352,12 +354,12 @@ NetworkManager::MessageHeader NetworkManager::MessageHeader::Deserialize(
         std::array<std::byte, HeaderLength> bytes) {
     using namespace Util;
     uint64_t uid;
-    uint16_t length;
+    uint64_t length;
     std::string channel;
     auto uid_pair = slice<sizeof(uid)>(bytes);
     uid = deserialize<uint64_t>(uid_pair.first);
     auto length_pair = slice<sizeof(length)>(uid_pair.second);
-    length = deserialize<uint16_t>(length_pair.first);
+    length = deserialize<uint64_t>(length_pair.first);
     channel = deserialize<
             MessageHeader::HeaderLength - sizeof(uid) - sizeof(length)>(
             length_pair.second);
@@ -372,13 +374,9 @@ NetworkManager::Message::Message() : msg(),
 NetworkManager::Message::Message(
         std::string to_send, uint64_t uid, std::string channel) : Header(
         uid, to_send.length() + 1, channel) {
-    // TODO: consider making this check more permanent
-    assert(to_send.length() + 1 <
-            MessageLengthMax - MessageHeader::HeaderLength);
     msg = Util::serialize(to_send);
-    std::vector<std::byte> t = Serialize();
-    Length = t.size();
-    std::copy(t.begin(), t.end(), data.data());
+    DataVec = Serialize();
+    Length = DataVec.size();
 }
 
 NetworkManager::Message::Message(
@@ -386,12 +384,9 @@ NetworkManager::Message::Message(
         uint64_t uid,
         std::string channel) : Header(
         uid, to_send.size(), channel) {
-    // TODO: consider making this check more permanent
-    assert(to_send.size() < MessageLengthMax - MessageHeader::HeaderLength);
     msg = to_send;
-    std::vector<std::byte> t = Serialize();
-    Length = t.size();
-    std::copy(t.begin(), t.end(), data.data());
+    DataVec = Serialize();
+    Length = DataVec.size();
 }
 
 std::vector<std::byte> NetworkManager::Message::Serialize() {
@@ -406,12 +401,13 @@ std::vector<std::byte> NetworkManager::Message::Serialize() {
 bool NetworkManager::Message::DecodeHeader() {
     std::array<std::byte, MessageHeader::HeaderLength> t;
     std::copy(
-            data.begin(),
-            data.begin() + MessageHeader::HeaderLength,
+            DataVec.begin(),
+            DataVec.begin() + MessageHeader::HeaderLength,
             t.begin());
     Header = MessageHeader::Deserialize(t);
-    return Header.MessageLength <=
-            MessageLengthMax - MessageHeader::HeaderLength;
+    std::vector<std::byte> v(Header.MessageLength + 1);
+    DataVec.insert(DataVec.end(), v.begin(), v.end());
+    return true;
 }
 
 void NetworkManager::Message::Clear() {
@@ -421,17 +417,17 @@ void NetworkManager::Message::Clear() {
 }
 
 std::byte *NetworkManager::Message::Data() {
-    return data.data();
+    return DataVec.data();
 }
 
 std::byte *NetworkManager::Message::Body() {
-    return data.data() + MessageHeader::HeaderLength;
+    return DataVec.data() + MessageHeader::HeaderLength;
 }
 
 const std::vector<std::byte> &NetworkManager::Message::Msg() {
     std::vector<std::byte> t(
-            data.begin() + MessageHeader::HeaderLength,
-            data.begin() + MessageHeader::HeaderLength + Header.MessageLength +
+            DataVec.begin() + MessageHeader::HeaderLength,
+            DataVec.begin() + MessageHeader::HeaderLength + Header.MessageLength +
                     1);
     msg = t;
     return msg;

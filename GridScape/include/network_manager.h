@@ -46,7 +46,6 @@ public:
         void Publish(const T &data, int uid = 0) {
             static NetworkManager &nm = NetworkManager::GetInstance();
             auto v = Util::serialize_vec<T>(data);
-            Message m(v, uid, channel_name);
             nm.net_obj->Write(Message(v, uid, channel_name));
         }
 
@@ -104,15 +103,15 @@ private:
 
     class MessageHeader {
     public:
-        static const size_t HeaderLength = 26;
+        static const size_t HeaderLength = 32;
 
         uint64_t Uid;
-        uint16_t MessageLength;
+        uint64_t MessageLength;
         std::string Channel;
 
         MessageHeader();
 
-        MessageHeader(uint64_t uid, uint16_t length, std::string channel);
+        MessageHeader(uint64_t uid, uint64_t length, std::string channel);
 
         ~MessageHeader() = default;
 
@@ -123,10 +122,9 @@ private:
 
     class Message {
     public:
-        static const size_t MessageLengthMax = 200000;
-
         MessageHeader Header;
         int Length;
+        std::vector<std::byte> DataVec;
 
         Message();
 
@@ -148,7 +146,6 @@ private:
 
     private:
         std::vector<std::byte> msg;
-        std::array<std::byte, MessageLengthMax> data{ };
     };
 
     class network_object {

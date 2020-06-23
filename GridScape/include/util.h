@@ -7,6 +7,9 @@
 #include <random>
 #include <cmath>
 
+#include "game_object.h"
+#include "resource_manager.h"
+
 namespace Util {
     class NetworkData {
     public:
@@ -94,14 +97,33 @@ namespace Util {
         return *ptr;
     }
 
+    template<class T>
+    T deserialize(const std::byte * bytes) {
+        using std::byte;
+        const T *ptr = reinterpret_cast<const T *>(bytes);
+        return *ptr;
+    }
+
     template<>
     NetworkData deserialize<NetworkData>(const std::vector<std::byte> &bytes);
+
+    template<>
+    ImageData deserialize<ImageData>(const std::vector<std::byte> &bytes);
 
     template<>
     std::string deserialize<std::string>(const std::vector<std::byte> &bytes);
 
     template<>
+    GameObject deserialize<GameObject>(const std::vector<std::byte> &bytes);
+
+    template<>
     std::vector<std::byte> serialize_vec<NetworkData>(const NetworkData &object);
+
+    template<>
+    std::vector<std::byte> serialize_vec<GameObject>(const GameObject &object);
+
+    template<>
+    std::vector<std::byte> serialize_vec<ImageData>(const ImageData &object);
 
     template<class T, size_t N1, size_t N2>
     std::array<T, N1 + N2> concat(
@@ -122,6 +144,8 @@ namespace Util {
         std::copy(a.begin() + S, a.end(), tail.begin());
         return std::make_pair(head, tail);
     }
+
+    std::vector<std::byte> flatten(std::vector<std::vector<std::byte>> vecs);
 
     uint64_t generate_uid();
 }

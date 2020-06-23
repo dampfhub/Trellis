@@ -14,9 +14,10 @@ Texture2D::Texture2D() : Width(0),
 }
 
 void Texture2D::Generate(
-        unsigned int width, unsigned int height, unsigned char *data) {
+        unsigned int width, unsigned int height, unsigned char *data, uint64_t image_uid) {
     Width = width;
     Height = height;
+    ImageUID = image_uid;
     // create Texture
     glBindTexture(GL_TEXTURE_2D, ID);
     glTexImage2D(

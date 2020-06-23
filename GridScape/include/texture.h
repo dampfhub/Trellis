@@ -2,6 +2,7 @@
 #define TEXTURE_H
 
 #include <glad/glad.h>
+#include <cstdint>
 
 // Texture2D is able to store and configure a texture in OpenGL.
 // It also hosts utility functions for easy management.
@@ -11,6 +12,8 @@ public:
     unsigned int ID;
     // texture image dimensions
     unsigned int Width, Height; // width and height of loaded image in pixels
+    // Image uid for server lookup
+    uint64_t ImageUID;
     // texture Format
     unsigned int Internal_Format; // format of texture object
     unsigned int Image_Format; // format of loaded image
@@ -21,8 +24,14 @@ public:
     unsigned int Filter_Max; // filtering mode if texture pixels > screen pixels
     // constructor (sets default texture modes)
     Texture2D();
+
     // generates texture from image data
-    void Generate(unsigned int width, unsigned int height, unsigned char* data);
+    void Generate(
+            unsigned int width,
+            unsigned int height,
+            unsigned char *data,
+            uint64_t ImageUid);
+
     // binds the texture as the current active GL_TEXTURE_2D texture object
     void Bind() const;
 };

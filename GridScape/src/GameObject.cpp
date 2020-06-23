@@ -14,6 +14,7 @@ GameObject::GameObject(
         glm::vec2 pos,
         glm::vec2 size,
         Texture2D sprite,
+        uint64_t uid,
         bool clickable,
         glm::vec3 color) : Position(pos),
         Size(size),
@@ -21,7 +22,9 @@ GameObject::GameObject(
         Rotation(0.0f),
         Sprite(sprite),
         Clickable(clickable) {
-    Uid = Util::generate_uid();
+    Uid = uid == 0
+          ? Uid = Util::generate_uid()
+          : uid;
 }
 
 void GameObject::Draw(SpriteRenderer *renderer, int border_pixel_width) {
