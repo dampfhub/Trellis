@@ -37,7 +37,7 @@ void Page::PlacePiece(GameObject *piece, bool grid_locked) {
                 piece->Position.x * TILE_DIMENSIONS + 1,
                 piece->Position.y * TILE_DIMENSIONS + 1);
     }
-    Pieces.push_back(piece);
+    Pieces.push_front(piece);
 }
 
 void Page::BeginPlacePiece(GameObject *piece) {

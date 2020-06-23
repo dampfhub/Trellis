@@ -41,7 +41,8 @@ void NetworkClient::GetPageChanges(Page &pg) {
         }
         move_queue.pop();
     }
-    auto resize_queue = subbed_queues["RESIZE_PIECE"]->Query<Util::NetworkData>();
+    auto resize_queue =
+            subbed_queues["RESIZE_PIECE"]->Query<Util::NetworkData>();
     while (!resize_queue.empty()) {
         auto nd = resize_queue.front();
         // Potentially add another map of piece UID to pieces in page for easier lookup
@@ -69,9 +70,9 @@ void NetworkClient::GetPageChanges(Page &pg) {
     while (!image_queue.empty()) {
         auto nd = image_queue.front();
         rm.Images[nd.Uid] = nd.Parse<ImageData>();
+        // Check which gameobjects need this texture and apply it.
         for (GameObject *go : pg.Pieces) {
             if (go->Sprite.ImageUID == nd.Uid) {
-                std::cout << "Got UID: " << nd.Uid << std::endl;
                 go->Sprite = ResourceManager::GetTexture(nd.Uid);
             }
         }
@@ -81,7 +82,7 @@ void NetworkClient::GetPageChanges(Page &pg) {
             subbed_queues["IMAGE_REQUEST"]->Query<Util::NetworkData>();
     while (!image_request_queue.empty()) {
         auto nd = image_request_queue.front();
-        std::cout << "Got UID: " << nd.Uid << std::endl;
+        // Make sure we have the requested image, then send it
         if (rm.Images.find(nd.Uid) != rm.Images.end()) {
             RegisterPageChange("IMAGE", nd.Uid, rm.Images[nd.Uid]);
         }
