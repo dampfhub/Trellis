@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "page.h"
+#include "util.h"
+#include "client_server.h"
 
 // Represents the current state of the game
 enum GameState {
@@ -43,7 +45,6 @@ public:
 private:
     Game();
 
-    // destructor
     ~Game();
 
     void init_textures();
@@ -57,6 +58,23 @@ private:
     void ProcessUIEvents();
 
     void UpdateMouse();
+
+    void start_server(int key, int scancode, int action, int mod);
+
+    void start_client(int key, int scancode, int action, int mod);
+
+    void register_network_callbacks();
+
+    // Callbacks for networking
+    void handle_page_add_piece(Util::NetworkData &&q);
+
+    void handle_page_move_piece(Util::NetworkData &&q);
+
+    void handle_page_resize_piece(Util::NetworkData &&q);
+
+    void handle_new_image(Util::NetworkData &&q);
+
+    void handle_image_request(Util::NetworkData &&q);
 
     MouseHoverType current_hover_type = MouseHoverType::NONE;
 

@@ -3,25 +3,28 @@
 #include "text_renderer.h"
 #include "text_object.h"
 #include "game.h"
-#include "network_server.h"
-#include "network_client.h"
-
-NetworkClient *nc = nullptr;
+#include "util.h"
+#include "client_server.h"
 
 Page::Page(
         std::string name,
         Texture2D board_tex,
         SpriteRenderer *renderer,
         glm::vec2 pos,
-        glm::vec2 size) : Name(name),
+        glm::vec2 size,
+        uint64_t uid) : Name(name),
         Board_Texture(board_tex),
         Renderer(renderer),
         Position(pos),
-        Size(size) {
+        Size(size),
+        Uid(uid) {
     Renderer->Resize((int)Size.x);
     Camera = new Camera2D(
             200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = new PageUI();
+    if (Uid == 0) {
+        Uid = Util::generate_uid();
+    }
 }
 
 Page::~Page() {
@@ -52,10 +55,6 @@ void Page::BeginPlacePiece(GameObject *piece) {
 void Page::Update(float dt) {
     (void)dt;
     HandleUIEvents();
-    if (nc) {
-        nc->GetPageChanges(*this);
-        nc->PublishPageChanges();
-    }
 }
 
 void Page::UpdatePlacing(glm::ivec2 mouse_pos) {
@@ -134,20 +133,16 @@ MouseHoverType Page::CurrentHoverType(glm::ivec2 mouse_pos) {
     return HoverType(mouse_pos, *CurrentSelection);
 }
 
-bool started_server = false;
-bool started_client = false;
-
 void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
-    if (!started_server && !started_client) {
-        nc = &NetworkServer::GetInstance();
-        ((NetworkServer *)nc)->Start(5005);
-        started_server = true;
-    }
     // Piece that is currently being placed
     if (Placing) {
         Placing = false;
+        // Send piece over the wire
         GameObject *piece = (*CurrentSelection);
-        nc->RegisterPageChange("ADD_PIECE", piece->Uid, *piece);
+        if (ClientServer::Started()) {
+            ClientServer &ns = ClientServer::GetInstance();
+            ns.RegisterPageChange("ADD_PIECE", Uid, *piece);
+        }
         CurrentSelection = Pieces.end();
         return;
     }
@@ -252,11 +247,20 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                     break;
             }
         }
-        if (nc && piece->Position != prev_pos) {
-            nc->RegisterPageChange("MOVE_PIECE", piece->Uid, piece->Position);
-        }
-        if (nc && piece->Size != prev_size) {
-            nc->RegisterPageChange("RESIZE_PIECE", piece->Uid, piece->Size);
+        if (ClientServer::Started()) {
+            static ClientServer &cs = ClientServer::GetInstance();
+            if (piece->Position != prev_pos) {
+                cs.RegisterPageChange(
+                        "MOVE_PIECE",
+                        Uid,
+                        Util::NetworkData(piece->Position, piece->Uid));
+            }
+            if (piece->Size != prev_size) {
+                cs.RegisterPageChange(
+                        "RESIZE_PIECE",
+                        Uid,
+                        Util::NetworkData(piece->Size, piece->Uid));
+            }
         }
     }
 }
@@ -274,11 +278,6 @@ void Page::HandleLeftClickRelease(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleRightClick(glm::ivec2 mouse_pos) {
-    if (!started_client && !started_server) {
-        nc = &NetworkClient::GetInstance();
-        nc->Start("Test Client", "localhost", 5005);
-        started_client = true;
-    }
     MouseHoverType hover = CurrentHoverType(mouse_pos);
     if (hover != NONE) {
         UserInterface->ClickMenuActive = true;

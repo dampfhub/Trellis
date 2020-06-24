@@ -9,6 +9,7 @@
 #include "ui.h"
 #include "util.h"
 #include "GUI.h"
+#include "client_server.h"
 
 SpriteRenderer *ObjectRenderer;
 UI *UserInterface;
@@ -114,6 +115,23 @@ void snap_callback(int key, int scancode, int action, int mod) {
     }
 }
 
+void start_server_temp(int key, int scancode, int action, int mod) {
+    if (action == GLFW_PRESS) {
+        ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
+        Server *s = reinterpret_cast<Server *>(&cs);
+        // TODO: Make this function virtual, always take 3 arguments, some defaulted
+        s->Start(5005);
+    }
+}
+
+void start_client_temp(int key, int scancode, int action, int mod) {
+    if (action == GLFW_PRESS) {
+        ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
+        Client *c = reinterpret_cast<Client *>(&cs);
+        c->Start("Test Client", "localhost", 5005);
+    }
+}
+
 Game::Game() {
     GLFW &glfw = GLFW::GetInstance();
     init_shaders();
@@ -131,6 +149,8 @@ Game::Game() {
     glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_MIDDLE, middle_click_press);
     glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_MIDDLE, middle_click_release);
     glfw.RegisterKey(GLFW_KEY_LEFT_ALT, snap_callback);
+    glfw.RegisterKey(GLFW_KEY_A, start_server_temp);
+    glfw.RegisterKey(GLFW_KEY_S, start_client_temp);
 
     // Set projection matrix
     set_projection();
@@ -177,16 +197,6 @@ void Game::init_objects() {
             glm::vec2(0.0f, 0.0f),
             glm::vec2(20.0f, 20.0f));
     Pages.push_back(ActivePage);
-    GameObject *test = new GameObject(
-            glm::vec2(1.0f, 1.0f),
-            glm::vec2(98.0f, 98.0f),
-            ResourceManager::GetTexture("goblin"));
-    GameObject *orc = new GameObject(
-            glm::vec2(2.0f, 1.0f),
-            glm::vec2(98.0f, 98.0f),
-            ResourceManager::GetTexture("orcling"));
-    ActivePage->PlacePiece(test);
-    ActivePage->PlacePiece(orc);
 }
 
 void Game::set_projection() {
@@ -269,6 +279,8 @@ void Game::UpdateMouse() {
     }
 }
 
+bool registered = false;
+
 void Game::Update(float dt) {
     ProcessUIEvents();
     ActivePage->Update(dt);
@@ -276,6 +288,14 @@ void Game::Update(float dt) {
         ActivePage->UpdatePlacing(MousePos);
     }
     UpdateMouse();
+    if (ClientServer::Started()) {
+        static ClientServer &cs = ClientServer::GetInstance();
+        cs.Update();
+        if (!registered) {
+            register_network_callbacks();
+            registered = true;
+        }
+    }
 }
 
 void Game::Render() {
@@ -318,3 +338,123 @@ Page *Game::MakePage(std::string name) {
             glm::vec2(0.0f, 0.0f),
             glm::vec2(20.0f, 20.0f));
 }
+
+void Game::start_server(int key, int scancode, int action, int mod) {
+    ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
+    register_network_callbacks();
+}
+
+void Game::start_client(int key, int scancode, int action, int mod) {
+    ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
+    register_network_callbacks();
+}
+
+void Game::handle_page_add_piece(Util::NetworkData &&q) {
+    static ClientServer &cs = ClientServer::GetInstance();
+    auto *g = new GameObject(q.Parse<GameObject>());
+    if (ResourceManager::Images.find(g->Sprite.ImageUID) ==
+            ResourceManager::Images.end()) {
+        // Image isn't cached, need to request it
+        cs.RegisterPageChange("IMAGE_REQUEST", g->Sprite.ImageUID, "");
+    }
+    auto it = std::find_if(
+            Pages.begin(), Pages.end(), [q](Page *pg) {
+                return pg->Uid == q.Uid;
+            });
+    if (it != Pages.end()) {
+        (*it)->PlacePiece(g, false);
+    }
+}
+
+void Game::handle_page_move_piece(Util::NetworkData &&q) {
+    auto piece_data = q.Parse<Util::NetworkData>();
+    // Find the relevant page
+    // TODO Ideally this idiom will be replaced by something like another map
+    // for pieces in page
+    auto page_it = std::find_if(
+            Pages.begin(), Pages.end(), [q](Page *pg) {
+                return pg->Uid == q.Uid;
+            });
+    if (page_it != Pages.end()) {
+        Page *pg = *page_it;
+        // If the page is found, find the relevant piece
+        auto piece_it = std::find_if(
+                pg->Pieces.begin(),
+                pg->Pieces.end(),
+                [piece_data](GameObject *g) {
+                    return g->Uid == piece_data.Uid;
+                });
+        if (piece_it != pg->Pieces.end()) {
+            (*piece_it)->Position = piece_data.Parse<glm::vec2>();
+        }
+    }
+}
+
+void Game::handle_page_resize_piece(Util::NetworkData &&q) {
+    auto piece_data = q.Parse<Util::NetworkData>();
+    // Find the relevant page
+    // Ideally this idiom will be replaced by something like another map
+    // for pieces in page
+    auto page_it = std::find_if(
+            Pages.begin(), Pages.end(), [q](Page *pg) {
+                return pg->Uid == q.Uid;
+            });
+    if (page_it != Pages.end()) {
+        Page *pg = *page_it;
+        // If the page is found, find the relevant piece
+        auto piece_it = std::find_if(
+                pg->Pieces.begin(),
+                pg->Pieces.end(),
+                [piece_data](GameObject *g) {
+                    return g->Uid == piece_data.Uid;
+                });
+        if (piece_it != pg->Pieces.end()) {
+            (*piece_it)->Size = piece_data.Parse<glm::vec2>();
+        }
+    }
+}
+
+void Game::handle_new_image(Util::NetworkData &&q) {
+    ResourceManager::Images[q.Uid] = q.Parse<ImageData>();
+    // Check which gameobjects need this texture and apply it.
+    for (Page *pg : Pages) {
+        for (GameObject *go : pg->Pieces) {
+            if (go->Sprite.ImageUID == q.Uid) {
+                go->Sprite = ResourceManager::GetTexture(q.Uid);
+            }
+        }
+    }
+}
+
+void Game::handle_image_request(Util::NetworkData &&q) {
+    static ClientServer &cs = ClientServer::GetInstance();
+    if (ResourceManager::Images.find(q.Uid) != ResourceManager::Images.end()) {
+        cs.RegisterPageChange(
+                "NEW_IMAGE", q.Uid, ResourceManager::Images[q.Uid]);
+    }
+}
+
+void Game::register_network_callbacks() {
+    ClientServer &cs = ClientServer::GetInstance();
+    cs.RegisterCallback(
+            "MOVE_PIECE", [this](Util::NetworkData &&d) {
+                handle_page_move_piece(std::move(d));
+            });
+    cs.RegisterCallback(
+            "ADD_PIECE", [this](Util::NetworkData &&d) {
+                handle_page_add_piece(std::move(d));
+            });
+    cs.RegisterCallback(
+            "RESIZE_PIECE", [this](Util::NetworkData &&d) {
+                handle_page_resize_piece(std::move(d));
+            });
+    cs.RegisterCallback(
+            "NEW_IMAGE", [this](Util::NetworkData &&d) {
+                handle_new_image(std::move(d));
+            });
+    cs.RegisterCallback(
+            "IMAGE_REQUEST", [this](Util::NetworkData &&d) {
+                handle_image_request(std::move(d));
+            });
+}
+

@@ -60,13 +60,12 @@ std::shared_ptr<NetworkManager::NetworkQueue> NetworkManager::NetworkQueue::Subs
 }
 
 void NetworkManager::NetworkQueue::Push(std::vector<std::byte> ar) {
-    mtx.lock();
+    const std::lock_guard<std::mutex> lock(mtx);
     if (should_clear) {
         byte_ars.clear();
         should_clear = false;
     }
     byte_ars.push_back(ar);
-    mtx.unlock();
 }
 
 NetworkManager::network_object::~network_object() {
@@ -248,7 +247,7 @@ void NetworkManager::server::handle_read_header_connect(
 
 void NetworkManager::server::handle_header_action(const socket_ptr &sock) {
     // Need to lock due to accessing nm queues
-    mtx.lock();
+    const std::lock_guard<std::mutex> lock(mtx);
     static NetworkManager &nm = NetworkManager::GetInstance();
     // Service new clients
     if (read_msg.Header.Channel == "JOIN") {
@@ -266,7 +265,6 @@ void NetworkManager::server::handle_header_action(const socket_ptr &sock) {
             ptr.lock()->Push(read_msgs[sock].Msg());
         }
     }
-    mtx.unlock();
 }
 
 NetworkManager::client::client(
@@ -427,8 +425,8 @@ std::byte *NetworkManager::Message::Body() {
 const std::vector<std::byte> &NetworkManager::Message::Msg() {
     std::vector<std::byte> t(
             DataVec.begin() + MessageHeader::HeaderLength,
-            DataVec.begin() + MessageHeader::HeaderLength + Header.MessageLength +
-                    1);
+            DataVec.begin() + MessageHeader::HeaderLength +
+                    Header.MessageLength + 1);
     msg = t;
     return msg;
 }
