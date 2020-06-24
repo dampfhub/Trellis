@@ -5,7 +5,7 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
+    <Filter Include="MessageHeader Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
@@ -93,79 +93,79 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="game.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="shader.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="texture.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="resource_manager.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="sprite_renderer.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="camera.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="page.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="game_object.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="text_renderer.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="text_object.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imgui.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imgui_impl_glfw.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imgui_impl_opengl3.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imconfig.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imgui_internal.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imstb_rectpack.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imstb_textedit.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imstb_truetype.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="imfilebrowser.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="ui.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="util.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="page_ui.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
     <ClInclude Include="network_manager.h">
-      <Filter>Header Files</Filter>
+      <Filter>MessageHeader Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

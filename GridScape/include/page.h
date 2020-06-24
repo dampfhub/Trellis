@@ -32,6 +32,8 @@ public:
     Camera2D *Camera;
     PageUI *UserInterface;
 
+    uint64_t Uid;
+
     ~Page();
 
     Page(
@@ -39,7 +41,9 @@ public:
             Texture2D board_tex,
             SpriteRenderer *renderer,
             glm::vec2 pos = glm::vec2(0.0f, 0.0f),
-            glm::vec2 size = glm::vec2(100.0f, 100.0f));
+            glm::vec2 size = glm::vec2(100.0f, 100.0f),
+            // TODO: This should be 0 when we are sending pages correctly
+            uint64_t uid = 1);
 
     // Mouse event handlers
     void HandleLeftClickPress(glm::ivec2 mouse_pos);
@@ -70,10 +74,12 @@ public:
     void Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer);
 
     MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject *object);
+
     MouseHoverType CurrentHoverType(glm::ivec2 mouse_pos);
 
-private:
     std::list<GameObject *> Pieces;
+
+private:
     std::list<GameObject *>::iterator CurrentSelection = Pieces.end();
     glm::ivec2 DragOrigin = glm::ivec2(0);
     int BorderWidth = 5;
@@ -81,6 +87,7 @@ private:
     void SnapPieceToGrid(GameObject *piece, int increments);
 
     glm::vec2 ScreenPosToWorldPos(glm::ivec2 pos);
+
     glm::vec2 WorldPosToScreenPos(glm::ivec2 pos);
 
     void MoveCurrentSelection(glm::vec2 mouse_pos);

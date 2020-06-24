@@ -3,21 +3,28 @@
 #include "text_renderer.h"
 #include "text_object.h"
 #include "game.h"
+#include "util.h"
+#include "client_server.h"
 
 Page::Page(
         std::string name,
         Texture2D board_tex,
         SpriteRenderer *renderer,
         glm::vec2 pos,
-        glm::vec2 size) : Name(name),
+        glm::vec2 size,
+        uint64_t uid) : Name(name),
         Board_Texture(board_tex),
         Renderer(renderer),
         Position(pos),
-        Size(size) {
+        Size(size),
+        Uid(uid) {
     Renderer->Resize((int)Size.x);
     Camera = new Camera2D(
             200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = new PageUI();
+    if (Uid == 0) {
+        Uid = Util::generate_uid();
+    }
 }
 
 Page::~Page() {
@@ -33,7 +40,7 @@ void Page::PlacePiece(GameObject *piece, bool grid_locked) {
                 piece->Position.x * TILE_DIMENSIONS + 1,
                 piece->Position.y * TILE_DIMENSIONS + 1);
     }
-    Pieces.push_back(piece);
+    Pieces.push_front(piece);
 }
 
 void Page::BeginPlacePiece(GameObject *piece) {
@@ -83,9 +90,11 @@ void Page::HandleUIEvents() {
 
 MouseHoverType Page::HoverType(glm::ivec2 mouse_pos, GameObject *object) {
     glm::ivec2 NW_corner_screen = WorldPosToScreenPos(object->Position);
-    glm::ivec2 SE_corner_screen = WorldPosToScreenPos(object->Position + object->Size);
+    glm::ivec2 SE_corner_screen =
+            WorldPosToScreenPos(object->Position + object->Size);
     if (mouse_pos.x < NW_corner_screen.x || mouse_pos.y < NW_corner_screen.y ||
-        mouse_pos.x > SE_corner_screen.x || mouse_pos.y > SE_corner_screen.y) {
+            mouse_pos.x > SE_corner_screen.x ||
+            mouse_pos.y > SE_corner_screen.y) {
         return NONE;
     }
     glm::ivec2 size_screen = SE_corner_screen - NW_corner_screen;
@@ -125,12 +134,19 @@ MouseHoverType Page::CurrentHoverType(glm::ivec2 mouse_pos) {
 }
 
 void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
-    CurrentSelection = Pieces.end();
     // Piece that is currently being placed
     if (Placing) {
         Placing = false;
+        // Send piece over the wire
+        GameObject *piece = (*CurrentSelection);
+        if (ClientServer::Started()) {
+            ClientServer &ns = ClientServer::GetInstance();
+            ns.RegisterPageChange("ADD_PIECE", Uid, *piece);
+        }
+        CurrentSelection = Pieces.end();
         return;
     }
+    CurrentSelection = Pieces.end();
     for (auto it = Pieces.begin(); it != Pieces.end(); it++) {
         MouseHoverType hover = HoverType(mouse_pos, *it);
         if (hover != NONE && (*it)->Clickable) {
@@ -173,16 +189,17 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
         GameObject *piece = *CurrentSelection;
+        glm::vec2 prev_pos = piece->Position;
+        glm::vec2 prev_size = piece->Size;
         if (Placing) {
-            piece->Position = world_mouse - piece->Size/2.0f;
+            piece->Position = world_mouse - piece->Size / 2.0f;
             SnapPieceToGrid(*CurrentSelection, inc);
         } else if (piece->FollowMouse) {
-            piece->Position = piece->initialPos +
-                    world_mouse - (glm::vec2)DragOrigin;
+            piece->Position =
+                    piece->initialPos + world_mouse - (glm::vec2)DragOrigin;
             SnapPieceToGrid(*CurrentSelection, inc);
         } else if (piece->ScaleMouse) {
-            glm::vec2 diff = world_mouse -
-                    (glm::vec2)DragOrigin;
+            glm::vec2 diff = world_mouse - (glm::vec2)DragOrigin;
             switch (piece->ScaleEdges.first) {
                 case 1:
                     piece->Size.x = fmax(
@@ -195,8 +212,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                     break;
                 case -1:
                     piece->Size.x = fmax(
-                            DragOrigin.x +
-                                    piece->initialSize.x - world_mouse.x,
+                            DragOrigin.x + piece->initialSize.x - world_mouse.x,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
                             piece->Size.x / (TILE_DIMENSIONS / (float)inc) +
@@ -219,8 +235,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                     break;
                 case -1:
                     piece->Size.y = fmax(
-                            DragOrigin.y +
-                                    piece->initialSize.y - world_mouse.y,
+                            DragOrigin.y + piece->initialSize.y - world_mouse.y,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
                             piece->Size.y / (TILE_DIMENSIONS / (float)inc) +
@@ -230,6 +245,21 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                             piece->initialPos.y + piece->initialSize.y -
                                     piece->Size.y;
                     break;
+            }
+        }
+        if (ClientServer::Started()) {
+            static ClientServer &cs = ClientServer::GetInstance();
+            if (piece->Position != prev_pos) {
+                cs.RegisterPageChange(
+                        "MOVE_PIECE",
+                        Uid,
+                        Util::NetworkData(piece->Position, piece->Uid));
+            }
+            if (piece->Size != prev_size) {
+                cs.RegisterPageChange(
+                        "RESIZE_PIECE",
+                        Uid,
+                        Util::NetworkData(piece->Size, piece->Uid));
             }
         }
     }
