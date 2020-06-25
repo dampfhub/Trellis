@@ -2,7 +2,6 @@
 #define GLFW_HANDLER_H
 
 #include <GLFW/glfw3.h>
-#include <functional>
 
 typedef void (*keyfunc)(int key, int scancode, int action, int mods);
 
