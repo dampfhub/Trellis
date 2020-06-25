@@ -2,6 +2,7 @@
 #include "glfw_handler.h"
 
 #include <iostream>
+#include <iterator>
 
 UI::~UI() {
     delete FileDialog;
@@ -11,7 +12,7 @@ UI::UI() {
     FileDialog = new ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
 }
 
-void UI::Draw(Page::page_vector_t &pages, Page::page_vector_it_t active_page) {
+void UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     ImGui::ShowDemoWindow();
     // Display file dialog if it's open
     FileDialog->Display();
@@ -20,7 +21,7 @@ void UI::Draw(Page::page_vector_t &pages, Page::page_vector_it_t active_page) {
     DrawPageSettings(active_page);
 }
 
-void UI::DrawMenu(Page::page_vector_t &pages, Page::page_vector_it_t active_page) {
+void UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
 
     (void)pages;
 
@@ -108,7 +109,7 @@ void UI::DrawMenu(Page::page_vector_t &pages, Page::page_vector_it_t active_page
     }
     ImGui::End();
 }
-void UI::DrawPageSelect(Page::page_vector_t &pages, Page::page_vector_it_t active_page) {
+void UI::DrawPageSelect(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     if (!PageSelectOpen) {
         return;
     }
@@ -142,7 +143,7 @@ void UI::DrawPageSelect(Page::page_vector_t &pages, Page::page_vector_it_t activ
     ImGui::End();
 }
 
-void UI::DrawPageSettings(Page::page_vector_it_t active_page) {
+void UI::DrawPageSettings(Page::page_list_it_t &active_page) {
     if (!PageSettingsOpen) {
         return;
     }
@@ -167,8 +168,10 @@ void UI::DrawPageSettings(Page::page_vector_it_t active_page) {
     ImGui::End();
 }
 
-std::vector<std::unique_ptr<Page>>::iterator UI::GetActivePage(std::vector<std::unique_ptr<Page>> &pages) {
-    return pages.begin() + ActivePage;
+Page::page_list_it_t UI::GetActivePage(Page::page_list_t &pages) {
+    auto it = pages.begin();
+    std::advance(it, ActivePage);
+    return it;
 }
 
 void UI::ClearFlags() {

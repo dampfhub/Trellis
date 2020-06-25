@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <unordered_map>
+#include <list>
+#include <functional>
 
 #include "page.h"
 #include "util.h"
@@ -31,9 +33,10 @@ public:
     } LeftClick, RightClick, MiddleClick;
     glm::ivec2 MousePos;
     int ScrollDirection;
-    std::vector<std::unique_ptr<Page>> Pages;
-    std::vector<std::unique_ptr<Page>>::iterator ActivePage = Pages.end();
-    std::unordered_map<uint64_t, Page &> PagesMap;
+
+    Page::page_list_t Pages;
+    Page::page_list_it_t ActivePage = Pages.end();
+    std::unordered_map<uint64_t, std::reference_wrapper<Page>> PagesMap;
 
     bool snapping = true;
 

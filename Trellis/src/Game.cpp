@@ -189,7 +189,7 @@ void Game::init_objects() {
             ResourceManager::GetShader("sprite"), 20);
     UserInterface = new UI();
     MakePage("Default");
-    ActivePage = Pages.end() - 1;
+    ActivePage = Pages.begin();
 }
 
 void Game::set_projection() {
@@ -330,7 +330,7 @@ void Game::MakePage(std::string name) {
             std::move(BoardRenderer),
             glm::vec2(0.0f, 0.0f),
             glm::vec2(20.0f, 20.0f));
-    PagesMap.insert({ pg->Uid, *pg });
+    PagesMap.insert(std::make_pair(pg->Uid, std::ref(*pg)));
     Pages.push_back(std::move(pg));
 }
 
@@ -355,8 +355,9 @@ void Game::handle_page_add_piece(Util::NetworkData &&q) {
     // See if page exists and place piece new in it if it does
     auto it = PagesMap.find(q.Uid);
     if (it != PagesMap.end()) {
-        (*it).second.PiecesMap.insert({ g->Uid, *g });
-        (*it).second.Pieces.push_front(std::move(g));
+        Page &pg = (*it).second;
+        pg.PiecesMap.insert(std::make_pair(g->Uid, std::ref(*g)));
+        pg.Pieces.push_front(std::move(g));
     }
 }
 
@@ -369,7 +370,8 @@ void Game::handle_page_move_piece(Util::NetworkData &&q) {
         // If the page is found, find the relevant piece
         auto piece_it = pg.PiecesMap.find(piece_data.Uid);
         if (piece_it != pg.PiecesMap.end()) {
-            (*piece_it).second.Position = piece_data.Parse<glm::vec2>();
+            GameObject &piece = (*piece_it).second;
+            piece.Position = piece_data.Parse<glm::vec2>();
         }
     }
 }
@@ -383,7 +385,8 @@ void Game::handle_page_resize_piece(Util::NetworkData &&q) {
         // If the page is found, find the relevant piece
         auto piece_it = pg.PiecesMap.find(piece_data.Uid);
         if (piece_it != pg.PiecesMap.end()) {
-            (*piece_it).second.Size = piece_data.Parse<glm::vec2>();
+            GameObject &piece = (*piece_it).second;
+            piece.Size = piece_data.Parse<glm::vec2>();
         }
     }
 }

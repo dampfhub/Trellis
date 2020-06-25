@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <functional>
 
 #include "camera.h"
 #include "game_object.h"
@@ -21,8 +22,8 @@ class Page {
 public:
     static constexpr float TILE_DIMENSIONS = 100.0f;
 
-    using page_vector_t = std::vector<std::unique_ptr<Page>>;
-    using page_vector_it_t = std::vector<std::unique_ptr<Page>>::iterator;
+    using page_list_t = std::list<std::unique_ptr<Page>>;
+    using page_list_it_t = std::list<std::unique_ptr<Page>>::iterator;
 
     glm::mat4 View = glm::mat4(1.0f);
 
@@ -80,7 +81,7 @@ public:
     MouseHoverType CurrentHoverType(glm::ivec2 mouse_pos);
 
     std::list<std::unique_ptr<GameObject>> Pieces;
-    std::unordered_map<uint64_t, GameObject&> PiecesMap;
+    std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
 
 private:
     std::list<std::unique_ptr<GameObject>>::iterator CurrentSelection = Pieces.end();
