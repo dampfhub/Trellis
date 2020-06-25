@@ -1,4 +1,5 @@
 #include <iostream>
+#include <functional>
 
 #include "game.h"
 #include "glfw_handler.h"
@@ -10,6 +11,8 @@
 #include "util.h"
 #include "GUI.h"
 #include "client_server.h"
+
+using std::bind;
 
 SpriteRenderer *ObjectRenderer;
 UI *UserInterface;
@@ -30,92 +33,52 @@ static void close_window(int key, int scancode, int action, int mods) {
     glfw.SetWindowShouldClose(1);
 }
 
-static void window_size_callback(int width, int height) {
-    static Game &game = Game::GetInstance();
-    game.SetScreenDims(width, height);
+void Game::window_size_callback(int width, int height) {
+    SetScreenDims(width, height);
 }
 
-static void mouse_pos_callback(double x, double y) {
-    static Game &game = Game::GetInstance();
-    game.MousePos.x = x;
-    game.MousePos.y = y;
+void Game::mouse_pos_callback(double x, double y) {
+    MousePos.x = x;
+    MousePos.y = y;
 }
 
-static void left_click_press(int key, int action, int mod) {
-    (void)key;
-    (void)action;
-    (void)mod;
-
-    static Game &game = Game::GetInstance();
-    game.LeftClick = Game::PRESS;
+void Game::left_click_press() {
+    LeftClick = Game::PRESS;
 }
 
-static void left_click_release(int key, int action, int mod) {
-    (void)key;
-    (void)action;
-    (void)mod;
-
-    static Game &game = Game::GetInstance();
-    game.LeftClick = Game::RELEASE;
+void Game::left_click_release() {
+    LeftClick = Game::RELEASE;
 }
 
-static void right_click_press(int key, int action, int mod) {
-    (void)key;
-    (void)action;
-    (void)mod;
-
-    static Game &game = Game::GetInstance();
-    game.RightClick = Game::PRESS;
+void Game::right_click_press() {
+    RightClick = Game::PRESS;
 }
 
-static void right_click_release(int key, int action, int mod) {
-    (void)key;
-    (void)action;
-    (void)mod;
-
-    static Game &game = Game::GetInstance();
-    game.RightClick = Game::RELEASE;
+void Game::right_click_release() {
+    RightClick = Game::RELEASE;
 }
 
-static void middle_click_press(int key, int action, int mod) {
-    (void)key;
-    (void)action;
-    (void)mod;
-
-    static Game &game = Game::GetInstance();
-    game.MiddleClick = Game::PRESS;
+void Game::middle_click_press() {
+    MiddleClick = Game::PRESS;
 }
 
-static void middle_click_release(int key, int action, int mod) {
-    (void)key;
-    (void)action;
-    (void)mod;
-
-    static Game &game = Game::GetInstance();
-    game.MiddleClick = Game::RELEASE;
+void Game::middle_click_release() {
+    MiddleClick = Game::RELEASE;
 }
 
-void scroll_callback(double xoffset, double yoffset) {
-    (void)xoffset;
-
-    static Game &game = Game::GetInstance();
-    game.ScrollDirection = (int)yoffset;
+void Game::scroll_callback(double yoffset) {
+    ScrollDirection = (int)yoffset;
 }
 
-void snap_callback(int key, int scancode, int action, int mod) {
-    (void)key;
-    (void)scancode;
-    (void)mod;
-
-    static Game &game = Game::GetInstance();
+void Game::snap_callback(int action) {
     if (action == GLFW_PRESS) {
-        game.snapping = false;
+        snapping = false;
     } else if (action == GLFW_RELEASE) {
-        game.snapping = true;
+        snapping = true;
     }
 }
 
-void start_server_temp(int key, int scancode, int action, int mod) {
+void Game::start_server_temp(int action) {
     if (action == GLFW_PRESS) {
         ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
         Server *s = reinterpret_cast<Server *>(&cs);
@@ -124,7 +87,7 @@ void start_server_temp(int key, int scancode, int action, int mod) {
     }
 }
 
-void start_client_temp(int key, int scancode, int action, int mod) {
+void Game::start_client_temp(int action) {
     if (action == GLFW_PRESS) {
         ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
         Client *c = reinterpret_cast<Client *>(&cs);
@@ -133,24 +96,40 @@ void start_client_temp(int key, int scancode, int action, int mod) {
 }
 
 Game::Game() {
+    using namespace std::placeholders;
+
     GLFW &glfw = GLFW::GetInstance();
     init_shaders();
     init_textures();
     init_objects();
 
-    glfw.RegisterWindowSizeCallback(window_size_callback);
+    glfw.RegisterWindowSizeCallback(
+            bind(
+                    &Game::window_size_callback, this, _1, _2));
     glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
-    glfw.RegisterMousePosCallback(mouse_pos_callback);
-    glfw.RegisterScroll(scroll_callback);
-    glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_LEFT, left_click_press);
-    glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_LEFT, left_click_release);
-    glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_RIGHT, right_click_press);
-    glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_RIGHT, right_click_release);
-    glfw.RegisterMousePress(GLFW_MOUSE_BUTTON_MIDDLE, middle_click_press);
-    glfw.RegisterMouseRelease(GLFW_MOUSE_BUTTON_MIDDLE, middle_click_release);
-    glfw.RegisterKey(GLFW_KEY_LEFT_ALT, snap_callback);
-    glfw.RegisterKey(GLFW_KEY_A, start_server_temp);
-    glfw.RegisterKey(GLFW_KEY_S, start_client_temp);
+    glfw.RegisterMousePosCallback(
+            bind(
+                    &Game::mouse_pos_callback, this, _1, _2));
+    glfw.RegisterScroll(bind(&Game::scroll_callback, this, _2));
+    glfw.RegisterMousePress(
+            GLFW_MOUSE_BUTTON_LEFT, bind(&Game::left_click_press, this));
+    glfw.RegisterMouseRelease(
+            GLFW_MOUSE_BUTTON_LEFT, bind(&Game::left_click_release, this));
+    glfw.RegisterMousePress(
+            GLFW_MOUSE_BUTTON_RIGHT, bind(&Game::right_click_press, this));
+    glfw.RegisterMouseRelease(
+            GLFW_MOUSE_BUTTON_RIGHT, bind(&Game::right_click_release, this));
+    glfw.RegisterMousePress(
+            GLFW_MOUSE_BUTTON_MIDDLE, bind(&Game::middle_click_press, this));
+    glfw.RegisterMouseRelease(
+            GLFW_MOUSE_BUTTON_MIDDLE, bind(&Game::middle_click_release, this));
+    auto fn = bind(&Game::snap_callback, this, _3);
+    fn(1, 2, 3);
+    glfw.RegisterKey(GLFW_KEY_LEFT_ALT, bind(&Game::snap_callback, this, _3));
+    glfw.RegisterKey(
+            GLFW_KEY_A, bind(&Game::start_server_temp, this, _3));
+    glfw.RegisterKey(
+            GLFW_KEY_S, bind(&Game::start_client_temp, this, _3));
 
     // Set projection matrix
     set_projection();
