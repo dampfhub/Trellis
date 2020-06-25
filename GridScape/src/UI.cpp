@@ -26,7 +26,7 @@ void UI::DrawMenu(std::vector<Page *> pages, Page *active_page) {
 
     GLFW &glfw = GLFW::GetInstance();
     ImGui::Begin(
-            "D&D",
+            "Trellis",
             nullptr,
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
