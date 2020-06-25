@@ -118,17 +118,14 @@ void snap_callback(int key, int scancode, int action, int mod) {
 void start_server_temp(int key, int scancode, int action, int mod) {
     if (action == GLFW_PRESS) {
         ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
-        Server *s = reinterpret_cast<Server *>(&cs);
-        // TODO: Make this function virtual, always take 3 arguments, some defaulted
-        s->Start(5005);
+        cs.Start(5005);
     }
 }
 
 void start_client_temp(int key, int scancode, int action, int mod) {
     if (action == GLFW_PRESS) {
         ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
-        Client *c = reinterpret_cast<Client *>(&cs);
-        c->Start("Test Client", "localhost", 5005);
+        cs.Start(5005, "Test Client", "localhost");
     }
 }
 
@@ -321,6 +318,11 @@ void Game::ProcessUIEvents() {
     UserInterface->ClearFlags();
 }
 
+void Game::AddPage(std::unique_ptr<Page> &&pg) {
+    PagesMap.insert(std::make_pair(pg->Uid, std::ref(*pg)));
+    Pages.push_back(std::move(pg));
+}
+
 void Game::MakePage(std::string name) {
     auto BoardRenderer = std::make_unique<SpriteRenderer>(
             ResourceManager::GetShader("sprite"), 20);
@@ -330,8 +332,7 @@ void Game::MakePage(std::string name) {
             std::move(BoardRenderer),
             glm::vec2(0.0f, 0.0f),
             glm::vec2(20.0f, 20.0f));
-    PagesMap.insert(std::make_pair(pg->Uid, std::ref(*pg)));
-    Pages.push_back(std::move(pg));
+    AddPage(std::move(pg));
 }
 
 void Game::start_server(int key, int scancode, int action, int mod) {
@@ -356,8 +357,7 @@ void Game::handle_page_add_piece(Util::NetworkData &&q) {
     auto it = PagesMap.find(q.Uid);
     if (it != PagesMap.end()) {
         Page &pg = (*it).second;
-        pg.PiecesMap.insert(std::make_pair(g->Uid, std::ref(*g)));
-        pg.Pieces.push_front(std::move(g));
+        pg.AddPiece(std::move(g));
     }
 }
 
