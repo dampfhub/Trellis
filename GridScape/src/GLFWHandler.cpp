@@ -106,7 +106,7 @@ GLFW::GLFW() {
     glfwWindowHint(GLFW_RESIZABLE, true);
 
     window = glfwCreateWindow(
-            screen_width, screen_height, "Dnd", nullptr, nullptr);
+            screen_width, screen_height, "Trellis", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
     glfwSetKeyCallback(window, key_handler);
