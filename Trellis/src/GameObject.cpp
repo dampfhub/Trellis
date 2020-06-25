@@ -31,7 +31,3 @@ void GameObject::Draw(SpriteRenderer *renderer, int border_pixel_width) {
     renderer->DrawSprite(
             Sprite, Position, border_pixel_width, Size, Rotation, Color);
 }
-
-glm::vec2 GameObject::DistanceFromTopLeft(glm::vec2 pos) {
-    return pos - Position;
-}

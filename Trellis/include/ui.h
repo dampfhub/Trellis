@@ -31,12 +31,12 @@ public:
 
 	~UI();
 	UI();
-	void Draw(std::vector <Page *> pages, Page * active_page);
-	void DrawMenu(std::vector <Page *> pages, Page * active_page);
-	void DrawPageSelect(std::vector<Page *> pages, Page * active_page);
-	void DrawPageSettings(Page * active_page);
+	void Draw(Page::page_vector_t &pages, Page::page_vector_it_t active_page);
+	void DrawMenu(Page::page_vector_t &pages, Page::page_vector_it_t active_page);
+	void DrawPageSelect(Page::page_vector_t &pages, Page::page_vector_it_t active_page);
+	void DrawPageSettings(Page::page_vector_it_t active_page);
 
-	Page * GetActivePage(std::vector<Page *> pages);
+    std::vector<std::unique_ptr<Page>>::iterator GetActivePage(std::vector<std::unique_ptr<Page>> &pages);
 	void ClearFlags();
 
 private:
