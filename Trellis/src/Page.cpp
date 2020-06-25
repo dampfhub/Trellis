@@ -9,47 +9,34 @@
 Page::Page(
         std::string name,
         Texture2D board_tex,
-        SpriteRenderer *renderer,
+        std::unique_ptr <SpriteRenderer> &&renderer,
         glm::vec2 pos,
         glm::vec2 size,
         uint64_t uid) : Name(name),
         Board_Texture(board_tex),
-        Renderer(renderer),
+        Renderer(std::move(renderer)),
         Position(pos),
         Size(size),
         Uid(uid) {
     Renderer->Resize((int)Size.x);
-    Camera = new Camera2D(
+    Camera = std::make_unique<Camera2D>(
             200.0f, glm::vec2(0.4f, 2.5f));
-    UserInterface = new PageUI();
+    UserInterface = std::make_unique<PageUI>();
     if (Uid == 0) {
         Uid = Util::generate_uid();
     }
 }
 
 Page::~Page() {
-    for (GameObject *piece : Pieces) {
-        delete piece;
-    }
-    delete Camera;
 }
 
-void Page::PlacePiece(GameObject *piece, bool grid_locked) {
-    if (grid_locked) {
-        piece->Position = glm::vec2(
-                piece->Position.x * TILE_DIMENSIONS + 1,
-                piece->Position.y * TILE_DIMENSIONS + 1);
-    }
-    Pieces.push_front(piece);
-}
-
-void Page::BeginPlacePiece(GameObject *piece) {
-    Pieces.push_front(piece);
-    CurrentSelection = Pieces.begin();
+void Page::BeginPlacePiece(std::unique_ptr <GameObject> &&piece) {
     Placing = true;
     piece->FollowMouse = true;
     piece->initialSize = piece->Size;
     piece->initialPos = piece->Position;
+    Pieces.push_front(std::move(piece));
+    CurrentSelection = Pieces.begin();
 }
 
 void Page::Update(float dt) {
@@ -88,10 +75,11 @@ void Page::HandleUIEvents() {
     UserInterface->ClearFlags();
 }
 
-MouseHoverType Page::HoverType(glm::ivec2 mouse_pos, GameObject *object) {
-    glm::ivec2 NW_corner_screen = WorldPosToScreenPos(object->Position);
+MouseHoverType Page::HoverType(
+        glm::ivec2 mouse_pos, GameObject &object) {
+    glm::ivec2 NW_corner_screen = WorldPosToScreenPos(object.Position);
     glm::ivec2 SE_corner_screen =
-            WorldPosToScreenPos(object->Position + object->Size);
+            WorldPosToScreenPos(object.Position + object.Size);
     if (mouse_pos.x < NW_corner_screen.x || mouse_pos.y < NW_corner_screen.y ||
             mouse_pos.x > SE_corner_screen.x ||
             mouse_pos.y > SE_corner_screen.y) {
@@ -130,7 +118,7 @@ MouseHoverType Page::CurrentHoverType(glm::ivec2 mouse_pos) {
     if (CurrentSelection == Pieces.end()) {
         return NONE;
     }
-    return HoverType(mouse_pos, *CurrentSelection);
+    return HoverType(mouse_pos, **CurrentSelection);
 }
 
 void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
@@ -138,26 +126,26 @@ void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
     if (Placing) {
         Placing = false;
         // Send piece over the wire
-        GameObject *piece = (*CurrentSelection);
+        GameObject &piece = **CurrentSelection;
         if (ClientServer::Started()) {
             ClientServer &ns = ClientServer::GetInstance();
-            ns.RegisterPageChange("ADD_PIECE", Uid, *piece);
+            ns.RegisterPageChange("ADD_PIECE", Uid, piece);
         }
         CurrentSelection = Pieces.end();
         return;
     }
     CurrentSelection = Pieces.end();
     for (auto it = Pieces.begin(); it != Pieces.end(); it++) {
-        MouseHoverType hover = HoverType(mouse_pos, *it);
+        MouseHoverType hover = HoverType(mouse_pos, **it);
         if (hover != NONE && (*it)->Clickable) {
             CurrentSelection = it;
-            GameObject *piece = *it;
+            GameObject &piece = **it;
             if (hover == CENTER) {
-                piece->FollowMouse = true;
-                piece->ScaleMouse = false;
+                piece.FollowMouse = true;
+                piece.ScaleMouse = false;
             } else {
-                piece->FollowMouse = false;
-                piece->ScaleMouse = true;
+                piece.FollowMouse = false;
+                piece.ScaleMouse = true;
                 if (hover == N || hover == NE || hover == NW) {
                     (*it)->ScaleEdges.second = -1;
                 }
@@ -188,78 +176,78 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
     float closest;
     glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
-        GameObject *piece = *CurrentSelection;
-        glm::vec2 prev_pos = piece->Position;
-        glm::vec2 prev_size = piece->Size;
+        GameObject &piece = **CurrentSelection;
+        glm::vec2 prev_pos = piece.Position;
+        glm::vec2 prev_size = piece.Size;
         if (Placing) {
-            piece->Position = world_mouse - piece->Size / 2.0f;
-            SnapPieceToGrid(*CurrentSelection, inc);
-        } else if (piece->FollowMouse) {
-            piece->Position =
-                    piece->initialPos + world_mouse - (glm::vec2)DragOrigin;
-            SnapPieceToGrid(*CurrentSelection, inc);
-        } else if (piece->ScaleMouse) {
+            piece.Position = world_mouse - piece.Size / 2.0f;
+            SnapPieceToGrid(piece, inc);
+        } else if (piece.FollowMouse) {
+            piece.Position =
+                    piece.initialPos + world_mouse - (glm::vec2)DragOrigin;
+            SnapPieceToGrid(piece, inc);
+        } else if (piece.ScaleMouse) {
             glm::vec2 diff = world_mouse - (glm::vec2)DragOrigin;
-            switch (piece->ScaleEdges.first) {
+            switch (piece.ScaleEdges.first) {
                 case 1:
-                    piece->Size.x = fmax(
-                            piece->initialSize.x + diff.x,
+                    piece.Size.x = fmax(
+                            piece.initialSize.x + diff.x,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
-                            piece->Size.x / (TILE_DIMENSIONS / (float)inc) +
+                            piece.Size.x / (TILE_DIMENSIONS / (float)inc) +
                                     0.5);
-                    piece->Size.x = closest * TILE_DIMENSIONS / (float)inc - 2;
+                    piece.Size.x = closest * TILE_DIMENSIONS / (float)inc - 2;
                     break;
                 case -1:
-                    piece->Size.x = fmax(
-                            DragOrigin.x + piece->initialSize.x - world_mouse.x,
+                    piece.Size.x = fmax(
+                            DragOrigin.x + piece.initialSize.x - world_mouse.x,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
-                            piece->Size.x / (TILE_DIMENSIONS / (float)inc) +
+                            piece.Size.x / (TILE_DIMENSIONS / (float)inc) +
                                     0.5);
-                    piece->Size.x = closest * TILE_DIMENSIONS / (float)inc - 2;
-                    piece->Position.x =
-                            piece->initialPos.x + piece->initialSize.x -
-                                    piece->Size.x;
+                    piece.Size.x = closest * TILE_DIMENSIONS / (float)inc - 2;
+                    piece.Position.x =
+                            piece.initialPos.x + piece.initialSize.x -
+                                    piece.Size.x;
                     break;
             }
-            switch (piece->ScaleEdges.second) {
+            switch (piece.ScaleEdges.second) {
                 case 1:
-                    piece->Size.y = fmax(
-                            piece->initialSize.y + diff.y,
+                    piece.Size.y = fmax(
+                            piece.initialSize.y + diff.y,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
-                            piece->Size.y / (TILE_DIMENSIONS / (float)inc) +
+                            piece.Size.y / (TILE_DIMENSIONS / (float)inc) +
                                     0.5);
-                    piece->Size.y = closest * TILE_DIMENSIONS / (float)inc - 2;
+                    piece.Size.y = closest * TILE_DIMENSIONS / (float)inc - 2;
                     break;
                 case -1:
-                    piece->Size.y = fmax(
-                            DragOrigin.y + piece->initialSize.y - world_mouse.y,
+                    piece.Size.y = fmax(
+                            DragOrigin.y + piece.initialSize.y - world_mouse.y,
                             TILE_DIMENSIONS / (float)inc);
                     closest = floor(
-                            piece->Size.y / (TILE_DIMENSIONS / (float)inc) +
+                            piece.Size.y / (TILE_DIMENSIONS / (float)inc) +
                                     0.5);
-                    piece->Size.y = closest * TILE_DIMENSIONS / (float)inc - 2;
-                    piece->Position.y =
-                            piece->initialPos.y + piece->initialSize.y -
-                                    piece->Size.y;
+                    piece.Size.y = closest * TILE_DIMENSIONS / (float)inc - 2;
+                    piece.Position.y =
+                            piece.initialPos.y + piece.initialSize.y -
+                                    piece.Size.y;
                     break;
             }
         }
         if (ClientServer::Started()) {
             static ClientServer &cs = ClientServer::GetInstance();
-            if (piece->Position != prev_pos) {
+            if (piece.Position != prev_pos) {
                 cs.RegisterPageChange(
                         "MOVE_PIECE",
                         Uid,
-                        Util::NetworkData(piece->Position, piece->Uid));
+                        Util::NetworkData(piece.Position, piece.Uid));
             }
-            if (piece->Size != prev_size) {
+            if (piece.Size != prev_size) {
                 cs.RegisterPageChange(
                         "RESIZE_PIECE",
                         Uid,
-                        Util::NetworkData(piece->Size, piece->Uid));
+                        Util::NetworkData(piece.Size, piece.Uid));
             }
         }
     }
@@ -302,12 +290,12 @@ void Page::HandleScrollWheel(glm::ivec2 mouse_pos, int scroll_direction) {
     View = Camera->CalculateView(Size * TILE_DIMENSIONS);
 }
 
-void Page::SnapPieceToGrid(GameObject *piece, int increments) {
+void Page::SnapPieceToGrid(GameObject &piece, int increments) {
     float closest_x = (float)floor(
-            piece->Position.x / (TILE_DIMENSIONS / (float)increments) + 0.5);
+            piece.Position.x / (TILE_DIMENSIONS / (float)increments) + 0.5);
     float closest_y = (float)floor(
-            piece->Position.y / (TILE_DIMENSIONS / (float)increments) + 0.5);
-    piece->Position = glm::vec2(
+            piece.Position.y / (TILE_DIMENSIONS / (float)increments) + 0.5);
+    piece.Position = glm::vec2(
             closest_x * TILE_DIMENSIONS / (float)increments + 1,
             closest_y * TILE_DIMENSIONS / (float)increments + 1);
 }

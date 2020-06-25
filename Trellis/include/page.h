@@ -4,12 +4,15 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <functional>
 
 #include "camera.h"
 #include "game_object.h"
 #include "sprite_renderer.h"
 #include "text_renderer.h"
 #include "page_ui.h"
+
 
 enum MouseHoverType {
     NONE, N, E, S, W, NE, SE, SW, NW, CENTER
@@ -19,18 +22,21 @@ class Page {
 public:
     static constexpr float TILE_DIMENSIONS = 100.0f;
 
+    using page_list_t = std::list<std::unique_ptr<Page>>;
+    using page_list_it_t = std::list<std::unique_ptr<Page>>::iterator;
+
     glm::mat4 View = glm::mat4(1.0f);
 
     bool Placing = false;
 
     std::string Name;
     Texture2D Board_Texture;
-    SpriteRenderer *Renderer;
+    std::unique_ptr<SpriteRenderer> Renderer;
 
     glm::vec2 Position, Size;
 
-    Camera2D *Camera;
-    PageUI *UserInterface;
+    std::unique_ptr<Camera2D> Camera;
+    std::unique_ptr<PageUI> UserInterface;
 
     uint64_t Uid;
 
@@ -39,7 +45,7 @@ public:
     Page(
             std::string name,
             Texture2D board_tex,
-            SpriteRenderer *renderer,
+            std::unique_ptr<SpriteRenderer> &&renderer,
             glm::vec2 pos = glm::vec2(0.0f, 0.0f),
             glm::vec2 size = glm::vec2(100.0f, 100.0f),
             // TODO: This should be 0 when we are sending pages correctly
@@ -60,11 +66,8 @@ public:
 
     void HandleScrollWheel(glm::ivec2 mouse_pos, int direction);
 
-    // Place piece on board, optionally grid locked
-    void PlacePiece(GameObject *piece, bool grid_locked = true);
-
     // Begin placing a piece on board, this locks it to the mouse and doesn't place until clicked.
-    void BeginPlacePiece(GameObject *piece);
+    void BeginPlacePiece(std::unique_ptr<GameObject> &&piece);
 
     void Update(float dt);
 
@@ -73,18 +76,19 @@ public:
 
     void Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer);
 
-    MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject *object);
+    MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject &object);
 
     MouseHoverType CurrentHoverType(glm::ivec2 mouse_pos);
 
-    std::list<GameObject *> Pieces;
+    std::list<std::unique_ptr<GameObject>> Pieces;
+    std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
 
 private:
-    std::list<GameObject *>::iterator CurrentSelection = Pieces.end();
+    std::list<std::unique_ptr<GameObject>>::iterator CurrentSelection = Pieces.end();
     glm::ivec2 DragOrigin = glm::ivec2(0);
     int BorderWidth = 5;
 
-    void SnapPieceToGrid(GameObject *piece, int increments);
+    void SnapPieceToGrid(GameObject &piece, int increments);
 
     glm::vec2 ScreenPosToWorldPos(glm::ivec2 pos);
 

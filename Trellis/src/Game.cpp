@@ -159,9 +159,6 @@ Game::Game() {
 }
 
 Game::~Game() {
-    for (Page *page : Pages) {
-        delete page;
-    }
     delete ObjectRenderer;
     delete UserInterface;
 }
@@ -187,16 +184,12 @@ void Game::init_textures() {
 
 void Game::init_objects() {
     ObjectRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
-    SpriteRenderer *BoardRenderer =
-            new SpriteRenderer(ResourceManager::GetShader("sprite"), 20);
+    std::unique_ptr<SpriteRenderer>
+            BoardRenderer = std::make_unique<SpriteRenderer>(
+            ResourceManager::GetShader("sprite"), 20);
     UserInterface = new UI();
-    ActivePage = new Page(
-            "Default",
-            ResourceManager::GetTexture("grid"),
-            BoardRenderer,
-            glm::vec2(0.0f, 0.0f),
-            glm::vec2(20.0f, 20.0f));
-    Pages.push_back(ActivePage);
+    MakePage("Default");
+    ActivePage = Pages.begin();
 }
 
 void Game::set_projection() {
@@ -214,43 +207,44 @@ void Game::set_projection() {
 
 void Game::UpdateMouse() {
     static GUI &gui = GUI::GetInstance();
+    Page &pg = **ActivePage;
     switch (LeftClick) {
         case PRESS:
-            ActivePage->HandleLeftClickPress(MousePos);
-            current_hover_type = ActivePage->CurrentHoverType(MousePos);
+            pg.HandleLeftClickPress(MousePos);
+            current_hover_type = pg.CurrentHoverType(MousePos);
             LeftClick = HOLD;
             break;
         case HOLD:
-            ActivePage->HandleLeftClickHold(MousePos);
+            pg.HandleLeftClickHold(MousePos);
             break;
         case RELEASE:
-            ActivePage->HandleLeftClickRelease(MousePos);
-            current_hover_type = ActivePage->CurrentHoverType(MousePos);
+            pg.HandleLeftClickRelease(MousePos);
+            current_hover_type = pg.CurrentHoverType(MousePos);
             break;
         default:
             break;
     }
     switch (RightClick) {
         case PRESS:
-            ActivePage->HandleRightClick(MousePos);
+            pg.HandleRightClick(MousePos);
             break;
         default:
             break;
     }
     switch (MiddleClick) {
         case PRESS:
-            ActivePage->HandleMiddleClickPress(MousePos);
+            pg.HandleMiddleClickPress(MousePos);
             MiddleClick = HOLD;
             break;
         case HOLD:
-            ActivePage->HandleMiddleClickHold(MousePos);
+            pg.HandleMiddleClickHold(MousePos);
             break;
         case NONE:
         case RELEASE:
             break;
     }
     if (ScrollDirection != 0) {
-        ActivePage->HandleScrollWheel(MousePos, ScrollDirection);
+        pg.HandleScrollWheel(MousePos, ScrollDirection);
         ScrollDirection = 0;
     }
     switch (current_hover_type) {
@@ -283,9 +277,10 @@ bool registered = false;
 
 void Game::Update(float dt) {
     ProcessUIEvents();
-    ActivePage->Update(dt);
-    if (ActivePage->Placing) {
-        ActivePage->UpdatePlacing(MousePos);
+    Page &pg = **ActivePage;
+    pg.Update(dt);
+    if (pg.Placing) {
+        pg.UpdatePlacing(MousePos);
     }
     UpdateMouse();
     if (ClientServer::Started()) {
@@ -299,7 +294,7 @@ void Game::Update(float dt) {
 }
 
 void Game::Render() {
-    ActivePage->Draw(ObjectRenderer, nullptr);
+    (**ActivePage).Draw(ObjectRenderer, nullptr);
     UserInterface->Draw(Pages, ActivePage);
 }
 
@@ -312,31 +307,31 @@ void Game::ProcessUIEvents() {
                 UserInterface->FileDialog->GetSelected().string().c_str(),
                 Util::IsPng(file_name),
                 file_name);
-        ActivePage->BeginPlacePiece(
-                new GameObject(
+        (**ActivePage).BeginPlacePiece(
+                std::make_unique<GameObject>(
                         glm::vec2(0.0f, 0.0f),
                         glm::vec2(98.0f, 98.0f),
                         ResourceManager::GetTexture(file_name)));
         UserInterface->FileDialog->ClearSelected();
     }
     if (UserInterface->AddPage) {
-        Page *new_page = MakePage(UserInterface->PageName);
-        Pages.push_back(new_page);
-        ActivePage = new_page;
+        MakePage(UserInterface->PageName);
         UserInterface->ActivePage = Pages.size() - 1;
     }
     UserInterface->ClearFlags();
 }
 
-Page *Game::MakePage(std::string name) {
-    auto BoardRenderer =
-            new SpriteRenderer(ResourceManager::GetShader("sprite"), 20);
-    return new Page(
+void Game::MakePage(std::string name) {
+    auto BoardRenderer = std::make_unique<SpriteRenderer>(
+            ResourceManager::GetShader("sprite"), 20);
+    auto pg = std::make_unique<Page>(
             name,
             ResourceManager::GetTexture("grid"),
-            BoardRenderer,
+            std::move(BoardRenderer),
             glm::vec2(0.0f, 0.0f),
             glm::vec2(20.0f, 20.0f));
+    PagesMap.insert(std::make_pair(pg->Uid, std::ref(*pg)));
+    Pages.push_back(std::move(pg));
 }
 
 void Game::start_server(int key, int scancode, int action, int mod) {
@@ -351,41 +346,32 @@ void Game::start_client(int key, int scancode, int action, int mod) {
 
 void Game::handle_page_add_piece(Util::NetworkData &&q) {
     static ClientServer &cs = ClientServer::GetInstance();
-    auto *g = new GameObject(q.Parse<GameObject>());
+    auto g = std::make_unique<GameObject>(q.Parse<GameObject>());
     if (ResourceManager::Images.find(g->Sprite.ImageUID) ==
             ResourceManager::Images.end()) {
         // Image isn't cached, need to request it
         cs.RegisterPageChange("IMAGE_REQUEST", g->Sprite.ImageUID, "");
     }
-    auto it = std::find_if(
-            Pages.begin(), Pages.end(), [q](Page *pg) {
-                return pg->Uid == q.Uid;
-            });
-    if (it != Pages.end()) {
-        (*it)->PlacePiece(g, false);
+    // See if page exists and place piece new in it if it does
+    auto it = PagesMap.find(q.Uid);
+    if (it != PagesMap.end()) {
+        Page &pg = (*it).second;
+        pg.PiecesMap.insert(std::make_pair(g->Uid, std::ref(*g)));
+        pg.Pieces.push_front(std::move(g));
     }
 }
 
 void Game::handle_page_move_piece(Util::NetworkData &&q) {
     auto piece_data = q.Parse<Util::NetworkData>();
     // Find the relevant page
-    // TODO Ideally this idiom will be replaced by something like another map
-    // for pieces in page
-    auto page_it = std::find_if(
-            Pages.begin(), Pages.end(), [q](Page *pg) {
-                return pg->Uid == q.Uid;
-            });
-    if (page_it != Pages.end()) {
-        Page *pg = *page_it;
+    auto page_it = PagesMap.find(q.Uid);
+    if (page_it != PagesMap.end()) {
+        Page &pg = page_it->second;
         // If the page is found, find the relevant piece
-        auto piece_it = std::find_if(
-                pg->Pieces.begin(),
-                pg->Pieces.end(),
-                [piece_data](GameObject *g) {
-                    return g->Uid == piece_data.Uid;
-                });
-        if (piece_it != pg->Pieces.end()) {
-            (*piece_it)->Position = piece_data.Parse<glm::vec2>();
+        auto piece_it = pg.PiecesMap.find(piece_data.Uid);
+        if (piece_it != pg.PiecesMap.end()) {
+            GameObject &piece = (*piece_it).second;
+            piece.Position = piece_data.Parse<glm::vec2>();
         }
     }
 }
@@ -393,23 +379,14 @@ void Game::handle_page_move_piece(Util::NetworkData &&q) {
 void Game::handle_page_resize_piece(Util::NetworkData &&q) {
     auto piece_data = q.Parse<Util::NetworkData>();
     // Find the relevant page
-    // Ideally this idiom will be replaced by something like another map
-    // for pieces in page
-    auto page_it = std::find_if(
-            Pages.begin(), Pages.end(), [q](Page *pg) {
-                return pg->Uid == q.Uid;
-            });
-    if (page_it != Pages.end()) {
-        Page *pg = *page_it;
+    auto page_it = PagesMap.find(q.Uid);
+    if (page_it != PagesMap.end()) {
+        Page &pg = page_it->second;
         // If the page is found, find the relevant piece
-        auto piece_it = std::find_if(
-                pg->Pieces.begin(),
-                pg->Pieces.end(),
-                [piece_data](GameObject *g) {
-                    return g->Uid == piece_data.Uid;
-                });
-        if (piece_it != pg->Pieces.end()) {
-            (*piece_it)->Size = piece_data.Parse<glm::vec2>();
+        auto piece_it = pg.PiecesMap.find(piece_data.Uid);
+        if (piece_it != pg.PiecesMap.end()) {
+            GameObject &piece = (*piece_it).second;
+            piece.Size = piece_data.Parse<glm::vec2>();
         }
     }
 }
@@ -417,8 +394,8 @@ void Game::handle_page_resize_piece(Util::NetworkData &&q) {
 void Game::handle_new_image(Util::NetworkData &&q) {
     ResourceManager::Images[q.Uid] = q.Parse<ImageData>();
     // Check which gameobjects need this texture and apply it.
-    for (Page *pg : Pages) {
-        for (GameObject *go : pg->Pieces) {
+    for (auto &pg : Pages) {
+        for (auto &go : pg->Pieces) {
             if (go->Sprite.ImageUID == q.Uid) {
                 go->Sprite = ResourceManager::GetTexture(q.Uid);
             }

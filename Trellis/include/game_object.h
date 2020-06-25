@@ -35,9 +35,6 @@ public:
             glm::vec3 color = glm::vec3(1.0f));
 
     void Draw(SpriteRenderer *renderer, int border_pixel_width);
-
-    //bool CheckBorderContainment(glm::vec2 pos);
-    glm::vec2 DistanceFromTopLeft(glm::vec2 pos);
 };
 
 #endif

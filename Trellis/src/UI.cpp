@@ -2,6 +2,7 @@
 #include "glfw_handler.h"
 
 #include <iostream>
+#include <iterator>
 
 UI::~UI() {
     delete FileDialog;
@@ -11,9 +12,8 @@ UI::UI() {
     FileDialog = new ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
 }
 
-void UI::Draw(std::vector<Page *> pages, Page *active_page) {
+void UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     ImGui::ShowDemoWindow();
-
     // Display file dialog if it's open
     FileDialog->Display();
     DrawMenu(pages, active_page);
@@ -21,7 +21,8 @@ void UI::Draw(std::vector<Page *> pages, Page *active_page) {
     DrawPageSettings(active_page);
 }
 
-void UI::DrawMenu(std::vector<Page *> pages, Page *active_page) {
+void UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
+
     (void)pages;
 
     GLFW &glfw = GLFW::GetInstance();
@@ -98,8 +99,8 @@ void UI::DrawMenu(std::vector<Page *> pages, Page *active_page) {
     }
     if (ImGui::Button("Page Settings")) {
         PageSettingsOpen = !PageSettingsOpen;
-        strcpy(PageNameBuf, active_page->Name.c_str());
-        PageSize = (int)active_page->Size.x;
+        strcpy(PageNameBuf, (**active_page).Name.c_str());
+        PageSize = (int)(**active_page).Size.x;
     }
     if (ImGui::IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
         ImGui::BeginTooltip();
@@ -108,8 +109,7 @@ void UI::DrawMenu(std::vector<Page *> pages, Page *active_page) {
     }
     ImGui::End();
 }
-
-void UI::DrawPageSelect(std::vector<Page *> pages, Page *active_page) {
+void UI::DrawPageSelect(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     if (!PageSelectOpen) {
         return;
     }
@@ -121,9 +121,9 @@ void UI::DrawPageSelect(std::vector<Page *> pages, Page *active_page) {
     ImGui::Text("Switch Page");
     ImGui::SameLine();
     ImGui::Text("Player View");
-    for (Page *page : pages) {
+    for (auto &page : pages) {
         // Color the active page differently
-        if (page == active_page) {
+        if (page == *active_page) {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5, 0.5, 0.5, 1));
         }
         if (ImGui::Button(
@@ -131,7 +131,7 @@ void UI::DrawPageSelect(std::vector<Page *> pages, Page *active_page) {
                 ImVec2(ImGui::GetWindowSize().x * 0.5f, 0.0f))) {
             ActivePage = i;
         }
-        if (page == active_page) {
+        if (page == *active_page) {
             ImGui::PopStyleColor(1);
         }
         ImGui::SameLine();
@@ -143,11 +143,11 @@ void UI::DrawPageSelect(std::vector<Page *> pages, Page *active_page) {
     ImGui::End();
 }
 
-void UI::DrawPageSettings(Page *active_page) {
+void UI::DrawPageSettings(Page::page_list_it_t &active_page) {
     if (!PageSettingsOpen) {
         return;
     }
-
+    Page &pg = **active_page;
     ImGui::Begin(
             "Page Settings",
             &PageSettingsOpen,
@@ -160,16 +160,18 @@ void UI::DrawPageSettings(Page *active_page) {
     ImGui::InputInt("X", &PageSize);
     if (ImGui::Button("Done", ImVec2(120, 0.0f))) {
         PageSettingsOpen = false;
-        active_page->Size.x = (float)PageSize;
-        active_page->Size.y = (float)PageSize;
-        active_page->Renderer->Resize(PageSize);
-        active_page->Name = PageNameBuf;
+        pg.Size.x = (float)PageSize;
+        pg.Size.y = (float)PageSize;
+        pg.Renderer->Resize(PageSize);
+        pg.Name = PageNameBuf;
     }
     ImGui::End();
 }
 
-Page *UI::GetActivePage(std::vector<Page *> pages) {
-    return pages[ActivePage];
+Page::page_list_it_t UI::GetActivePage(Page::page_list_t &pages) {
+    auto it = pages.begin();
+    std::advance(it, ActivePage);
+    return it;
 }
 
 void UI::ClearFlags() {
