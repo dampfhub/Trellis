@@ -30,12 +30,17 @@ Page::Page(
 Page::~Page() {
 }
 
+void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
+    PiecesMap.insert(std::make_pair(piece->Uid, std::ref(*piece)));
+    Pieces.push_front(std::move(piece));
+}
+
 void Page::BeginPlacePiece(std::unique_ptr <GameObject> &&piece) {
     Placing = true;
     piece->FollowMouse = true;
     piece->initialSize = piece->Size;
     piece->initialPos = piece->Position;
-    Pieces.push_front(std::move(piece));
+    AddPiece(std::move(piece));
     CurrentSelection = Pieces.begin();
 }
 
@@ -235,7 +240,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                     break;
             }
         }
-        if (ClientServer::Started()) {
+        if (ClientServer::Started() && !Placing) {
             static ClientServer &cs = ClientServer::GetInstance();
             if (piece.Position != prev_pos) {
                 cs.RegisterPageChange(
@@ -309,3 +314,4 @@ glm::vec2 Page::WorldPosToScreenPos(glm::ivec2 pos) {
     glm::vec4 screen_pos = View * glm::vec4(pos, 0.0f, 1.0f);
     return glm::vec2(screen_pos.x, screen_pos.y);
 }
+

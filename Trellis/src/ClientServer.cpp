@@ -37,7 +37,7 @@ void ClientServer::RegisterCallback(
     sub_queues[channel_name].push_back(NetworkQueueCallback(channel_name, cb));
 }
 
-void Client::Start(std::string name, std::string hostname, int port_num) {
+void Client::Start(int port_num, std::string name, std::string hostname) {
     client_name = name;
     // Uid will get filled in from db or generated new
     uid = Util::generate_uid();
@@ -50,7 +50,7 @@ void Client::Update() {
     ClientServer::Update();
 }
 
-void Server::Start(int port) {
+void Server::Start(int port, std::string name, std::string hostname) {
     port_num = port;
     NetworkManager &nm = NetworkManager::GetInstance();
     nm.StartServer(port);

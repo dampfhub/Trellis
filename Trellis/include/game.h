@@ -84,6 +84,8 @@ private:
 
     MouseHoverType current_hover_type = MouseHoverType::NONE;
 
+    void AddPage(std::unique_ptr<Page> &&pg);
+
     void MakePage(std::string name);
 };
 

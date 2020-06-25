@@ -66,6 +66,9 @@ public:
 
     void HandleScrollWheel(glm::ivec2 mouse_pos, int direction);
 
+    // Adds a piece to the pieces list and the map
+    void AddPiece(std::unique_ptr<GameObject> &&piece);
+
     // Begin placing a piece on board, this locks it to the mouse and doesn't place until clicked.
     void BeginPlacePiece(std::unique_ptr<GameObject> &&piece);
 

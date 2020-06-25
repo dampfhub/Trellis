@@ -34,6 +34,8 @@ public:
 
     virtual void Update();
 
+    virtual void Start(int port_num, std::string name = "", std::string hostname = "") = 0;
+
     template<class T>
     void RegisterPageChange(
             std::string name, uint64_t uid, T data) {
@@ -88,7 +90,7 @@ public:
 
     ~Client() override = default;
 
-    void Start(std::string name, std::string hostname, int port_num);
+    void Start(int port_num, std::string name, std::string hostname) override;
 
     void Update() override;
 
@@ -107,7 +109,7 @@ public:
 
     ~Server() override = default;
 
-    void Start(int port);
+    void Start(int port_num, std::string name, std::string hostname) override;
 
     void Update() override;
 
