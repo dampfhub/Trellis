@@ -17,4 +17,5 @@ vcpkg install glfw3:x64-windows-static
 vcpkg install glad:x64-windows-static
 vcpkg install glm:x64-windows-static
 vcpkg install freetype:x64-windows-static
+vcpkg install asio:x64-windows-static
 ```
