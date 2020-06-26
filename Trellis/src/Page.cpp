@@ -9,7 +9,7 @@
 Page::Page(
         std::string name,
         Texture2D board_tex,
-        std::unique_ptr <SpriteRenderer> &&renderer,
+        std::unique_ptr<SpriteRenderer> &&renderer,
         glm::vec2 pos,
         glm::vec2 size,
         uint64_t uid) : Name(name),
@@ -35,7 +35,7 @@ void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
     Pieces.push_front(std::move(piece));
 }
 
-void Page::BeginPlacePiece(std::unique_ptr <GameObject> &&piece) {
+void Page::BeginPlacePiece(std::unique_ptr<GameObject> &&piece) {
     Placing = true;
     piece->FollowMouse = true;
     piece->initialSize = piece->Size;
@@ -145,6 +145,7 @@ void Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
         if (hover != NONE && (*it)->Clickable) {
             CurrentSelection = it;
             GameObject &piece = **it;
+            (*it)->ScaleEdges = { 0, 0 };
             if (hover == CENTER) {
                 piece.FollowMouse = true;
                 piece.ScaleMouse = false;
@@ -317,6 +318,10 @@ glm::vec2 Page::WorldPosToScreenPos(glm::ivec2 pos) {
 
 bool Page::Deselect() {
     if (CurrentSelection != Pieces.end()) {
+        if (Placing) {
+            Pieces.erase(CurrentSelection);
+            Placing = false;
+        }
         CurrentSelection = Pieces.end();
         return true;
     }
