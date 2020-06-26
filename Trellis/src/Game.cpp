@@ -7,15 +7,11 @@
 #include "resource_manager.h"
 #include "page.h"
 #include "game_object.h"
-#include "ui.h"
 #include "util.h"
 #include "GUI.h"
 #include "client_server.h"
 
 using std::unique_ptr, std::make_unique, std::move;
-
-SpriteRenderer *ObjectRenderer;
-UI *UserInterface;
 
 Game &Game::GetInstance() {
     static Game instance; // Guaranteed to be destroyed.
@@ -191,8 +187,6 @@ Game::Game() {
 }
 
 Game::~Game() {
-    delete ObjectRenderer;
-    delete UserInterface;
 }
 
 void Game::SetScreenDims(int width, int height) {
@@ -215,11 +209,9 @@ void Game::init_textures() {
 }
 
 void Game::init_objects() {
-    ObjectRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
     std::unique_ptr<SpriteRenderer>
             BoardRenderer = std::make_unique<SpriteRenderer>(
             ResourceManager::GetShader("sprite"), 20);
-    UserInterface = new UI();
     MakePage("Default");
     ActivePage = Pages.begin();
 }
@@ -323,30 +315,30 @@ void Game::Update(float dt) {
 }
 
 void Game::Render() {
-    (**ActivePage).Draw(ObjectRenderer, nullptr);
-    UserInterface->Draw(Pages, ActivePage);
+    (**ActivePage).Draw(nullptr);
+    UserInterface.Draw(Pages, ActivePage);
 }
 
 void Game::ProcessUIEvents() {
-    ActivePage = UserInterface->GetActivePage(Pages);
-    if (UserInterface->FileDialog->HasSelected()) {
+    ActivePage = UserInterface.GetActivePage(Pages);
+    if (UserInterface.FileDialog->HasSelected()) {
         std::string file_name = Util::PathBaseName(
-                UserInterface->FileDialog->GetSelected().string());
+                UserInterface.FileDialog->GetSelected().string());
         ResourceManager::LoadTexture(
-                UserInterface->FileDialog->GetSelected().string().c_str(),
+                UserInterface.FileDialog->GetSelected().string().c_str(),
                 Util::IsPng(file_name),
                 file_name);
         (**ActivePage).BeginPlacePiece(
                 Transform(
                         glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
                 ResourceManager::GetTexture(file_name));
-        UserInterface->FileDialog->ClearSelected();
+        UserInterface.FileDialog->ClearSelected();
     }
-    if (UserInterface->AddPage) {
-        MakePage(UserInterface->PageName);
-        UserInterface->ActivePage = Pages.size() - 1;
+    if (UserInterface.AddPage) {
+        MakePage(UserInterface.PageName);
+        UserInterface.ActivePage = Pages.size() - 1;
     }
-    UserInterface->ClearFlags();
+    UserInterface.ClearFlags();
 }
 
 void Game::AddPage(std::unique_ptr<Page> &&pg) {

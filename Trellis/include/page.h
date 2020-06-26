@@ -79,7 +79,7 @@ public:
 
     void Update(glm::ivec2 mouse_pos);
 
-    void Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer);
+    void Draw(TextRenderer *text_renderer);
 
     MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject &object);
 

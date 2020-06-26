@@ -53,10 +53,9 @@ void Page::Update(glm::ivec2 mouse_pos) {
     HandleUIEvents();
 }
 
-void Page::Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer) {
+void Page::Draw(TextRenderer *text_renderer) {
     (void)text_renderer;
     Renderer->View = View;
-    sprite_renderer->View = View;
     Renderer->DrawSprite(
             Board_Texture, Position, false, Size * TILE_DIMENSIONS);
     // Draw sprites back-to-front, so the "top" sprite is drawn above the others
