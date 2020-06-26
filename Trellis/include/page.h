@@ -85,8 +85,11 @@ public:
 
     MouseHoverType CurrentHoverType(glm::ivec2 mouse_pos);
 
+    // Network related functions
+    void SendAllPieces(uint64_t target_uid = 0);
+
     // If page has an active selection, deselect it and return true. Otherwise,
-    // return false.
+    // return false. If a new piece is being placed, delete it.
     bool Deselect();
 
     std::list<std::unique_ptr<GameObject>> Pieces;

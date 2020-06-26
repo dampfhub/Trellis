@@ -43,20 +43,20 @@ public:
         static std::shared_ptr<NetworkQueue> Subscribe(std::string cname);
 
         template<class T>
-        void Publish(const T &data, int uid = 0) {
+        void Publish(const T &data, uint64_t uid = 0) {
             static NetworkManager &nm = NetworkManager::GetInstance();
             auto v = Util::serialize_vec<T>(data);
             nm.net_obj->Write(Message(v, uid, channel_name));
         }
 
         template<>
-        void Publish<std::string>(const std::string &data, int uid) {
+        void Publish<std::string>(const std::string &data, uint64_t uid) {
             nm.net_obj->Write(Message(data, uid, channel_name));
         }
 
         template<>
         void Publish<std::vector<std::byte>>(
-                const std::vector<std::byte> &data, int uid) {
+                const std::vector<std::byte> &data, uint64_t uid) {
             nm.net_obj->Write(Message(data, uid, channel_name));
         }
 
@@ -144,6 +144,8 @@ private:
 
         const std::vector<std::byte> &Msg();
 
+        std::vector<std::byte> RawMsg();
+
     private:
         std::vector<std::byte> msg;
     };
@@ -160,13 +162,13 @@ private:
 
         void WriteSocket(const socket_ptr &sock, const Message &msg);
 
-        virtual void Write(const Message &msg) = 0;
+        virtual void Write(Message msg) = 0;
 
         //virtual std::shared_ptr<std::string> Read() = 0;
 
         virtual void handle_header_action(const socket_ptr &sock) = 0;
 
-        void handle_write(
+        virtual void handle_write(
                 const socket_ptr &sock,
                 const asio::error_code &error,
                 size_t bytes);
@@ -183,6 +185,12 @@ private:
                 const asio::error_code &error,
                 size_t bytes);
 
+        virtual void handle_error(
+                const socket_ptr &sock,
+                Message &buf,
+                const asio::error_code &error) {
+        };
+
         uint64_t uid;
 
     protected:
@@ -190,7 +198,7 @@ private:
         std::deque<Message> write_msgs;
         Message read_msg;
 
-        void do_write(const socket_ptr &sock, const Message &msg);
+        virtual void do_write(const socket_ptr &sock, const Message &msg);
     };
 
     class server : public network_object {
@@ -209,7 +217,17 @@ private:
 
         ~server();
 
-        void Write(const Message &msg) override;
+        void Write(Message msg) override;
+
+        void handle_write(
+                const socket_ptr &sock,
+                const asio::error_code &error,
+                size_t bytes) override;
+
+        void handle_error(
+                const socket_ptr &sock,
+                Message &buf,
+                const asio::error_code &error) override;
 
     private:
         tcp::acceptor acceptor;
@@ -220,6 +238,8 @@ private:
 
         void handle_accept(
                 socket_ptr new_sock, const asio::error_code &error);
+
+        void do_write(const socket_ptr &sock, const Message &msg) override;
 
         void listen();
     };
@@ -239,7 +259,7 @@ private:
 
         ~client();
 
-        void Write(const Message &msg) override;
+        void Write(Message msg) override;
 
     private:
         socket_ptr server_sock;

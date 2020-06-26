@@ -382,6 +382,7 @@ void Game::handle_page_add_piece(Util::NetworkData &&q) {
     if (ResourceManager::Images.find(g->Sprite.ImageUID) ==
             ResourceManager::Images.end()) {
         // Image isn't cached, need to request it
+        std::cout << "Requesting Image" << std::endl;
         cs.RegisterPageChange("IMAGE_REQUEST", g->Sprite.ImageUID, "");
     }
     // See if page exists and place piece new in it if it does
@@ -442,6 +443,17 @@ void Game::handle_image_request(Util::NetworkData &&q) {
     }
 }
 
+void Game::handle_client_join(Util::NetworkData &&q) {
+    static ClientServer &cs = ClientServer::GetInstance();
+    for (auto &pg : Pages) {
+        pg->SendAllPieces(q.Uid);
+    }
+}
+
+void Game::handle_client_disconnect(Util::NetworkData &&q) {
+    std::cout << "Client DC: " << q.Uid << std::endl;
+}
+
 void Game::register_network_callbacks() {
     ClientServer &cs = ClientServer::GetInstance();
     cs.RegisterCallback(
@@ -463,5 +475,13 @@ void Game::register_network_callbacks() {
     cs.RegisterCallback(
             "IMAGE_REQUEST", [this](Util::NetworkData &&d) {
                 handle_image_request(std::move(d));
+            });
+    cs.RegisterCallback(
+            "JOIN", [this](Util::NetworkData &&d) {
+                handle_client_join(std::move(d));
+            });
+    cs.RegisterCallback(
+            "DISCONNECT", [this](Util::NetworkData &&d) {
+                handle_client_disconnect(std::move(d));
             });
 }
