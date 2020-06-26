@@ -1,4 +1,9 @@
+#include <memory>
+
 #include "util.h"
+#include "sprite_renderer.h"
+
+using std::make_unique;
 
 std::string Util::PathBaseName(std::string const &path) {
     return path.substr(path.find_last_of("/\\") + 1);

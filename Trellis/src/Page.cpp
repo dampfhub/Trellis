@@ -4,6 +4,7 @@
 #include "util.h"
 #include "client_server.h"
 #include "board_renderer.h"
+#include "sprite_renderer.h"
 
 using std::make_unique;
 
@@ -14,12 +15,9 @@ Page::Page(
         glm::vec2 size,
         uint64_t uid) : Name(name),
         Uid(uid),
-        board_transform(pos, size, 0){
+        board_transform(pos, size, 0) {
     board_renderer = std::make_unique<BoardRenderer>(
-            this->board_transform,
-            this->View,
-            board_tex
-    );
+            this->board_transform, this->View, board_tex);
     Camera = std::make_unique<Camera2D>(
             200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = std::make_unique<PageUI>();
@@ -32,12 +30,14 @@ Page::~Page() {
 }
 
 void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
+    piece->renderer = std::make_unique<SpriteRenderer>(
+            piece->transform, this->View, piece->Sprite);
     PiecesMap.insert(std::make_pair(piece->Uid, std::ref(*piece)));
     Pieces.push_front(std::move(piece));
 }
 
 void Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
-    auto piece = make_unique<GameObject>(transform, View, sprite);
+    auto piece = make_unique<GameObject>(transform, sprite);
     mouse_hold = MouseHoldType::PLACING;
     initialSize = piece->transform.scale;
     initialPos = piece->transform.position;
@@ -209,8 +209,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                         break;
                     case -1:
                         piece.transform.scale.x = fmax(
-                                DragOrigin.x + initialSize.x -
-                                        world_mouse.x,
+                                DragOrigin.x + initialSize.x - world_mouse.x,
                                 TILE_DIMENSIONS / (float)inc);
                         closest = floor(
                                 piece.transform.scale.x /
@@ -235,8 +234,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                         break;
                     case -1:
                         piece.transform.scale.y = fmax(
-                                DragOrigin.y + initialSize.y -
-                                        world_mouse.y,
+                                DragOrigin.y + initialSize.y - world_mouse.y,
                                 TILE_DIMENSIONS / (float)inc);
                         closest = floor(
                                 piece.transform.scale.y /

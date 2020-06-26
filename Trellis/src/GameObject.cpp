@@ -13,7 +13,6 @@ GameObject::GameObject() : transform(),
 
 GameObject::GameObject(
         const Transform &transform,
-        const glm::mat4 &View,
         Texture2D sprite,
         uint64_t uid,
         bool clickable,
@@ -24,7 +23,6 @@ GameObject::GameObject(
     Uid = uid == 0
           ? Uid = Util::generate_uid()
           : uid;
-    renderer = make_unique<SpriteRenderer>(this->transform, View, this->Sprite);
 }
 
 void GameObject::Draw(int border_pixel_width) {

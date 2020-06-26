@@ -22,7 +22,6 @@ public:
     GameObject();
     GameObject(
             const Transform &transform,
-            const glm::mat4 &View,
             Texture2D sprite,
             uint64_t uid = 0,
             bool clickable = true,

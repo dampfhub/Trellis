@@ -204,7 +204,7 @@ void Game::init_shaders() {
 }
 
 void Game::init_textures() {
-    ResourceManager::LoadTexture("textures/grid.png", false, "grid");
+    ResourceManager::LoadTexture("textures/gnome.png", true, "grid");
 }
 
 void Game::init_objects() {
@@ -347,7 +347,7 @@ void Game::MakePage(std::string name) {
             name,
             ResourceManager::GetTexture("grid"),
             glm::vec2(0.0f, 0.0f),
-            glm::vec2(20.0f, 20.0f));
+            glm::vec2(2000.0f, 2000.0f));
     AddPage(std::move(pg));
 }
 

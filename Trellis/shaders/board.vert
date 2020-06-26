@@ -10,7 +10,7 @@ uniform mat4 projection;
 uniform vec2 screenRes;
 
 void main() {
-    TexCoords = vertex.zw;
+    TexCoords = vertex.zw * 20;
     mat4 mat = projection * view * model;
     gl_Position = mat * vec4(vertex.xy, 0.0, 1.0);
     screen_corners = vec4(screenRes.xy, screenRes.xy) * (vec4(
