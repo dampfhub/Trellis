@@ -86,12 +86,13 @@ private:
 
     void handle_client_disconnect(Util::NetworkData &&q);
 
-    MouseHoverType current_hover_type = MouseHoverType::NONE;
+    Page::MouseHoverType current_hover_type = Page::MouseHoverType::NONE;
 
     void AddPage(std::unique_ptr<Page> &&pg);
 
     void MakePage(std::string name);
 
+    void esc_handler();
     void window_size_callback(int width, int height);
     void mouse_pos_callback(double x, double y);
     void left_click_press();
@@ -101,6 +102,7 @@ private:
     void middle_click_press();
     void middle_click_release();
     void scroll_callback(double yoffset);
+    void arrow_press(int key);
     void snap_callback(int action);
     void start_server_temp(int action);
     void start_client_temp(int action);

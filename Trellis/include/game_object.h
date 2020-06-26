@@ -3,38 +3,35 @@
 
 #include "texture.h"
 #include "sprite_renderer.h"
+#include "renderer.h"
+#include "transform.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <memory>
 
 class GameObject {
 public:
-    glm::vec2 Position, Size;
+    Transform transform;
     glm::vec3 Color;
-    float Rotation;
     uint64_t Uid;
 
     Texture2D Sprite;
 
     bool Clickable;
 
-    bool FollowMouse = false;
-    bool ScaleMouse = false;
-    std::pair<int, int> ScaleEdges;
-    glm::vec2 initialSize;
-    glm::vec2 initialPos;
-
     GameObject();
 
     GameObject(
-            glm::vec2 pos,
-            glm::vec2 size,
+            const Transform &transform,
             Texture2D sprite,
             uint64_t uid = 0,
             bool clickable = true,
             glm::vec3 color = glm::vec3(1.0f));
 
     void Draw(SpriteRenderer *renderer, int border_pixel_width);
+private:
+    std::shared_ptr<Renderer> renderer;
 };
 
 #endif

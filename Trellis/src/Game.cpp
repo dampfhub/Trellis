@@ -12,8 +12,6 @@
 #include "GUI.h"
 #include "client_server.h"
 
-using std::bind;
-
 SpriteRenderer *ObjectRenderer;
 UI *UserInterface;
 
@@ -23,12 +21,10 @@ Game &Game::GetInstance() {
     return instance;
 }
 
-static void close_window(int key, int scancode, int action, int mods) {
-    (void)key;
-    (void)scancode;
-    (void)action;
-    (void)mods;
-
+void Game::esc_handler() {
+    if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) {
+        return;
+    }
     static GLFW &glfw = GLFW::GetInstance();
     glfw.SetWindowShouldClose(1);
 }
@@ -70,6 +66,25 @@ void Game::scroll_callback(double yoffset) {
     ScrollDirection = (int)yoffset;
 }
 
+void Game::arrow_press(int key) {
+    if (ActivePage != Pages.end()) {
+        switch (key) {
+            case GLFW_KEY_RIGHT:
+                (*ActivePage)->HandleArrows(Page::ArrowkeyType::RIGHT);
+                break;
+            case GLFW_KEY_LEFT:
+                (*ActivePage)->HandleArrows(Page::ArrowkeyType::LEFT);
+                break;
+            case GLFW_KEY_DOWN:
+                (*ActivePage)->HandleArrows(Page::ArrowkeyType::DOWN);
+                break;
+            case GLFW_KEY_UP:
+                (*ActivePage)->HandleArrows(Page::ArrowkeyType::UP);
+                break;
+        }
+    }
+}
+
 void Game::snap_callback(int action) {
     if (action == GLFW_PRESS) {
         snapping = false;
@@ -93,40 +108,79 @@ void Game::start_client_temp(int action) {
 }
 
 Game::Game() {
-    using namespace std::placeholders;
-
     GLFW &glfw = GLFW::GetInstance();
     init_shaders();
     init_textures();
     init_objects();
 
     glfw.RegisterWindowSizeCallback(
-            bind(
-                    &Game::window_size_callback, this, _1, _2));
-    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
+            [this](int width, int height) {
+                this->window_size_callback(width, height);
+            });
+    glfw.RegisterKeyPress(
+            GLFW_KEY_ESCAPE, [this](int, int, int, int) {
+                this->esc_handler();
+            });
+    glfw.RegisterKeyPress(
+            GLFW_KEY_RIGHT, [this](int key, int, int, int) {
+                this->arrow_press(key);
+            });
+    glfw.RegisterKeyPress(
+            GLFW_KEY_LEFT, [this](int key, int, int, int) {
+                this->arrow_press(key);
+            });
+    glfw.RegisterKeyPress(
+            GLFW_KEY_DOWN, [this](int key, int, int, int) {
+                this->arrow_press(key);
+            });
+    glfw.RegisterKeyPress(
+            GLFW_KEY_UP, [this](int key, int, int, int) {
+                this->arrow_press(key);
+            });
     glfw.RegisterMousePosCallback(
-            bind(
-                    &Game::mouse_pos_callback, this, _1, _2));
-    glfw.RegisterScroll(bind(&Game::scroll_callback, this, _2));
+            [this](double x, double y) {
+                this->mouse_pos_callback(x, y);
+            });
+    glfw.RegisterScroll(
+            [this](double, double yoffset) {
+                this->scroll_callback(yoffset);
+            });
     glfw.RegisterMousePress(
-            GLFW_MOUSE_BUTTON_LEFT, bind(&Game::left_click_press, this));
+            GLFW_MOUSE_BUTTON_LEFT, [this](int, int, int) {
+                this->left_click_press();
+            });
     glfw.RegisterMouseRelease(
-            GLFW_MOUSE_BUTTON_LEFT, bind(&Game::left_click_release, this));
+            GLFW_MOUSE_BUTTON_LEFT, [this](int, int, int) {
+                this->left_click_release();
+            });
     glfw.RegisterMousePress(
-            GLFW_MOUSE_BUTTON_RIGHT, bind(&Game::right_click_press, this));
+            GLFW_MOUSE_BUTTON_RIGHT, [this](int, int, int) {
+                this->right_click_press();
+            });
     glfw.RegisterMouseRelease(
-            GLFW_MOUSE_BUTTON_RIGHT, bind(&Game::right_click_release, this));
+            GLFW_MOUSE_BUTTON_RIGHT, [this](int, int, int) {
+                this->right_click_release();
+            });
     glfw.RegisterMousePress(
-            GLFW_MOUSE_BUTTON_MIDDLE, bind(&Game::middle_click_press, this));
+            GLFW_MOUSE_BUTTON_MIDDLE, [this](int, int, int) {
+                this->middle_click_press();
+            });
     glfw.RegisterMouseRelease(
-            GLFW_MOUSE_BUTTON_MIDDLE, bind(&Game::middle_click_release, this));
-    auto fn = bind(&Game::snap_callback, this, _3);
-    fn(1, 2, 3);
-    glfw.RegisterKey(GLFW_KEY_LEFT_ALT, bind(&Game::snap_callback, this, _3));
+            GLFW_MOUSE_BUTTON_MIDDLE, [this](int, int, int) {
+                this->middle_click_release();
+            });
     glfw.RegisterKey(
-            GLFW_KEY_A, bind(&Game::start_server_temp, this, _3));
+            GLFW_KEY_LEFT_ALT, [this](int, int, int action, int) {
+                this->snap_callback(action);
+            });
     glfw.RegisterKey(
-            GLFW_KEY_S, bind(&Game::start_client_temp, this, _3));
+            GLFW_KEY_A, [this](int, int, int action, int) {
+                this->start_server_temp(action);
+            });
+    glfw.RegisterKey(
+            GLFW_KEY_S, [this](int, int, int action, int) {
+                this->start_client_temp(action);
+            });
 
     // Set projection matrix
     set_projection();
@@ -224,26 +278,26 @@ void Game::UpdateMouse() {
         ScrollDirection = 0;
     }
     switch (current_hover_type) {
-        case CENTER:
+        case Page::MouseHoverType::CENTER:
             gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
-        case E:
-        case W:
+        case Page::MouseHoverType::E:
+        case Page::MouseHoverType::W:
             gui.SetCursor(ImGuiMouseCursor_ResizeEW);
             break;
-        case N:
-        case S:
+        case Page::MouseHoverType::N:
+        case Page::MouseHoverType::S:
             gui.SetCursor(ImGuiMouseCursor_ResizeNS);
             break;
-        case NE:
-        case SW:
+        case Page::MouseHoverType::NE:
+        case Page::MouseHoverType::SW:
             //Put NESW cursor here if one exists, otherwise use hand cursor
-        case NW:
-        case SE:
+        case Page::MouseHoverType::NW:
+        case Page::MouseHoverType::SE:
             //Put NWSE cursor here if one exists, otherwise use hand cursor
             gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
-        case NONE:
+        case Page::MouseHoverType::NONE:
         default:
             gui.SetCursor(ImGuiMouseCursor_Arrow);
     }
@@ -254,10 +308,7 @@ bool registered = false;
 void Game::Update(float dt) {
     ProcessUIEvents();
     Page &pg = **ActivePage;
-    pg.Update(dt);
-    if (pg.Placing) {
-        pg.UpdatePlacing(MousePos);
-    }
+    pg.Update(MousePos);
     UpdateMouse();
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
@@ -285,9 +336,10 @@ void Game::ProcessUIEvents() {
                 file_name);
         (**ActivePage).BeginPlacePiece(
                 std::make_unique<GameObject>(
-                        glm::vec2(0.0f, 0.0f),
-                        glm::vec2(98.0f, 98.0f),
-                        ResourceManager::GetTexture(file_name)));
+                        Transform(
+                                glm::vec2(0.0f, 0.0f),
+                                glm::vec2(98.0f, 98.0f),
+                                0), ResourceManager::GetTexture(file_name)));
         UserInterface->FileDialog->ClearSelected();
     }
     if (UserInterface->AddPage) {
@@ -351,7 +403,7 @@ void Game::handle_page_move_piece(Util::NetworkData &&q) {
         auto piece_it = pg.PiecesMap.find(piece_data.Uid);
         if (piece_it != pg.PiecesMap.end()) {
             GameObject &piece = (*piece_it).second;
-            piece.Position = piece_data.Parse<glm::vec2>();
+            piece.transform.position = piece_data.Parse<glm::vec2>();
         }
     }
 }
@@ -366,7 +418,7 @@ void Game::handle_page_resize_piece(Util::NetworkData &&q) {
         auto piece_it = pg.PiecesMap.find(piece_data.Uid);
         if (piece_it != pg.PiecesMap.end()) {
             GameObject &piece = (*piece_it).second;
-            piece.Size = piece_data.Parse<glm::vec2>();
+            piece.transform.scale = piece_data.Parse<glm::vec2>();
         }
     }
 }
