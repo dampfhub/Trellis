@@ -319,6 +319,7 @@ glm::vec2 Page::WorldPosToScreenPos(glm::ivec2 pos) {
 bool Page::Deselect() {
     if (CurrentSelection != Pieces.end()) {
         if (Placing) {
+            PiecesMap.erase((*CurrentSelection)->Uid);
             Pieces.erase(CurrentSelection);
             Placing = false;
         }
