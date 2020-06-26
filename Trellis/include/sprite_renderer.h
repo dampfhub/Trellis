@@ -13,7 +13,7 @@ public:
     glm::mat4 View;
 
     // Constructor (inits shaders/shapes)
-    SpriteRenderer(Shader shader, int tile_factor = 1);
+    SpriteRenderer(const Shader &shader, int tile_factor = 1);
 
     // Destructor
     ~SpriteRenderer();

@@ -2,8 +2,7 @@
 #include "resource_manager.h"
 #include "glfw_handler.h"
 
-SpriteRenderer::SpriteRenderer(Shader shader, int tile_factor) {
-    sprite_shader = shader;
+SpriteRenderer::SpriteRenderer(const Shader &shader, int tile_factor): sprite_shader(shader) {
     init_render_data(tile_factor);
 }
 

@@ -19,7 +19,7 @@ namespace Util {
         NetworkData() = default;
 
         template<class T>
-        NetworkData(T data, uint64_t uid) : Data(Util::serialize_vec(data)),
+        NetworkData(const T &data, uint64_t uid) : Data(Util::serialize_vec(data)),
                 Uid(uid) {
         }
 

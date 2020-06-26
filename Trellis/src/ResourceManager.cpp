@@ -4,14 +4,17 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <unordered_map>
 
 #include "stb_image.h"
 #include "util.h"
 
+using std::make_pair;
+
 // Instantiate static variables
-std::map<std::string, Texture2D>    ResourceManager::Textures;
-std::map<std::string, Shader>       ResourceManager::Shaders;
-std::map<uint64_t, ImageData>       ResourceManager::Images;
+std::unordered_map<std::string, Texture2D>    ResourceManager::Textures;
+std::unordered_map<std::string, Shader>       ResourceManager::Shaders;
+std::unordered_map<uint64_t, ImageData>       ResourceManager::Images;
 
 ResourceManager &ResourceManager::GetInstance() {
     static ResourceManager instance; // Guaranteed to be destroyed.
@@ -24,12 +27,15 @@ Shader ResourceManager::LoadShader(
         const char *fShaderFile,
         const char *gShaderFile,
         std::string name) {
-    Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
-    return Shaders[name];
+    Shaders.insert(
+            make_pair(
+                    name, loadShaderFromFile(
+                            vShaderFile, fShaderFile, gShaderFile)));
+    return Shaders.at(name);
 }
 
 Shader ResourceManager::GetShader(std::string name) {
-    return Shaders[name];
+    return Shaders.at(name);
 }
 
 Texture2D ResourceManager::LoadTexture(
@@ -47,10 +53,6 @@ Texture2D ResourceManager::GetTexture(uint64_t uid) {
 }
 
 ResourceManager::~ResourceManager() {
-    // (properly) delete all shaders
-    for (auto iter : Shaders) {
-        glDeleteProgram(iter.second.ID);
-    }
     // (properly) delete all textures
     for (auto iter : Textures) {
         glDeleteTextures(1, &iter.second.ID);
@@ -96,8 +98,7 @@ Shader ResourceManager::loadShaderFromFile(
     const char *fShaderCode = fragmentCode.c_str();
     const char *gShaderCode = geometryCode.c_str();
     // 2. now create sprite_shader object from source code
-    Shader shader;
-    shader.Compile(
+    Shader shader(
             vShaderCode,
             fShaderCode,
             gShaderFile != nullptr

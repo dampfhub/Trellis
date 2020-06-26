@@ -12,6 +12,8 @@
 #include "GUI.h"
 #include "client_server.h"
 
+using std::unique_ptr, std::make_unique, std::move;
+
 SpriteRenderer *ObjectRenderer;
 UI *UserInterface;
 
@@ -201,9 +203,9 @@ void Game::SetScreenDims(int width, int height) {
 }
 
 void Game::init_shaders() {
-    ResourceManager::LoadShader(
+    auto shader = ResourceManager::LoadShader(
             "shaders/sprite.vert", "shaders/sprite.frag", nullptr, "sprite");
-    ResourceManager::GetShader("sprite").SetInteger("image", 0, true);
+    shader.SetInteger("image", 0, true);
 }
 
 void Game::init_textures() {
@@ -335,11 +337,9 @@ void Game::ProcessUIEvents() {
                 Util::IsPng(file_name),
                 file_name);
         (**ActivePage).BeginPlacePiece(
-                std::make_unique<GameObject>(
-                        Transform(
-                                glm::vec2(0.0f, 0.0f),
-                                glm::vec2(98.0f, 98.0f),
-                                0), ResourceManager::GetTexture(file_name)));
+                Transform(
+                        glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
+                ResourceManager::GetTexture(file_name));
         UserInterface->FileDialog->ClearSelected();
     }
     if (UserInterface->AddPage) {

@@ -1,6 +1,8 @@
 #include "game_object.h"
 #include "util.h"
 
+using std::move, std::exchange, std::make_unique;
+
 GameObject::GameObject() : transform(),
         Color(1.0f),
         Sprite(),
@@ -10,6 +12,7 @@ GameObject::GameObject() : transform(),
 
 GameObject::GameObject(
         const Transform &transform,
+        const glm::mat4 &View,
         Texture2D sprite,
         uint64_t uid,
         bool clickable,
@@ -20,14 +23,44 @@ GameObject::GameObject(
     Uid = uid == 0
           ? Uid = Util::generate_uid()
           : uid;
+    renderer = make_unique<SRenderer>(this->transform, View, this->Sprite);
 }
 
 void GameObject::Draw(SpriteRenderer *renderer, int border_pixel_width) {
     renderer->DrawSprite(
             Sprite,
-            transform.position,
+            transform.position + glm::vec2(10, 10),
             border_pixel_width,
             transform.scale,
             transform.rotation,
             Color);
+    this->renderer->Draw();
+}
+
+GameObject::GameObject(GameObject &&other) : transform(other.transform),
+        Color(other.Color),
+        Uid(exchange(other.Uid, -1)),
+        Sprite(other.Sprite),
+        Clickable(other.Clickable),
+        renderer(exchange(other.renderer, nullptr)) {
+}
+
+GameObject &GameObject::operator=(GameObject &&other) {
+    GameObject copy(move(other));
+    copy.swap(*this);
+    return *this;
+}
+
+void GameObject::swap(GameObject &other) {
+    using std::swap;
+    swap(transform, other.transform);
+    swap(Color, other.Color);
+    swap(Uid, other.Uid);
+    swap(Sprite, other.Sprite);
+    swap(Clickable, other.Clickable);
+    swap(renderer, other.renderer);
+}
+
+void swap(GameObject &a, GameObject &b) {
+    a.swap(b);
 }

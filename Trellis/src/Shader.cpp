@@ -7,7 +7,7 @@ Shader &Shader::Use() {
     return *this;
 }
 
-void Shader::Compile(
+Shader::Shader(
         const char *vertexSource,
         const char *fragmentSource,
         const char *geometrySource) {
@@ -144,4 +144,8 @@ void Shader::checkCompileErrors(unsigned int object, std::string type) {
                     << std::endl;
         }
     }
+}
+
+Shader::~Shader() {
+    glDeleteProgram(ID);
 }

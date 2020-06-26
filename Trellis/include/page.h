@@ -75,7 +75,7 @@ public:
     void AddPiece(std::unique_ptr<GameObject> &&piece);
 
     // Begin placing a piece on board, this locks it to the mouse and doesn't place until clicked.
-    void BeginPlacePiece(std::unique_ptr<GameObject> &&piece);
+    void BeginPlacePiece(const Transform &transform, Texture2D sprite);
 
     void Update(glm::ivec2 mouse_pos);
 

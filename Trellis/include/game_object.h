@@ -21,17 +21,27 @@ public:
     bool Clickable;
 
     GameObject();
-
     GameObject(
             const Transform &transform,
+            const glm::mat4 &View,
             Texture2D sprite,
             uint64_t uid = 0,
             bool clickable = true,
             glm::vec3 color = glm::vec3(1.0f));
 
+    GameObject(const GameObject &) = delete;
+    GameObject &operator=(const GameObject &) = delete;
+
+    GameObject(GameObject &&other);
+    GameObject &operator=(GameObject &&other);
+
     void Draw(SpriteRenderer *renderer, int border_pixel_width);
+
+    void swap(GameObject &other);
 private:
-    std::shared_ptr<Renderer> renderer;
+    std::unique_ptr<Renderer> renderer;
 };
+
+void swap(GameObject &a, GameObject &b);
 
 #endif

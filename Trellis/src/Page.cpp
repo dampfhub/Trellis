@@ -6,6 +6,8 @@
 #include "util.h"
 #include "client_server.h"
 
+using std::make_unique;
+
 Page::Page(
         std::string name,
         Texture2D board_tex,
@@ -35,7 +37,8 @@ void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
     Pieces.push_front(std::move(piece));
 }
 
-void Page::BeginPlacePiece(std::unique_ptr<GameObject> &&piece) {
+void Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
+    auto piece = make_unique<GameObject>(transform, View, sprite);
     mouse_hold = MouseHoldType::PLACING;
     initialSize = piece->transform.scale;
     initialPos = piece->transform.position;

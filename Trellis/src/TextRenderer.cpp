@@ -8,11 +8,13 @@
 #include "resource_manager.h"
 
 TextRenderer::TextRenderer(
-        unsigned int width, unsigned int height) : View(glm::mat4(1.0f)) {
-    // load and configure sprite_shader
-
-    TextShader = ResourceManager::LoadShader(
-            "shaders/text.vert", "shaders/text.frag", nullptr, "text");
+        unsigned int width, unsigned int height) : View(glm::mat4(1.0f)),
+        TextShader(
+                ResourceManager::LoadShader(
+                        "shaders/text.vert",
+                        "shaders/text.frag",
+                        nullptr,
+                        "text")) {
     TextShader.SetMatrix4(
             "projection", glm::ortho(
                     0.0f,

@@ -1,7 +1,7 @@
 #ifndef RESOURCE_MANAGER_H
 #define RESOURCE_MANAGER_H
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -30,9 +30,9 @@ public:
     static ResourceManager &GetInstance();
 
     // resource storage
-    static std::map<std::string, Shader> Shaders;
-    static std::map<std::string, Texture2D> Textures;
-    static std::map<uint64_t, ImageData> Images;
+    static std::unordered_map<std::string, Shader> Shaders;
+    static std::unordered_map<std::string, Texture2D> Textures;
+    static std::unordered_map<uint64_t, ImageData> Images;
 
     // loads (and generates) a sprite_shader program from file loading vertex, fragment (and geometry) sprite_shader's source code. If gShaderFile is not nullptr, it also loads a geometry sprite_shader
     static Shader LoadShader(

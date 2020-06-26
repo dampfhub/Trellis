@@ -12,21 +12,16 @@
 // functions for easy management.
 class Shader {
 public:
-    // state
-    unsigned int ID;
-
     // constructor
-    Shader() {
-    }
+    Shader(
+            const char *vertexSource,
+            const char *fragmentSource,
+            const char *geometrySource = nullptr); // note: geometry source code is optional
+    ~Shader();
 
     // sets the current sprite_shader as active
     Shader &Use();
 
-    // compiles the sprite_shader from given source code
-    void Compile(
-            const char *vertexSource,
-            const char *fragmentSource,
-            const char *geometrySource = nullptr); // note: geometry source code is optional
     // utility functions
     void SetFloat(const char *name, float value, bool useShader = false);
 
@@ -63,6 +58,9 @@ public:
             const char *name, const glm::mat4 &matrix, bool useShader = false);
 
 private:
+    // state
+    unsigned int ID;
+
     // checks if compilation or linking failed and if so, print the error logs
     void checkCompileErrors(unsigned int object, std::string type);
 };
