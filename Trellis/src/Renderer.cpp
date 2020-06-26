@@ -100,6 +100,8 @@ void SRenderer::Draw() {
     shader->SetVector2f(
             "screenRes",
             glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
+    shader->SetVector3f("spriteColor", glm::vec3(1));
+
     glActiveTexture(GL_TEXTURE0);
     Sprite.Bind();
 

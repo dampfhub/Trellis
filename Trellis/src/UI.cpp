@@ -162,7 +162,6 @@ void UI::DrawPageSettings(Page::page_list_it_t &active_page) {
         PageSettingsOpen = false;
         pg.Size.x = (float)PageSize;
         pg.Size.y = (float)PageSize;
-        pg.Renderer->Resize(PageSize);
         pg.Name = PageNameBuf;
     }
     ImGui::End();

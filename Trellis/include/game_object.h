@@ -38,8 +38,8 @@ public:
     void Draw(int border_pixel_width);
 
     void swap(GameObject &other);
-private:
     std::unique_ptr<Renderer> renderer;
+private:
 };
 
 void swap(GameObject &a, GameObject &b);

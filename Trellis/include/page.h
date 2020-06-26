@@ -32,8 +32,8 @@ public:
 
 
     std::string Name;
-    Texture2D Board_Texture;
-    std::unique_ptr<SpriteRenderer> Renderer;
+    Transform BoardTransform;
+    std::unique_ptr<Renderer> BoardRenderer;
 
     glm::vec2 Position, Size;
 
@@ -47,7 +47,6 @@ public:
     Page(
             std::string name,
             Texture2D board_tex,
-            std::unique_ptr<SpriteRenderer> &&renderer,
             glm::vec2 pos = glm::vec2(0.0f, 0.0f),
             glm::vec2 size = glm::vec2(100.0f, 100.0f),
             // TODO: This should be 0 when we are sending pages correctly
@@ -79,7 +78,7 @@ public:
 
     void Update(glm::ivec2 mouse_pos);
 
-    void Draw(TextRenderer *text_renderer);
+    void Draw();
 
     MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject &object);
 
@@ -100,8 +99,8 @@ private:
     glm::ivec2 DragOrigin = glm::ivec2(0);
     enum class MouseHoldType {
         NONE, PLACING, FOLLOWING, SCALING
-    } mouse_hold;
-    std::pair<int, int> ScaleEdges;
+    } mouse_hold = MouseHoldType::NONE;
+    std::pair<int, int> ScaleEdges = {0, 0};
     glm::vec2 initialSize;
     glm::vec2 initialPos;
     int BorderWidth = 5;

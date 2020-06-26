@@ -204,8 +204,6 @@ void Game::init_shaders() {
 
 void Game::init_textures() {
     ResourceManager::LoadTexture("textures/grid.png", false, "grid");
-    ResourceManager::LoadTexture("textures/token.jpg", false, "goblin");
-    ResourceManager::LoadTexture("textures/orcling.png", true, "orcling");
 }
 
 void Game::init_objects() {
@@ -315,7 +313,7 @@ void Game::Update(float dt) {
 }
 
 void Game::Render() {
-    (**ActivePage).Draw(nullptr);
+    (**ActivePage).Draw();
     UserInterface.Draw(Pages, ActivePage);
 }
 
@@ -347,12 +345,9 @@ void Game::AddPage(std::unique_ptr<Page> &&pg) {
 }
 
 void Game::MakePage(std::string name) {
-    auto BoardRenderer = std::make_unique<SpriteRenderer>(
-            ResourceManager::GetShader("sprite"), 20);
     auto pg = std::make_unique<Page>(
             name,
             ResourceManager::GetTexture("grid"),
-            std::move(BoardRenderer),
             glm::vec2(0.0f, 0.0f),
             glm::vec2(20.0f, 20.0f));
     AddPage(std::move(pg));

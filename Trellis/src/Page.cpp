@@ -11,16 +11,18 @@ using std::make_unique;
 Page::Page(
         std::string name,
         Texture2D board_tex,
-        std::unique_ptr<SpriteRenderer> &&renderer,
         glm::vec2 pos,
         glm::vec2 size,
         uint64_t uid) : Name(name),
-        Board_Texture(board_tex),
-        Renderer(std::move(renderer)),
         Position(pos),
         Size(size),
-        Uid(uid) {
-    Renderer->Resize((int)Size.x);
+        Uid(uid),
+        BoardTransform(glm::vec2(0), glm::vec2(1000, 1000), 0){
+    BoardRenderer = std::make_unique<SRenderer>(
+            this->BoardTransform,
+            this->View,
+            board_tex
+    );
     Camera = std::make_unique<Camera2D>(
             200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = std::make_unique<PageUI>();
@@ -53,11 +55,9 @@ void Page::Update(glm::ivec2 mouse_pos) {
     HandleUIEvents();
 }
 
-void Page::Draw(TextRenderer *text_renderer) {
-    (void)text_renderer;
-    Renderer->View = View;
-    Renderer->DrawSprite(
-            Board_Texture, Position, false, Size * TILE_DIMENSIONS);
+void Page::Draw() {
+    BoardRenderer->shader->SetInteger("border_width", 0);
+    BoardRenderer->Draw();
     // Draw sprites back-to-front, so the "top" sprite is drawn above the others
     for (auto it = Pieces.rbegin(); it != Pieces.rend(); it++) {
         int border_pixel_width =
