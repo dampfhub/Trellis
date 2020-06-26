@@ -38,17 +38,19 @@ public:
 
     template<class T>
     void RegisterPageChange(
-            std::string name, uint64_t uid, T data) {
+            std::string name, uint64_t uid, T data, uint64_t target_uid = 0) {
         if (pub_queues.find(name) == pub_queues.end()) {
             pub_queues[name] = NetworkManager::NetworkQueue::Subscribe(name);
         }
         Util::NetworkData nd(data, uid);
-        changes.push(std::make_pair(name, nd));
+        changes.push(std::make_pair(name, std::make_pair(nd, target_uid)));
     }
 
     void PublishPageChanges();
 
     void RegisterCallback(std::string channel_name, queue_handler_f cb);
+
+    uint64_t uid;
 
 protected:
     class NetworkQueueCallback {
@@ -70,7 +72,6 @@ protected:
                 callback(std::move(nd));
             }
         }
-
     private:
         queue_handler_f callback;
     };
@@ -78,9 +79,8 @@ protected:
     std::map<std::string, std::vector<NetworkQueueCallback>> sub_queues;
     std::map<std::string, std::shared_ptr<NetworkManager::NetworkQueue>>
             pub_queues;
-    std::queue<std::pair<std::string, Util::NetworkData>> changes;
+    std::queue<std::pair<std::string, std::pair<Util::NetworkData, uint64_t>>> changes;
     static bool started;
-    uint64_t uid = 0;
 };
 
 class Client : public ClientServer {
@@ -93,6 +93,8 @@ public:
     void Start(int port_num, std::string name, std::string hostname) override;
 
     void Update() override;
+
+    uint64_t uid = 0;
 
 private:
     friend class ClientServer;
@@ -113,14 +115,18 @@ public:
 
     void Update() override;
 
+    uint64_t uid = 0;
+
+    std::vector<ClientInfo> connected_clients;
+
 private:
     friend class ClientServer;
 
     Server() = default;
 
-    void HandleClientJoin(Util::NetworkData d);
+    void handle_client_join(Util::NetworkData d);
 
-    std::vector<ClientInfo> connected_clients;
+    void handle_forward_data(std::string channel, Util::NetworkData d);
 
     int port_num{ };
 };

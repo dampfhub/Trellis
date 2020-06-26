@@ -315,3 +315,12 @@ glm::vec2 Page::WorldPosToScreenPos(glm::ivec2 pos) {
     return glm::vec2(screen_pos.x, screen_pos.y);
 }
 
+void Page::SendAllPieces(uint64_t target_uid) {
+    if (ClientServer::Started()) {
+        for (auto &piece : Pieces) {
+            ClientServer &cs = ClientServer::GetInstance();
+            cs.RegisterPageChange("ADD_PIECE", Uid, *piece, target_uid);
+        }
+    }
+}
+

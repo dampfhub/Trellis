@@ -91,7 +91,7 @@ void NetworkManager::network_object::handle_write(
                     });
         }
     } else {
-
+        std::cout << "Handle Write Error: " << error.message() << std::endl;
     }
 }
 
@@ -110,8 +110,8 @@ void NetworkManager::network_object::handle_read_header(
                     handle_read_body(sock, buf, error, bytes_transferred);
                 });
     } else {
-        // Client can disconnect here, should handle it in server
         std::cout << "Read Header Error: " << error.message() << std::endl;
+        handle_error(sock, buf, error);
     }
 }
 
@@ -183,11 +183,13 @@ NetworkManager::server::~server() {
     tp.join();
 }
 
-void NetworkManager::server::Write(const NetworkManager::Message &msg) {
+void NetworkManager::server::Write(Message msg) {
     //uid is 0 write to all connected clients
     if (msg.Header.Uid == 0) {
         for (auto &kv : socks) {
-            WriteSocket(kv.second, msg);
+            //msg.Header.Uid = kv.first;
+            Message m = Message(msg.RawMsg(), kv.first, msg.Header.Channel);
+            WriteSocket(kv.second, m);
         }
     } else {
         if (socks[msg.Header.Uid]) {
@@ -267,6 +269,73 @@ void NetworkManager::server::handle_header_action(const socket_ptr &sock) {
     }
 }
 
+void NetworkManager::server::handle_write(
+        const NetworkManager::network_object::socket_ptr &sock,
+        const asio::error_code &error,
+        size_t bytes) {
+    if (!error) {
+        write_msgs.pop_front();
+        if (!write_msgs.empty()) {
+            Message &m = write_msgs.front();
+            asio::async_write(
+                    *socks[m.Header.Uid], asio::buffer(
+                            m.Data(),
+                            m.Length), [this, sock](
+                            const asio::error_code &error,
+                            size_t bytes_transferred) {
+                        handle_write(
+                                sock, error, bytes_transferred);
+                    });
+        }
+    } else {
+        std::cout << "Handle Write Error: " << error.message() << std::endl;
+    }
+}
+
+void NetworkManager::server::do_write(
+        const NetworkManager::network_object::socket_ptr &sock,
+        const NetworkManager::Message &msg) {
+    bool write_in_progress = !write_msgs.empty();
+    write_msgs.push_back(msg);
+    if (!write_in_progress) {
+        Message &m = write_msgs.front();
+        asio::async_write(
+                *socks[m.Header.Uid],
+                asio::buffer(
+                        m.Data(), m.Length),
+                [this, sock](
+                        const asio::error_code &error,
+                        size_t bytes_transferred) {
+                    handle_write(
+                            sock, error, bytes_transferred);
+                });
+    }
+}
+
+void NetworkManager::server::handle_error(
+        const NetworkManager::network_object::socket_ptr &sock,
+        NetworkManager::Message &buf,
+        const asio::error_code &error) {
+    if (error == asio::error::connection_reset) {
+        const std::lock_guard<std::mutex> lock(mtx);
+        static NetworkManager &nm = NetworkManager::GetInstance();
+        for (auto &kv : socks) {
+            // Find the relevant client and delete it
+            if (kv.second == sock) {
+                // Send the client uid that has disconnected so it can be untracked
+                Util::NetworkData con("", kv.first);
+                // Push this into the CLIENT_JOIN channel so new clients can be tracked
+                for (auto &ptr : nm.queues["DISCONNECT"]) {
+                    ptr.lock()->Push(Util::serialize_vec(con));
+                }
+                socks.erase(kv.first);
+                read_msgs.erase(sock);
+                break;
+            }
+        }
+    }
+}
+
 NetworkManager::client::client(
         std::string client_name,
         uint64_t client_uid,
@@ -296,7 +365,7 @@ NetworkManager::client::~client() {
     client_thread->join();
 }
 
-void NetworkManager::client::Write(const NetworkManager::Message &msg) {
+void NetworkManager::client::Write(NetworkManager::Message msg) {
     WriteSocket(server_sock, msg);
 }
 
@@ -428,5 +497,9 @@ const std::vector<std::byte> &NetworkManager::Message::Msg() {
             DataVec.begin() + MessageHeader::HeaderLength +
                     Header.MessageLength + 1);
     msg = t;
+    return msg;
+}
+
+std::vector<std::byte> NetworkManager::Message::RawMsg() {
     return msg;
 }

@@ -83,6 +83,9 @@ public:
 
     MouseHoverType CurrentHoverType(glm::ivec2 mouse_pos);
 
+    // Network related functions
+    void SendAllPieces(uint64_t target_uid = 0);
+
     std::list<std::unique_ptr<GameObject>> Pieces;
     std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
 

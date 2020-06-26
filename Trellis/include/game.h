@@ -82,6 +82,10 @@ private:
 
     void handle_image_request(Util::NetworkData &&q);
 
+    void handle_client_join(Util::NetworkData &&q);
+
+    void handle_client_disconnect(Util::NetworkData &&q);
+
     MouseHoverType current_hover_type = MouseHoverType::NONE;
 
     void AddPage(std::unique_ptr<Page> &&pg);

@@ -27,7 +27,8 @@ void ClientServer::Update() {
 void ClientServer::PublishPageChanges() {
     while (!changes.empty()) {
         auto p = changes.front();
-        pub_queues[p.first]->Publish(p.second, uid);
+        // Publish the data to the target uid
+        pub_queues[p.first]->Publish(p.second.first, p.second.second);
         changes.pop();
     }
 }
@@ -56,8 +57,16 @@ void Server::Start(int port, std::string name, std::string hostname) {
     nm.StartServer(port);
     RegisterCallback(
             "JOIN", [this](Util::NetworkData &&d) {
-                HandleClientJoin(std::move(d));
+                handle_client_join(std::move(d));
             });
+    std::vector<std::string>
+            forward_channels = { "ADD_PIECE", "MOVE_PIECE", "RESIZE_PIECE" };
+    for (auto &str : forward_channels) {
+        RegisterCallback(
+                str, [this, str](Util::NetworkData &&d) {
+                    handle_forward_data(str, std::move(d));
+                });
+    }
     started = true;
 }
 
@@ -65,6 +74,10 @@ void Server::Update() {
     ClientServer::Update();
 }
 
-void Server::HandleClientJoin(Util::NetworkData d) {
+void Server::handle_client_join(Util::NetworkData d) {
     connected_clients.emplace_back(d.Uid, d.Parse<std::string>());
+}
+
+void Server::handle_forward_data(std::string channel, Util::NetworkData d) {
+    RegisterPageChange(channel, d.Uid, d.Data);
 }
