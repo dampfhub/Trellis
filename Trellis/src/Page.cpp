@@ -1,7 +1,5 @@
 #include "page.h"
 #include "resource_manager.h"
-#include "text_renderer.h"
-#include "text_object.h"
 #include "game.h"
 #include "util.h"
 #include "client_server.h"
@@ -17,7 +15,7 @@ Page::Page(
         Position(pos),
         Size(size),
         Uid(uid),
-        BoardTransform(glm::vec2(0), glm::vec2(1000, 1000), 0){
+        BoardTransform(glm::vec2(0), glm::vec2(1000), 0){
     BoardRenderer = std::make_unique<SRenderer>(
             this->BoardTransform,
             this->View,
@@ -56,7 +54,6 @@ void Page::Update(glm::ivec2 mouse_pos) {
 }
 
 void Page::Draw() {
-    BoardRenderer->shader->SetInteger("border_width", 0);
     BoardRenderer->Draw();
     // Draw sprites back-to-front, so the "top" sprite is drawn above the others
     for (auto it = Pieces.rbegin(); it != Pieces.rend(); it++) {

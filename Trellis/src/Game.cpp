@@ -3,7 +3,6 @@
 
 #include "game.h"
 #include "glfw_handler.h"
-#include "sprite_renderer.h"
 #include "resource_manager.h"
 #include "page.h"
 #include "game_object.h"
@@ -207,9 +206,6 @@ void Game::init_textures() {
 }
 
 void Game::init_objects() {
-    std::unique_ptr<SpriteRenderer>
-            BoardRenderer = std::make_unique<SpriteRenderer>(
-            ResourceManager::GetShader("sprite"), 20);
     MakePage("Default");
     ActivePage = Pages.begin();
 }

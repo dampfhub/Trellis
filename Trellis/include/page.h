@@ -9,8 +9,6 @@
 
 #include "camera.h"
 #include "game_object.h"
-#include "sprite_renderer.h"
-#include "text_renderer.h"
 #include "page_ui.h"
 
 class Page {

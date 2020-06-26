@@ -2,7 +2,6 @@
 #define GAME_OBJECT_H
 
 #include "texture.h"
-#include "sprite_renderer.h"
 #include "renderer.h"
 #include "transform.h"
 
