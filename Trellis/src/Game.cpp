@@ -121,7 +121,6 @@ Game::Game() {
             GLFW_KEY_ESCAPE, [this](int, int, int, int) {
                 this->esc_handler();
             });
-    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
     glfw.RegisterKeyPress(
         GLFW_KEY_RIGHT, [this](int key, int, int, int) {
             this->arrow_press(key);
