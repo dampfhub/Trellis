@@ -340,3 +340,11 @@ glm::vec2 Page::WorldPosToScreenPos(glm::ivec2 pos) {
     return glm::vec2(screen_pos.x, screen_pos.y);
 }
 
+bool Page::Deselect() {
+    if (CurrentSelection != Pieces.end()) {
+        CurrentSelection = Pieces.end();
+        return true;
+    }
+    return false;
+}
+

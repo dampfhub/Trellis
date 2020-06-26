@@ -12,8 +12,6 @@
 #include "GUI.h"
 #include "client_server.h"
 
-using std::bind;
-
 SpriteRenderer *ObjectRenderer;
 UI *UserInterface;
 
@@ -23,12 +21,10 @@ Game &Game::GetInstance() {
     return instance;
 }
 
-static void close_window(int key, int scancode, int action, int mods) {
-    (void)key;
-    (void)scancode;
-    (void)action;
-    (void)mods;
-
+void Game::esc_handler() {
+    if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) {
+        return;
+    }
     static GLFW &glfw = GLFW::GetInstance();
     glfw.SetWindowShouldClose(1);
 }
@@ -112,16 +108,19 @@ void Game::start_client_temp(int action) {
 }
 
 Game::Game() {
-    using namespace std::placeholders;
-
     GLFW &glfw = GLFW::GetInstance();
     init_shaders();
     init_textures();
     init_objects();
 
     glfw.RegisterWindowSizeCallback(
-            bind(
-                    &Game::window_size_callback, this, _1, _2));
+            [this](int width, int height) {
+                this->window_size_callback(width, height);
+            });
+    glfw.RegisterKeyPress(
+            GLFW_KEY_ESCAPE, [this](int, int, int, int) {
+                this->esc_handler();
+            });
     glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
     glfw.RegisterKeyPress(
         GLFW_KEY_RIGHT, [this](int key, int, int, int) {
@@ -140,28 +139,49 @@ Game::Game() {
             this->arrow_press(key);
         });
     glfw.RegisterMousePosCallback(
-            bind(
-                    &Game::mouse_pos_callback, this, _1, _2));
-    glfw.RegisterScroll(bind(&Game::scroll_callback, this, _2));
+            [this](double x, double y) {
+                this->mouse_pos_callback(x, y);
+            });
+    glfw.RegisterScroll(
+            [this](double, double yoffset) {
+                this->scroll_callback(yoffset);
+            });
     glfw.RegisterMousePress(
-            GLFW_MOUSE_BUTTON_LEFT, bind(&Game::left_click_press, this));
+            GLFW_MOUSE_BUTTON_LEFT, [this](int, int, int) {
+                this->left_click_press();
+            });
     glfw.RegisterMouseRelease(
-            GLFW_MOUSE_BUTTON_LEFT, bind(&Game::left_click_release, this));
+            GLFW_MOUSE_BUTTON_LEFT, [this](int, int, int) {
+                this->left_click_release();
+            });
     glfw.RegisterMousePress(
-            GLFW_MOUSE_BUTTON_RIGHT, bind(&Game::right_click_press, this));
+            GLFW_MOUSE_BUTTON_RIGHT, [this](int, int, int) {
+                this->right_click_release();
+            });
     glfw.RegisterMouseRelease(
-            GLFW_MOUSE_BUTTON_RIGHT, bind(&Game::right_click_release, this));
+            GLFW_MOUSE_BUTTON_RIGHT, [this](int, int, int) {
+                this->right_click_release();
+            });
     glfw.RegisterMousePress(
-            GLFW_MOUSE_BUTTON_MIDDLE, bind(&Game::middle_click_press, this));
+            GLFW_MOUSE_BUTTON_MIDDLE, [this](int, int, int) {
+                this->middle_click_press();
+            });
     glfw.RegisterMouseRelease(
-            GLFW_MOUSE_BUTTON_MIDDLE, bind(&Game::middle_click_release, this));
-    auto fn = bind(&Game::snap_callback, this, _3);
-    fn(1, 2, 3);
-    glfw.RegisterKey(GLFW_KEY_LEFT_ALT, bind(&Game::snap_callback, this, _3));
+            GLFW_MOUSE_BUTTON_MIDDLE, [this](int, int, int) {
+                this->middle_click_release();
+            });
     glfw.RegisterKey(
-            GLFW_KEY_A, bind(&Game::start_server_temp, this, _3));
+            GLFW_KEY_LEFT_ALT, [this](int, int, int action, int) {
+                this->snap_callback(action);
+            });
     glfw.RegisterKey(
-            GLFW_KEY_S, bind(&Game::start_client_temp, this, _3));
+            GLFW_KEY_A, [this](int, int, int action, int) {
+                this->start_server_temp(action);
+            });
+    glfw.RegisterKey(
+            GLFW_KEY_S, [this](int, int, int action, int) {
+                this->start_client_temp(action);
+            });
 
     // Set projection matrix
     set_projection();
@@ -448,4 +468,3 @@ void Game::register_network_callbacks() {
                 handle_image_request(std::move(d));
             });
 }
-

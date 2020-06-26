@@ -90,6 +90,10 @@ public:
 
     MouseHoverType CurrentHoverType(glm::ivec2 mouse_pos);
 
+    // If page has an active selection, deselect it and return true. Otherwise,
+    // return false.
+    bool Deselect();
+
     std::list<std::unique_ptr<GameObject>> Pieces;
     std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
 
