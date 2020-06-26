@@ -23,12 +23,10 @@ Game &Game::GetInstance() {
     return instance;
 }
 
-static void close_window(int key, int scancode, int action, int mods) {
-    (void)key;
-    (void)scancode;
-    (void)action;
-    (void)mods;
-
+void Game::esc_handler() {
+    if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) {
+        return;
+    }
     static GLFW &glfw = GLFW::GetInstance();
     glfw.SetWindowShouldClose(1);
 }
@@ -103,7 +101,7 @@ Game::Game() {
     glfw.RegisterWindowSizeCallback(
             bind(
                     &Game::window_size_callback, this, _1, _2));
-    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
+    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, bind(&Game::esc_handler, this));
     glfw.RegisterMousePosCallback(
             bind(
                     &Game::mouse_pos_callback, this, _1, _2));

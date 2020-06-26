@@ -88,6 +88,7 @@ private:
 
     void MakePage(std::string name);
 
+    void esc_handler();
     void window_size_callback(int width, int height);
     void mouse_pos_callback(double x, double y);
     void left_click_press();
