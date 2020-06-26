@@ -18,6 +18,10 @@ enum MouseHoverType {
     NONE, N, E, S, W, NE, SE, SW, NW, CENTER
 };
 
+enum ArrowkeyType {
+    RIGHT, LEFT, DOWN, UP
+};
+
 class Page {
 public:
     static constexpr float TILE_DIMENSIONS = 100.0f;
@@ -65,6 +69,9 @@ public:
     void HandleMiddleClickHold(glm::ivec2 mouse_pos);
 
     void HandleScrollWheel(glm::ivec2 mouse_pos, int direction);
+
+    // Keyboard event handlers
+    void HandleArrows(ArrowkeyType key);
 
     // Adds a piece to the pieces list and the map
     void AddPiece(std::unique_ptr<GameObject> &&piece);

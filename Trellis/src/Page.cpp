@@ -240,6 +240,11 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                     break;
             }
         }
+        else {
+            //Arrow key movement
+            piece.Position.x += mouse_pos.x;
+            piece.Position.y += mouse_pos.y;
+        }
         if (ClientServer::Started() && !Placing) {
             static ClientServer &cs = ClientServer::GetInstance();
             if (piece.Position != prev_pos) {
@@ -293,6 +298,26 @@ void Page::HandleMiddleClickHold(glm::ivec2 mouse_pos) {
 void Page::HandleScrollWheel(glm::ivec2 mouse_pos, int scroll_direction) {
     Camera->Zoom(mouse_pos, scroll_direction);
     View = Camera->CalculateView(Size * TILE_DIMENSIONS);
+}
+
+void Page::HandleArrows(ArrowkeyType key) {
+    //ADH - FUTURE come back to this after a decision is made about snapping
+    glm::vec2 cardinal(0, 0);
+    switch (key) {
+    case ArrowkeyType::RIGHT:
+        cardinal.x += TILE_DIMENSIONS;
+        break;
+    case ArrowkeyType::LEFT:
+        cardinal.x -= TILE_DIMENSIONS;
+        break;
+    case ArrowkeyType::DOWN:
+        cardinal.y += TILE_DIMENSIONS;
+        break;
+    case ArrowkeyType::UP:
+        cardinal.y -= TILE_DIMENSIONS;
+        break;
+    }
+    MoveCurrentSelection(cardinal);
 }
 
 void Page::SnapPieceToGrid(GameObject &piece, int increments) {

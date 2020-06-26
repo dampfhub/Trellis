@@ -98,6 +98,7 @@ private:
     void middle_click_press();
     void middle_click_release();
     void scroll_callback(double yoffset);
+    void arrow_press(int key);
     void snap_callback(int action);
     void start_server_temp(int action);
     void start_client_temp(int action);

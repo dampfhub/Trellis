@@ -365,3 +365,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# adhansen - ignore visual studio build files
+Trellis/imgui.ini
+Trellis/CMakeSettings.json
+Trellis/out
