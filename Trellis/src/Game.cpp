@@ -389,7 +389,11 @@ void Game::handle_page_add_piece(Util::NetworkData &&q) {
     auto it = PagesMap.find(q.Uid);
     if (it != PagesMap.end()) {
         Page &pg = (*it).second;
-        pg.AddPiece(std::move(g));
+        auto piece_it = pg.PiecesMap.find(g->Uid);
+        // Only add piece if it doesn't already exist
+        if (piece_it == pg.PiecesMap.end()) {
+            pg.AddPiece(std::move(g));
+        }
     }
 }
 
