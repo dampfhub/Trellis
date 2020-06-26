@@ -38,7 +38,7 @@ public:
 
     template<class T>
     void RegisterPageChange(
-            std::string name, uint64_t uid, T data, uint64_t target_uid = 0) {
+            std::string name, uint64_t uid, const T &data, uint64_t target_uid = 0) {
         if (pub_queues.find(name) == pub_queues.end()) {
             pub_queues[name] = NetworkManager::NetworkQueue::Subscribe(name);
         }

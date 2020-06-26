@@ -2,7 +2,6 @@
 #define GAME_OBJECT_H
 
 #include "texture.h"
-#include "sprite_renderer.h"
 #include "renderer.h"
 #include "transform.h"
 
@@ -21,7 +20,6 @@ public:
     bool Clickable;
 
     GameObject();
-
     GameObject(
             const Transform &transform,
             Texture2D sprite,
@@ -29,9 +27,19 @@ public:
             bool clickable = true,
             glm::vec3 color = glm::vec3(1.0f));
 
-    void Draw(SpriteRenderer *renderer, int border_pixel_width);
+    GameObject(const GameObject &) = delete;
+    GameObject &operator=(const GameObject &) = delete;
+
+    GameObject(GameObject &&other);
+    GameObject &operator=(GameObject &&other);
+
+    void Draw(int border_pixel_width);
+
+    void swap(GameObject &other);
+    std::unique_ptr<Renderer> renderer;
 private:
-    std::shared_ptr<Renderer> renderer;
 };
+
+void swap(GameObject &a, GameObject &b);
 
 #endif

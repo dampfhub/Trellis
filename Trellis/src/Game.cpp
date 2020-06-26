@@ -3,17 +3,14 @@
 
 #include "game.h"
 #include "glfw_handler.h"
-#include "sprite_renderer.h"
 #include "resource_manager.h"
 #include "page.h"
 #include "game_object.h"
-#include "ui.h"
 #include "util.h"
 #include "GUI.h"
 #include "client_server.h"
 
-SpriteRenderer *ObjectRenderer;
-UI *UserInterface;
+using std::unique_ptr, std::make_unique, std::move;
 
 Game &Game::GetInstance() {
     static Game instance; // Guaranteed to be destroyed.
@@ -110,7 +107,6 @@ void Game::start_client_temp(int action) {
 Game::Game() {
     GLFW &glfw = GLFW::GetInstance();
     init_shaders();
-    init_textures();
     init_objects();
 
     glfw.RegisterWindowSizeCallback(
@@ -185,12 +181,10 @@ Game::Game() {
     // Set projection matrix
     set_projection();
     glm::mat4 view = glm::mat4(1.0f);
-    ResourceManager::GetShader("sprite").SetMatrix4("view", view, true);
+    ResourceManager::SetGlobalMatrix4("view", view);
 }
 
 Game::~Game() {
-    delete ObjectRenderer;
-    delete UserInterface;
 }
 
 void Game::SetScreenDims(int width, int height) {
@@ -203,21 +197,12 @@ void Game::SetScreenDims(int width, int height) {
 void Game::init_shaders() {
     ResourceManager::LoadShader(
             "shaders/sprite.vert", "shaders/sprite.frag", nullptr, "sprite");
-    ResourceManager::GetShader("sprite").SetInteger("image", 0, true);
-}
-
-void Game::init_textures() {
-    ResourceManager::LoadTexture("textures/grid.png", false, "grid");
-    ResourceManager::LoadTexture("textures/token.jpg", false, "goblin");
-    ResourceManager::LoadTexture("textures/orcling.png", true, "orcling");
+    ResourceManager::LoadShader(
+            "shaders/board.vert", "shaders/board.frag", nullptr, "board");
+    ResourceManager::SetGlobalInteger("image", 0);
 }
 
 void Game::init_objects() {
-    ObjectRenderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
-    std::unique_ptr<SpriteRenderer>
-            BoardRenderer = std::make_unique<SpriteRenderer>(
-            ResourceManager::GetShader("sprite"), 20);
-    UserInterface = new UI();
     MakePage("Default");
     ActivePage = Pages.begin();
 }
@@ -231,8 +216,8 @@ void Game::set_projection() {
             0.0f,
             -1.0f,
             1.0f);
-    ResourceManager::GetShader("sprite").SetMatrix4(
-            "projection", projection, true);
+    ResourceManager::SetGlobalMatrix4(
+            "projection", projection);
 }
 
 void Game::UpdateMouse() {
@@ -321,32 +306,30 @@ void Game::Update(float dt) {
 }
 
 void Game::Render() {
-    (**ActivePage).Draw(ObjectRenderer, nullptr);
-    UserInterface->Draw(Pages, ActivePage);
+    (**ActivePage).Draw();
+    UserInterface.Draw(Pages, ActivePage);
 }
 
 void Game::ProcessUIEvents() {
-    ActivePage = UserInterface->GetActivePage(Pages);
-    if (UserInterface->FileDialog->HasSelected()) {
+    ActivePage = UserInterface.GetActivePage(Pages);
+    if (UserInterface.FileDialog->HasSelected()) {
         std::string file_name = Util::PathBaseName(
-                UserInterface->FileDialog->GetSelected().string());
+                UserInterface.FileDialog->GetSelected().string());
         ResourceManager::LoadTexture(
-                UserInterface->FileDialog->GetSelected().string().c_str(),
+                UserInterface.FileDialog->GetSelected().string().c_str(),
                 Util::IsPng(file_name),
                 file_name);
         (**ActivePage).BeginPlacePiece(
-                std::make_unique<GameObject>(
-                        Transform(
-                                glm::vec2(0.0f, 0.0f),
-                                glm::vec2(98.0f, 98.0f),
-                                0), ResourceManager::GetTexture(file_name)));
-        UserInterface->FileDialog->ClearSelected();
+                Transform(
+                        glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
+                ResourceManager::GetTexture(file_name));
+        UserInterface.FileDialog->ClearSelected();
     }
-    if (UserInterface->AddPage) {
-        MakePage(UserInterface->PageName);
-        UserInterface->ActivePage = Pages.size() - 1;
+    if (UserInterface.AddPage) {
+        MakePage(UserInterface.PageName);
+        UserInterface.ActivePage = Pages.size() - 1;
     }
-    UserInterface->ClearFlags();
+    UserInterface.ClearFlags();
 }
 
 void Game::AddPage(std::unique_ptr<Page> &&pg) {
@@ -355,14 +338,8 @@ void Game::AddPage(std::unique_ptr<Page> &&pg) {
 }
 
 void Game::MakePage(std::string name) {
-    auto BoardRenderer = std::make_unique<SpriteRenderer>(
-            ResourceManager::GetShader("sprite"), 20);
     auto pg = std::make_unique<Page>(
-            name,
-            ResourceManager::GetTexture("grid"),
-            std::move(BoardRenderer),
-            glm::vec2(0.0f, 0.0f),
-            glm::vec2(20.0f, 20.0f));
+            name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
     AddPage(std::move(pg));
 }
 

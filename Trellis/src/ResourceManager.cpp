@@ -4,14 +4,19 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <unordered_map>
+#include <memory>
 
 #include "stb_image.h"
 #include "util.h"
 
+using std::make_pair, std::make_shared, std::shared_ptr;
+
 // Instantiate static variables
-std::map<std::string, Texture2D>    ResourceManager::Textures;
-std::map<std::string, Shader>       ResourceManager::Shaders;
-std::map<uint64_t, ImageData>       ResourceManager::Images;
+std::unordered_map<std::string, Texture2D>    ResourceManager::Textures;
+std::unordered_map<std::string, shared_ptr<Shader>>
+        ResourceManager::Shaders;
+std::unordered_map<uint64_t, ImageData>       ResourceManager::Images;
 
 ResourceManager &ResourceManager::GetInstance() {
     static ResourceManager instance; // Guaranteed to be destroyed.
@@ -19,17 +24,20 @@ ResourceManager &ResourceManager::GetInstance() {
     return instance;
 }
 
-Shader ResourceManager::LoadShader(
+std::shared_ptr<Shader> ResourceManager::LoadShader(
         const char *vShaderFile,
         const char *fShaderFile,
         const char *gShaderFile,
         std::string name) {
-    Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
-    return Shaders[name];
+    Shaders.insert(
+            make_pair(
+                    name, loadShaderFromFile(
+                            vShaderFile, fShaderFile, gShaderFile)));
+    return Shaders.at(name);
 }
 
-Shader ResourceManager::GetShader(std::string name) {
-    return Shaders[name];
+std::shared_ptr<Shader> ResourceManager::GetShader(std::string name) {
+    return Shaders.at(name);
 }
 
 Texture2D ResourceManager::LoadTexture(
@@ -47,17 +55,13 @@ Texture2D ResourceManager::GetTexture(uint64_t uid) {
 }
 
 ResourceManager::~ResourceManager() {
-    // (properly) delete all shaders
-    for (auto iter : Shaders) {
-        glDeleteProgram(iter.second.ID);
-    }
     // (properly) delete all textures
     for (auto iter : Textures) {
         glDeleteTextures(1, &iter.second.ID);
     }
 }
 
-Shader ResourceManager::loadShaderFromFile(
+std::shared_ptr<Shader> ResourceManager::loadShaderFromFile(
         const char *vShaderFile,
         const char *fShaderFile,
         const char *gShaderFile) {
@@ -96,14 +100,12 @@ Shader ResourceManager::loadShaderFromFile(
     const char *fShaderCode = fragmentCode.c_str();
     const char *gShaderCode = geometryCode.c_str();
     // 2. now create sprite_shader object from source code
-    Shader shader;
-    shader.Compile(
+    return make_shared<Shader>(
             vShaderCode,
             fShaderCode,
             gShaderFile != nullptr
             ? gShaderCode
             : nullptr);
-    return shader;
 }
 
 Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha) {
@@ -143,3 +145,48 @@ Texture2D ResourceManager::loadTextureFromUID(uint64_t uid) {
     stbi_image_free(data);
     return texture;
 }
+
+void ResourceManager::SetGlobalFloat(const char *name, float value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetFloat(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalInteger(const char *name, int value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetInteger(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalVector2f(
+        const char *name,
+        const glm::vec2 &value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetVector2f(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalVector3f(
+        const char *name,
+        const glm::vec3 &value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetVector3f(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalVector4f(
+        const char *name,
+        const glm::vec4 &value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetVector4f(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalMatrix4(
+        const char *name,
+        const glm::mat4 &value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetMatrix4(name, value);
+    }
+}
+

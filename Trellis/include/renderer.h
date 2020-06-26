@@ -5,19 +5,24 @@
 
 #include "shader.h"
 #include "transform.h"
+#include "texture.h"
 
 class Renderer {
 protected:
-    std::shared_ptr<Shader> shader;
-    Transform &transform;
+    const Transform &transform;
+    const glm::mat4 &view;
+
+    glm::mat4 Model();
+
 public:
-    Renderer(const std::shared_ptr<Shader> &shader, Transform &transform);
+    std::shared_ptr<Shader> shader;
+    Renderer(
+            const std::shared_ptr<Shader> &shader,
+            const Transform &transform,
+            const glm::mat4 &view);
 
+    virtual ~Renderer();
     virtual void Draw() = 0;
-};
-
-class SRenderer : public Renderer {
-
 };
 
 #endif //RENDERER_H

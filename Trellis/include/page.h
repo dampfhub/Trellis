@@ -9,8 +9,6 @@
 
 #include "camera.h"
 #include "game_object.h"
-#include "sprite_renderer.h"
-#include "text_renderer.h"
 #include "page_ui.h"
 
 class Page {
@@ -32,10 +30,8 @@ public:
 
 
     std::string Name;
-    Texture2D Board_Texture;
-    std::unique_ptr<SpriteRenderer> Renderer;
-
-    glm::vec2 Position, Size;
+    Transform board_transform;
+    std::unique_ptr<Renderer> board_renderer;
 
     std::unique_ptr<Camera2D> Camera;
     std::unique_ptr<PageUI> UserInterface;
@@ -46,8 +42,6 @@ public:
 
     Page(
             std::string name,
-            Texture2D board_tex,
-            std::unique_ptr<SpriteRenderer> &&renderer,
             glm::vec2 pos = glm::vec2(0.0f, 0.0f),
             glm::vec2 size = glm::vec2(100.0f, 100.0f),
             // TODO: This should be 0 when we are sending pages correctly
@@ -75,11 +69,11 @@ public:
     void AddPiece(std::unique_ptr<GameObject> &&piece);
 
     // Begin placing a piece on board, this locks it to the mouse and doesn't place until clicked.
-    void BeginPlacePiece(std::unique_ptr<GameObject> &&piece);
+    void BeginPlacePiece(const Transform &transform, Texture2D sprite);
 
     void Update(glm::ivec2 mouse_pos);
 
-    void Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer);
+    void Draw();
 
     MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject &object);
 
@@ -100,8 +94,8 @@ private:
     glm::ivec2 DragOrigin = glm::ivec2(0);
     enum class MouseHoldType {
         NONE, PLACING, FOLLOWING, SCALING
-    } mouse_hold;
-    std::pair<int, int> ScaleEdges;
+    } mouse_hold = MouseHoldType::NONE;
+    std::pair<int, int> ScaleEdges = {0, 0};
     glm::vec2 initialSize;
     glm::vec2 initialPos;
     int BorderWidth = 5;

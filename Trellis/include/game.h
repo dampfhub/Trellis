@@ -10,6 +10,7 @@
 #include "page.h"
 #include "util.h"
 #include "client_server.h"
+#include "ui.h"
 
 // Represents the current state of the game
 enum GameState {
@@ -49,11 +50,11 @@ public:
     void Render();
 
 private:
+    UI UserInterface;
+
     Game();
 
     ~Game();
-
-    void init_textures();
 
     void init_shaders();
 

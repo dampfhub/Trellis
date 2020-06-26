@@ -1,13 +1,10 @@
-#include "sprite_renderer.h"
+#include "board_renderer.h"
 #include "resource_manager.h"
 #include "glfw_handler.h"
 
-SpriteRenderer::SpriteRenderer(
-        const Transform &transform,
-        const glm::mat4 &view,
-        const Texture2D &sprite) : Renderer(
-        ResourceManager::GetShader("sprite"), transform, view),
-        Sprite(sprite) {
+BoardRenderer::BoardRenderer(
+        const Transform &transform, const glm::mat4 &view) : Renderer(
+        ResourceManager::GetShader("board"), transform, view) {
     unsigned int VBO;
     float vertices[] = {
             // pos      // tex
@@ -50,7 +47,7 @@ SpriteRenderer::SpriteRenderer(
     glBindVertexArray(0);
 }
 
-void SpriteRenderer::Draw() {
+void BoardRenderer::Draw() {
     shader->Use();
     glm::mat4 model = Model();
     shader->SetMatrix4("view", view);
@@ -58,17 +55,12 @@ void SpriteRenderer::Draw() {
     shader->SetVector2f(
             "screenRes",
             glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
-    shader->SetVector3f("spriteColor", glm::vec3(1));
-
-
-    glActiveTexture(GL_TEXTURE0);
-    Sprite.Bind();
 
     glBindVertexArray(quad_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
 
-SpriteRenderer::~SpriteRenderer() {
+BoardRenderer::~BoardRenderer() {
     glDeleteVertexArrays(1, &quad_VAO);
 }

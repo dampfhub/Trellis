@@ -1,41 +1,22 @@
 #ifndef SPRITE_RENDERER_H
 #define SPRITE_RENDERER_H
 
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "renderer.h"
 
-#include "texture.h"
-#include "shader.h"
-
-class SpriteRenderer {
-public:
-    glm::mat4 View;
-
-    // Constructor (inits shaders/shapes)
-    SpriteRenderer(Shader shader, int tile_factor = 1);
-
-    // Destructor
-    ~SpriteRenderer();
-
-    // Renders a defined quad textured with given sprite
-    void DrawSprite(
-            Texture2D texture,
-            glm::vec2 position,
-            int border_pixel_width,
-            glm::vec2 size = glm::vec2(10.0f, 10.0f),
-            float rotate = 0.0f,
-            glm::vec3 color = glm::vec3(1.0f));
-
-    void Resize(int size);
-
+class SpriteRenderer : public Renderer {
 private:
-    // Render state
-    Shader sprite_shader;
+    const Texture2D &Sprite;
     unsigned int quad_VAO;
+public:
+    SpriteRenderer(
+            const Transform &transform,
+            const glm::mat4 &view,
+            const Texture2D &sprite);
 
-    // Initializes and configures the quad's buffer and vertex attributes
-    void init_render_data(int tile_factor = 1);
+    ~SpriteRenderer() override;
+
+    void Draw() override;
+
 };
 
-#endif
+#endif //SPRITE_RENDERER_H

@@ -1,10 +1,10 @@
 #ifndef RESOURCE_MANAGER_H
 #define RESOURCE_MANAGER_H
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
-
+#include <memory>
 #include <glad/glad.h>
 
 #include "texture.h"
@@ -30,19 +30,19 @@ public:
     static ResourceManager &GetInstance();
 
     // resource storage
-    static std::map<std::string, Shader> Shaders;
-    static std::map<std::string, Texture2D> Textures;
-    static std::map<uint64_t, ImageData> Images;
+    static std::unordered_map<std::string, std::shared_ptr<Shader>> Shaders;
+    static std::unordered_map<std::string, Texture2D> Textures;
+    static std::unordered_map<uint64_t, ImageData> Images;
 
     // loads (and generates) a sprite_shader program from file loading vertex, fragment (and geometry) sprite_shader's source code. If gShaderFile is not nullptr, it also loads a geometry sprite_shader
-    static Shader LoadShader(
+    static std::shared_ptr<Shader> LoadShader(
             const char *vShaderFile,
             const char *fShaderFile,
             const char *gShaderFile,
             std::string name);
 
     // retrieves a stored sader
-    static Shader GetShader(std::string name);
+    static std::shared_ptr<Shader> GetShader(std::string name);
 
     // loads (and generates) a texture from file
     static Texture2D LoadTexture(
@@ -52,6 +52,13 @@ public:
     static Texture2D GetTexture(std::string name);
     static Texture2D GetTexture(uint64_t uid);
 
+    static void SetGlobalFloat(const char *name, float value);
+    static void SetGlobalInteger(const char *name, int value);
+    static void SetGlobalVector2f(const char *name, const glm::vec2 &value);
+    static void SetGlobalVector3f(const char *name, const glm::vec3 &value);
+    static void SetGlobalVector4f(const char *name, const glm::vec4 &value);
+    static void SetGlobalMatrix4(const char *name, const glm::mat4 &value);
+
 private:
     // private constructor, that is we do not want any actual resource manager objects. Its members and functions should be publicly available (static).
     ResourceManager() {
@@ -60,7 +67,7 @@ private:
     ~ResourceManager();
 
     // loads and generates a sprite_shader from file
-    static Shader loadShaderFromFile(
+    static std::shared_ptr<Shader> loadShaderFromFile(
             const char *vShaderFile,
             const char *fShaderFile,
             const char *gShaderFile = nullptr);

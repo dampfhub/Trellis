@@ -1,24 +1,22 @@
 #include "page.h"
 #include "resource_manager.h"
-#include "text_renderer.h"
-#include "text_object.h"
 #include "game.h"
 #include "util.h"
 #include "client_server.h"
+#include "board_renderer.h"
+#include "sprite_renderer.h"
+
+using std::make_unique;
 
 Page::Page(
         std::string name,
-        Texture2D board_tex,
-        std::unique_ptr<SpriteRenderer> &&renderer,
         glm::vec2 pos,
         glm::vec2 size,
         uint64_t uid) : Name(name),
-        Board_Texture(board_tex),
-        Renderer(std::move(renderer)),
-        Position(pos),
-        Size(size),
-        Uid(uid) {
-    Renderer->Resize((int)Size.x);
+        Uid(uid),
+        board_transform(pos, size, 0) {
+    board_renderer = std::make_unique<BoardRenderer>(
+            this->board_transform, this->View);
     Camera = std::make_unique<Camera2D>(
             200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = std::make_unique<PageUI>();
@@ -31,11 +29,15 @@ Page::~Page() {
 }
 
 void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
+    GameObject &g = *piece;
+    piece->renderer = std::make_unique<SpriteRenderer>(
+            piece->transform, this->View, g.Sprite);
     PiecesMap.insert(std::make_pair(piece->Uid, std::ref(*piece)));
     Pieces.push_front(std::move(piece));
 }
 
-void Page::BeginPlacePiece(std::unique_ptr<GameObject> &&piece) {
+void Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
+    auto piece = make_unique<GameObject>(transform, sprite);
     mouse_hold = MouseHoldType::PLACING;
     initialSize = piece->transform.scale;
     initialPos = piece->transform.position;
@@ -50,19 +52,15 @@ void Page::Update(glm::ivec2 mouse_pos) {
     HandleUIEvents();
 }
 
-void Page::Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer) {
-    (void)text_renderer;
-    Renderer->View = View;
-    sprite_renderer->View = View;
-    Renderer->DrawSprite(
-            Board_Texture, Position, false, Size * TILE_DIMENSIONS);
+void Page::Draw() {
+    board_renderer->Draw();
     // Draw sprites back-to-front, so the "top" sprite is drawn above the others
     for (auto it = Pieces.rbegin(); it != Pieces.rend(); it++) {
         int border_pixel_width =
                 CurrentSelection != Pieces.end() && (*it) == (*CurrentSelection)
                 ? BorderWidth
                 : 0;
-        (*it)->Draw(sprite_renderer, border_pixel_width);
+        (*it)->Draw(border_pixel_width);
     }
     // Draw user interface
     UserInterface->DrawPieceClickMenu();
@@ -211,8 +209,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                         break;
                     case -1:
                         piece.transform.scale.x = fmax(
-                                DragOrigin.x + initialSize.x -
-                                        world_mouse.x,
+                                DragOrigin.x + initialSize.x - world_mouse.x,
                                 TILE_DIMENSIONS / (float)inc);
                         closest = floor(
                                 piece.transform.scale.x /
@@ -237,8 +234,7 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                         break;
                     case -1:
                         piece.transform.scale.y = fmax(
-                                DragOrigin.y + initialSize.y -
-                                        world_mouse.y,
+                                DragOrigin.y + initialSize.y - world_mouse.y,
                                 TILE_DIMENSIONS / (float)inc);
                         closest = floor(
                                 piece.transform.scale.y /
@@ -302,13 +298,13 @@ void Page::HandleMiddleClickPress(glm::ivec2 mouse_pos) {
 void Page::HandleMiddleClickHold(glm::ivec2 mouse_pos) {
     glm::vec2 v = mouse_pos - DragOrigin;
     Camera->Move(v);
-    View = Camera->CalculateView(Size * TILE_DIMENSIONS);
+    View = Camera->CalculateView(board_transform.scale * TILE_DIMENSIONS);
     DragOrigin = mouse_pos;
 }
 
 void Page::HandleScrollWheel(glm::ivec2 mouse_pos, int scroll_direction) {
     Camera->Zoom(mouse_pos, scroll_direction);
-    View = Camera->CalculateView(Size * TILE_DIMENSIONS);
+    View = Camera->CalculateView(board_transform.scale * TILE_DIMENSIONS);
 }
 
 void Page::HandleArrows(ArrowkeyType key) {
