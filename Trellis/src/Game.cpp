@@ -124,13 +124,21 @@ Game::Game() {
                     &Game::window_size_callback, this, _1, _2));
     glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
     glfw.RegisterKeyPress(
-        GLFW_KEY_RIGHT, bind(&Game::arrow_press, this, _1));
+        GLFW_KEY_RIGHT, [this](int key, int, int, int) {
+            this->arrow_press(key);
+        });
     glfw.RegisterKeyPress(
-        GLFW_KEY_LEFT, bind(&Game::arrow_press, this, _1));
+        GLFW_KEY_LEFT, [this](int key, int, int, int) {
+            this->arrow_press(key);
+        });
     glfw.RegisterKeyPress(
-        GLFW_KEY_DOWN, bind(&Game::arrow_press, this, _1));
+        GLFW_KEY_DOWN, [this](int key, int, int, int) {
+            this->arrow_press(key);
+        });
     glfw.RegisterKeyPress(
-        GLFW_KEY_UP, bind(&Game::arrow_press, this, _1));
+        GLFW_KEY_UP, [this](int key, int, int, int) {
+            this->arrow_press(key);
+        });
     glfw.RegisterMousePosCallback(
             bind(
                     &Game::mouse_pos_callback, this, _1, _2));
