@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
-
+#include <memory>
 #include <glad/glad.h>
 
 #include "texture.h"
@@ -30,19 +30,19 @@ public:
     static ResourceManager &GetInstance();
 
     // resource storage
-    static std::unordered_map<std::string, Shader> Shaders;
+    static std::unordered_map<std::string, std::shared_ptr<Shader>> Shaders;
     static std::unordered_map<std::string, Texture2D> Textures;
     static std::unordered_map<uint64_t, ImageData> Images;
 
     // loads (and generates) a sprite_shader program from file loading vertex, fragment (and geometry) sprite_shader's source code. If gShaderFile is not nullptr, it also loads a geometry sprite_shader
-    static Shader LoadShader(
+    static std::shared_ptr<Shader> LoadShader(
             const char *vShaderFile,
             const char *fShaderFile,
             const char *gShaderFile,
             std::string name);
 
     // retrieves a stored sader
-    static Shader GetShader(std::string name);
+    static std::shared_ptr<Shader> GetShader(std::string name);
 
     // loads (and generates) a texture from file
     static Texture2D LoadTexture(
@@ -60,7 +60,7 @@ private:
     ~ResourceManager();
 
     // loads and generates a sprite_shader from file
-    static Shader loadShaderFromFile(
+    static std::shared_ptr<Shader> loadShaderFromFile(
             const char *vShaderFile,
             const char *fShaderFile,
             const char *gShaderFile = nullptr);

@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <memory>
 
 #include "texture.h"
 #include "shader.h"
@@ -13,7 +14,7 @@ public:
     glm::mat4 View;
 
     // Constructor (inits shaders/shapes)
-    SpriteRenderer(const Shader &shader, int tile_factor = 1);
+    SpriteRenderer(std::shared_ptr<Shader> shader, int tile_factor = 1);
 
     // Destructor
     ~SpriteRenderer();
@@ -31,7 +32,7 @@ public:
 
 private:
     // Render state
-    Shader sprite_shader;
+    std::shared_ptr<Shader> sprite_shader;
     unsigned int quad_VAO;
 
     // Initializes and configures the quad's buffer and vertex attributes

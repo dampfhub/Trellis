@@ -15,7 +15,7 @@ TextRenderer::TextRenderer(
                         "shaders/text.frag",
                         nullptr,
                         "text")) {
-    TextShader.SetMatrix4(
+    TextShader->SetMatrix4(
             "projection", glm::ortho(
                     0.0f,
                     static_cast<float>(width),
@@ -23,7 +23,7 @@ TextRenderer::TextRenderer(
                     0.0f,
                     -1.0f,
                     1.0f), true);
-    TextShader.SetInteger("text", 0);
+    TextShader->SetInteger("text", 0);
     // configure VAO/VBO for texture quads
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -100,9 +100,9 @@ void TextRenderer::Load(std::string font, unsigned int fontSize) {
 void TextRenderer::RenderText(
         std::string text, float x, float y, float scale, glm::vec3 color) {
     // activate corresponding render state	
-    TextShader.Use();
-    TextShader.SetVector3f("textColor", color);
-    TextShader.SetMatrix4("view", View);
+    TextShader->Use();
+    TextShader->SetVector3f("textColor", color);
+    TextShader->SetMatrix4("view", View);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(VAO);
     // iterate through all characters

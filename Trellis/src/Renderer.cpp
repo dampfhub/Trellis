@@ -3,8 +3,10 @@
 #include "glm/glm.hpp"
 #include "glfw_handler.h"
 
+using std::shared_ptr;
+
 Renderer::Renderer(
-        const Shader &shader,
+        const shared_ptr<Shader> &shader,
         const Transform &transform,
         const glm::mat4 &view) : shader(
         shader),
@@ -91,11 +93,11 @@ SRenderer::SRenderer(
 }
 
 void SRenderer::Draw() {
-    shader.Use();
+    shader->Use();
     glm::mat4 model = Model();
-    shader.SetMatrix4("view", view);
-    shader.SetMatrix4("model", model);
-    shader.SetVector2f(
+    shader->SetMatrix4("view", view);
+    shader->SetMatrix4("model", model);
+    shader->SetVector2f(
             "screenRes",
             glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
     glActiveTexture(GL_TEXTURE0);

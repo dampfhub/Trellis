@@ -26,14 +26,8 @@ GameObject::GameObject(
     renderer = make_unique<SRenderer>(this->transform, View, this->Sprite);
 }
 
-void GameObject::Draw(SpriteRenderer *renderer, int border_pixel_width) {
-    renderer->DrawSprite(
-            Sprite,
-            transform.position + glm::vec2(10, 10),
-            border_pixel_width,
-            transform.scale,
-            transform.rotation,
-            Color);
+void GameObject::Draw(int border_pixel_width) {
+    this->renderer->shader->SetInteger("border_width", border_pixel_width);
     this->renderer->Draw();
 }
 

@@ -35,7 +35,7 @@ public:
     GameObject(GameObject &&other);
     GameObject &operator=(GameObject &&other);
 
-    void Draw(SpriteRenderer *renderer, int border_pixel_width);
+    void Draw(int border_pixel_width);
 
     void swap(GameObject &other);
 private:

@@ -5,15 +5,17 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include "stb_image.h"
 #include "util.h"
 
-using std::make_pair;
+using std::make_pair, std::make_shared, std::shared_ptr;
 
 // Instantiate static variables
 std::unordered_map<std::string, Texture2D>    ResourceManager::Textures;
-std::unordered_map<std::string, Shader>       ResourceManager::Shaders;
+std::unordered_map<std::string, shared_ptr<Shader>>
+        ResourceManager::Shaders;
 std::unordered_map<uint64_t, ImageData>       ResourceManager::Images;
 
 ResourceManager &ResourceManager::GetInstance() {
@@ -22,7 +24,7 @@ ResourceManager &ResourceManager::GetInstance() {
     return instance;
 }
 
-Shader ResourceManager::LoadShader(
+std::shared_ptr<Shader> ResourceManager::LoadShader(
         const char *vShaderFile,
         const char *fShaderFile,
         const char *gShaderFile,
@@ -34,7 +36,7 @@ Shader ResourceManager::LoadShader(
     return Shaders.at(name);
 }
 
-Shader ResourceManager::GetShader(std::string name) {
+std::shared_ptr<Shader> ResourceManager::GetShader(std::string name) {
     return Shaders.at(name);
 }
 
@@ -59,7 +61,7 @@ ResourceManager::~ResourceManager() {
     }
 }
 
-Shader ResourceManager::loadShaderFromFile(
+std::shared_ptr<Shader> ResourceManager::loadShaderFromFile(
         const char *vShaderFile,
         const char *fShaderFile,
         const char *gShaderFile) {
@@ -98,13 +100,12 @@ Shader ResourceManager::loadShaderFromFile(
     const char *fShaderCode = fragmentCode.c_str();
     const char *gShaderCode = geometryCode.c_str();
     // 2. now create sprite_shader object from source code
-    Shader shader(
+    return make_shared<Shader>(
             vShaderCode,
             fShaderCode,
             gShaderFile != nullptr
             ? gShaderCode
             : nullptr);
-    return shader;
 }
 
 Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha) {

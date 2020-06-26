@@ -15,9 +15,9 @@ protected:
     glm::mat4 Model();
 
 public:
-    Shader shader;
+    std::shared_ptr<Shader> shader;
     Renderer(
-            const Shader &shader,
+            const std::shared_ptr<Shader> &shader,
             const Transform &transform,
             const glm::mat4 &view);
 

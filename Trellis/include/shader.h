@@ -18,6 +18,8 @@ public:
             const char *fragmentSource,
             const char *geometrySource = nullptr); // note: geometry source code is optional
     ~Shader();
+    Shader(const Shader &) = delete;
+    Shader &operator=(const Shader &) = delete;
 
     // sets the current sprite_shader as active
     Shader &Use();

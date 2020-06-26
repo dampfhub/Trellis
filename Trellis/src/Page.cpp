@@ -65,7 +65,7 @@ void Page::Draw(SpriteRenderer *sprite_renderer, TextRenderer *text_renderer) {
                 CurrentSelection != Pieces.end() && (*it) == (*CurrentSelection)
                 ? BorderWidth
                 : 0;
-        (*it)->Draw(sprite_renderer, border_pixel_width);
+        (*it)->Draw(border_pixel_width);
     }
     // Draw user interface
     UserInterface->DrawPieceClickMenu();

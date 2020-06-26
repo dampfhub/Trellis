@@ -2,7 +2,7 @@
 #define TEXT_RENDERER_H
 
 #include <map>
-
+#include <memory>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
@@ -25,7 +25,7 @@ public:
     // holds a list of pre-compiled Characters
     std::map<char, Character> Characters;
     // sprite_shader used for text rendering
-    Shader TextShader;
+    std::shared_ptr<Shader> TextShader;
     glm::mat4 View;
 
     // constructor
