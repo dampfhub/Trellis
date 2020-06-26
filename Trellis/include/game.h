@@ -87,6 +87,19 @@ private:
     void AddPage(std::unique_ptr<Page> &&pg);
 
     void MakePage(std::string name);
+
+    void window_size_callback(int width, int height);
+    void mouse_pos_callback(double x, double y);
+    void left_click_press();
+    void left_click_release();
+    void right_click_press();
+    void right_click_release();
+    void middle_click_press();
+    void middle_click_release();
+    void scroll_callback(double yoffset);
+    void snap_callback(int action);
+    void start_server_temp(int action);
+    void start_client_temp(int action);
 };
 
 #endif
