@@ -3,6 +3,7 @@
 #include "game.h"
 #include "util.h"
 #include "client_server.h"
+#include "board_renderer.h"
 
 using std::make_unique;
 
@@ -12,12 +13,10 @@ Page::Page(
         glm::vec2 pos,
         glm::vec2 size,
         uint64_t uid) : Name(name),
-        Position(pos),
-        Size(size),
         Uid(uid),
-        BoardTransform(glm::vec2(0), glm::vec2(1000), 0){
-    BoardRenderer = std::make_unique<SRenderer>(
-            this->BoardTransform,
+        board_transform(pos, size, 0){
+    board_renderer = std::make_unique<BoardRenderer>(
+            this->board_transform,
             this->View,
             board_tex
     );
@@ -54,7 +53,7 @@ void Page::Update(glm::ivec2 mouse_pos) {
 }
 
 void Page::Draw() {
-    BoardRenderer->Draw();
+    board_renderer->Draw();
     // Draw sprites back-to-front, so the "top" sprite is drawn above the others
     for (auto it = Pieces.rbegin(); it != Pieces.rend(); it++) {
         int border_pixel_width =
@@ -301,13 +300,13 @@ void Page::HandleMiddleClickPress(glm::ivec2 mouse_pos) {
 void Page::HandleMiddleClickHold(glm::ivec2 mouse_pos) {
     glm::vec2 v = mouse_pos - DragOrigin;
     Camera->Move(v);
-    View = Camera->CalculateView(Size * TILE_DIMENSIONS);
+    View = Camera->CalculateView(board_transform.scale * TILE_DIMENSIONS);
     DragOrigin = mouse_pos;
 }
 
 void Page::HandleScrollWheel(glm::ivec2 mouse_pos, int scroll_direction) {
     Camera->Zoom(mouse_pos, scroll_direction);
-    View = Camera->CalculateView(Size * TILE_DIMENSIONS);
+    View = Camera->CalculateView(board_transform.scale * TILE_DIMENSIONS);
 }
 
 void Page::HandleArrows(ArrowkeyType key) {

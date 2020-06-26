@@ -1,5 +1,6 @@
 #include "game_object.h"
 #include "util.h"
+#include "sprite_renderer.h"
 
 using std::move, std::exchange, std::make_unique;
 
@@ -23,7 +24,7 @@ GameObject::GameObject(
     Uid = uid == 0
           ? Uid = Util::generate_uid()
           : uid;
-    renderer = make_unique<SRenderer>(this->transform, View, this->Sprite);
+    renderer = make_unique<SpriteRenderer>(this->transform, View, this->Sprite);
 }
 
 void GameObject::Draw(int border_pixel_width) {

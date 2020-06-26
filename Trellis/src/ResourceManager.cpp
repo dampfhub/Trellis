@@ -145,3 +145,48 @@ Texture2D ResourceManager::loadTextureFromUID(uint64_t uid) {
     stbi_image_free(data);
     return texture;
 }
+
+void ResourceManager::SetGlobalFloat(const char *name, float value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetFloat(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalInteger(const char *name, int value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetInteger(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalVector2f(
+        const char *name,
+        const glm::vec2 &value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetVector2f(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalVector3f(
+        const char *name,
+        const glm::vec3 &value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetVector3f(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalVector4f(
+        const char *name,
+        const glm::vec4 &value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetVector4f(name, value);
+    }
+}
+
+void ResourceManager::SetGlobalMatrix4(
+        const char *name,
+        const glm::mat4 &value) {
+    for (auto &[key, shader] : Shaders) {
+        shader->SetMatrix4(name, value);
+    }
+}
+

@@ -25,20 +25,4 @@ public:
     virtual void Draw() = 0;
 };
 
-class SRenderer : public Renderer {
-private:
-    Texture2D Sprite;
-    unsigned int quad_VAO;
-public:
-    SRenderer(
-            const Transform &transform,
-            const glm::mat4 &view,
-            const Texture2D &sprite);
-
-    ~SRenderer() override;
-
-    void Draw() override;
-
-};
-
 #endif //RENDERER_H

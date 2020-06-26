@@ -100,7 +100,7 @@ void UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     if (ImGui::Button("Page Settings")) {
         PageSettingsOpen = !PageSettingsOpen;
         strcpy(PageNameBuf, (**active_page).Name.c_str());
-        PageSize = (int)(**active_page).Size.x;
+        PageSize = (int)(**active_page).board_transform.scale.x;
     }
     if (ImGui::IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
         ImGui::BeginTooltip();
@@ -160,8 +160,8 @@ void UI::DrawPageSettings(Page::page_list_it_t &active_page) {
     ImGui::InputInt("X", &PageSize);
     if (ImGui::Button("Done", ImVec2(120, 0.0f))) {
         PageSettingsOpen = false;
-        pg.Size.x = (float)PageSize;
-        pg.Size.y = (float)PageSize;
+        pg.board_transform.scale.x = (float)PageSize;
+        pg.board_transform.scale.y = (float)PageSize;
         pg.Name = PageNameBuf;
     }
     ImGui::End();

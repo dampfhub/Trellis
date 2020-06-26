@@ -52,6 +52,13 @@ public:
     static Texture2D GetTexture(std::string name);
     static Texture2D GetTexture(uint64_t uid);
 
+    static void SetGlobalFloat(const char *name, float value);
+    static void SetGlobalInteger(const char *name, int value);
+    static void SetGlobalVector2f(const char *name, const glm::vec2 &value);
+    static void SetGlobalVector3f(const char *name, const glm::vec3 &value);
+    static void SetGlobalVector4f(const char *name, const glm::vec4 &value);
+    static void SetGlobalMatrix4(const char *name, const glm::mat4 &value);
+
 private:
     // private constructor, that is we do not want any actual resource manager objects. Its members and functions should be publicly available (static).
     ResourceManager() {

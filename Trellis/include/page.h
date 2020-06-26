@@ -30,10 +30,8 @@ public:
 
 
     std::string Name;
-    Transform BoardTransform;
-    std::unique_ptr<Renderer> BoardRenderer;
-
-    glm::vec2 Position, Size;
+    Transform board_transform;
+    std::unique_ptr<Renderer> board_renderer;
 
     std::unique_ptr<Camera2D> Camera;
     std::unique_ptr<PageUI> UserInterface;

@@ -182,7 +182,7 @@ Game::Game() {
     // Set projection matrix
     set_projection();
     glm::mat4 view = glm::mat4(1.0f);
-    ResourceManager::GetShader("sprite")->SetMatrix4("view", view, true);
+    ResourceManager::SetGlobalMatrix4("view", view);
 }
 
 Game::~Game() {
@@ -196,9 +196,11 @@ void Game::SetScreenDims(int width, int height) {
 }
 
 void Game::init_shaders() {
-    auto shader = ResourceManager::LoadShader(
+    ResourceManager::LoadShader(
             "shaders/sprite.vert", "shaders/sprite.frag", nullptr, "sprite");
-    shader->SetInteger("image", 0, true);
+    ResourceManager::LoadShader(
+            "shaders/board.vert", "shaders/board.frag", nullptr, "board");
+    ResourceManager::SetGlobalInteger("image", 0);
 }
 
 void Game::init_textures() {
@@ -219,8 +221,8 @@ void Game::set_projection() {
             0.0f,
             -1.0f,
             1.0f);
-    ResourceManager::GetShader("sprite")->SetMatrix4(
-            "projection", projection, true);
+    ResourceManager::SetGlobalMatrix4(
+            "projection", projection);
 }
 
 void Game::UpdateMouse() {
