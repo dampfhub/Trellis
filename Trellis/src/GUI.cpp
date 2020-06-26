@@ -10,11 +10,14 @@ GUI &GUI::GetInstance() {
     return instance;
 }
 
-GUI::GUI() {
+GUI::GUI() :
+        io((ImGui::CreateContext(), ImGui::GetIO())),
+        WantCaptureMouse(io.WantCaptureMouse),
+        WantCaptureKeyboard(io.WantCaptureKeyboard),
+        WantTextInput(io.WantTextInput),
+        WantSetMousePos(io.WantSetMousePos),
+        WantSaveIniSettings(io.WantSaveIniSettings) {
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigWindowsMoveFromTitleBarOnly = true;
@@ -51,34 +54,6 @@ void GUI::NewFrame() {
 void GUI::Render() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-int GUI::MousePress(int button) {
-    ImGuiIO &io = ImGui::GetIO();
-    io.MouseDown[button] = true;
-    if (io.WantCaptureMouse) {
-        return 1;
-    }
-    return 0;
-}
-
-void GUI::MouseRelease(int button) {
-    ImGuiIO &io = ImGui::GetIO();
-    io.MouseDown[button] = false;
-}
-
-int GUI::KeyPress(int key) {
-    ImGuiIO &io = ImGui::GetIO();
-    io.KeysDown[key] = true;
-    if (io.WantCaptureKeyboard) {
-        return 1;
-    }
-    return 0;
-}
-
-void GUI::KeyRelease(int key) {
-    ImGuiIO &io = ImGui::GetIO();
-    io.KeysDown[key] = false;
 }
 
 void GUI::SetCursor(ImGuiMouseCursor_ cursor) {

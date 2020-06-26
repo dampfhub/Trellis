@@ -43,14 +43,13 @@ static void key_handler(
     (void)window;
     static GUI &gui = GUI::GetInstance();
     if (action == GLFW_PRESS) {
-        if (gui.KeyPress(key)) {
+        if (gui.WantCaptureKeyboard) {
             return;
         }
         if (key_press_callbacks[key] != nullptr) {
             key_press_callbacks[key](key, scancode, action, mods);
         }
     } else if (action == GLFW_RELEASE) {
-        gui.KeyRelease(key);
         if (key_release_callbacks[key] != nullptr) {
             key_release_callbacks[key](key, scancode, action, mods);
         }
@@ -62,14 +61,13 @@ static void mouse_handler(
     (void)window;
     static GUI &gui = GUI::GetInstance();
     if (action == GLFW_PRESS) {
-        if (gui.MousePress(button)) {
+        if (gui.WantCaptureMouse) {
             return;
         }
         if (mouse_press_callbacks[button] != nullptr) {
             mouse_press_callbacks[button](button, action, mods);
         }
     } else if (action == GLFW_RELEASE) {
-        gui.MouseRelease(button);
         if (mouse_release_callbacks[button] != nullptr) {
             mouse_release_callbacks[button](button, action, mods);
         }
@@ -78,6 +76,10 @@ static void mouse_handler(
 
 static void scroll_handler(GLFWwindow *window, double xoffset, double yoffset) {
     (void)window;
+    static GUI &gui = GUI::GetInstance();
+    if (gui.WantCaptureMouse) {
+        return;
+    }
     if (scroll_callback != nullptr) {
         scroll_callback(xoffset, yoffset);
     }

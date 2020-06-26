@@ -14,17 +14,17 @@ public:
 
     void Render();
 
-    // Returns 1 if mouse was captured, 0 otherwise
-    int MousePress(int button);
-
-    void MouseRelease(int button);
-
-    // Returns 1 if key was captured, 0 otherwise
-    int KeyPress(int key);
-
-    void KeyRelease(int key);
-
     void SetCursor(ImGuiMouseCursor_ cursor);
+private:
+    // Declaration of io must appear above Want... members for correct
+    // constructor initialization order.
+    ImGuiIO &io;
+public:
+    const bool &WantCaptureMouse;
+    const bool &WantCaptureKeyboard;
+    const bool &WantTextInput;
+    const bool &WantSetMousePos;
+    const bool &WantSaveIniSettings;
 
 private:
     GUI();
