@@ -70,6 +70,25 @@ void Game::scroll_callback(double yoffset) {
     ScrollDirection = (int)yoffset;
 }
 
+void Game::arrow_press(int key) {
+    if (ActivePage != Pages.end()) {
+        switch (key) {
+        case GLFW_KEY_RIGHT:
+            (*ActivePage)->HandleArrows(ArrowkeyType::RIGHT);
+            break;
+        case GLFW_KEY_LEFT:
+            (*ActivePage)->HandleArrows(ArrowkeyType::LEFT);
+            break;
+        case GLFW_KEY_DOWN:
+            (*ActivePage)->HandleArrows(ArrowkeyType::DOWN);
+            break;
+        case GLFW_KEY_UP:
+            (*ActivePage)->HandleArrows(ArrowkeyType::UP);
+            break;
+        }
+    }
+}
+
 void Game::snap_callback(int action) {
     if (action == GLFW_PRESS) {
         snapping = false;
@@ -104,6 +123,14 @@ Game::Game() {
             bind(
                     &Game::window_size_callback, this, _1, _2));
     glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, close_window);
+    glfw.RegisterKeyPress(
+        GLFW_KEY_RIGHT, bind(&Game::arrow_press, this, _1));
+    glfw.RegisterKeyPress(
+        GLFW_KEY_LEFT, bind(&Game::arrow_press, this, _1));
+    glfw.RegisterKeyPress(
+        GLFW_KEY_DOWN, bind(&Game::arrow_press, this, _1));
+    glfw.RegisterKeyPress(
+        GLFW_KEY_UP, bind(&Game::arrow_press, this, _1));
     glfw.RegisterMousePosCallback(
             bind(
                     &Game::mouse_pos_callback, this, _1, _2));
