@@ -6,7 +6,6 @@ out vec4 color;
 uniform sampler2D image;
 uniform vec3 spriteColor;
 uniform int border_width;
-uniform vec2 screenRes;
 
 void main() {
 	if (border_width == 0) {

@@ -10,14 +10,13 @@ using std::make_unique;
 
 Page::Page(
         std::string name,
-        Texture2D board_tex,
         glm::vec2 pos,
         glm::vec2 size,
         uint64_t uid) : Name(name),
         Uid(uid),
         board_transform(pos, size, 0) {
     board_renderer = std::make_unique<BoardRenderer>(
-            this->board_transform, this->View, board_tex);
+            this->board_transform, this->View);
     Camera = std::make_unique<Camera2D>(
             200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = std::make_unique<PageUI>();
@@ -30,8 +29,9 @@ Page::~Page() {
 }
 
 void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
+    GameObject &g = *piece;
     piece->renderer = std::make_unique<SpriteRenderer>(
-            piece->transform, this->View, piece->Sprite);
+            piece->transform, this->View, g.Sprite);
     PiecesMap.insert(std::make_pair(piece->Uid, std::ref(*piece)));
     Pieces.push_front(std::move(piece));
 }

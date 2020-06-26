@@ -5,7 +5,7 @@
 
 class SpriteRenderer : public Renderer {
 private:
-    Texture2D Sprite;
+    const Texture2D &Sprite;
     unsigned int quad_VAO;
 public:
     SpriteRenderer(

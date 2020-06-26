@@ -56,8 +56,6 @@ private:
 
     ~Game();
 
-    void init_textures();
-
     void init_shaders();
 
     void init_objects();

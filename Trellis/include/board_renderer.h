@@ -5,13 +5,11 @@
 
 class BoardRenderer : public Renderer {
 private:
-    Texture2D Sprite;
     unsigned int quad_VAO;
 public:
     BoardRenderer(
             const Transform &transform,
-            const glm::mat4 &view,
-            const Texture2D &sprite);
+            const glm::mat4 &view);
 
     ~BoardRenderer() override;
 

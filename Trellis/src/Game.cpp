@@ -107,7 +107,6 @@ void Game::start_client_temp(int action) {
 Game::Game() {
     GLFW &glfw = GLFW::GetInstance();
     init_shaders();
-    init_textures();
     init_objects();
 
     glfw.RegisterWindowSizeCallback(
@@ -201,10 +200,6 @@ void Game::init_shaders() {
     ResourceManager::LoadShader(
             "shaders/board.vert", "shaders/board.frag", nullptr, "board");
     ResourceManager::SetGlobalInteger("image", 0);
-}
-
-void Game::init_textures() {
-    ResourceManager::LoadTexture("textures/gnome.png", true, "grid");
 }
 
 void Game::init_objects() {
@@ -344,10 +339,7 @@ void Game::AddPage(std::unique_ptr<Page> &&pg) {
 
 void Game::MakePage(std::string name) {
     auto pg = std::make_unique<Page>(
-            name,
-            ResourceManager::GetTexture("grid"),
-            glm::vec2(0.0f, 0.0f),
-            glm::vec2(2000.0f, 2000.0f));
+            name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
     AddPage(std::move(pg));
 }
 

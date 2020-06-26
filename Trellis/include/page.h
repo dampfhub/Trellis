@@ -42,7 +42,6 @@ public:
 
     Page(
             std::string name,
-            Texture2D board_tex,
             glm::vec2 pos = glm::vec2(0.0f, 0.0f),
             glm::vec2 size = glm::vec2(100.0f, 100.0f),
             // TODO: This should be 0 when we are sending pages correctly

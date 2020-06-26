@@ -3,11 +3,8 @@
 #include "glfw_handler.h"
 
 BoardRenderer::BoardRenderer(
-        const Transform &transform,
-        const glm::mat4 &view,
-        const Texture2D &sprite) : Renderer(
-        ResourceManager::GetShader("board"), transform, view),
-        Sprite(sprite) {
+        const Transform &transform, const glm::mat4 &view) : Renderer(
+        ResourceManager::GetShader("board"), transform, view) {
     unsigned int VBO;
     float vertices[] = {
             // pos      // tex
@@ -58,10 +55,6 @@ void BoardRenderer::Draw() {
     shader->SetVector2f(
             "screenRes",
             glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
-    shader->SetVector3f("spriteColor", glm::vec3(1));
-
-    glActiveTexture(GL_TEXTURE0);
-    Sprite.Bind();
 
     glBindVertexArray(quad_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
