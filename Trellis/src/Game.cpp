@@ -69,18 +69,18 @@ void Game::scroll_callback(double yoffset) {
 void Game::arrow_press(int key) {
     if (ActivePage != Pages.end()) {
         switch (key) {
-        case GLFW_KEY_RIGHT:
-            (*ActivePage)->HandleArrows(ArrowkeyType::RIGHT);
-            break;
-        case GLFW_KEY_LEFT:
-            (*ActivePage)->HandleArrows(ArrowkeyType::LEFT);
-            break;
-        case GLFW_KEY_DOWN:
-            (*ActivePage)->HandleArrows(ArrowkeyType::DOWN);
-            break;
-        case GLFW_KEY_UP:
-            (*ActivePage)->HandleArrows(ArrowkeyType::UP);
-            break;
+            case GLFW_KEY_RIGHT:
+                (*ActivePage)->HandleArrows(Page::ArrowkeyType::RIGHT);
+                break;
+            case GLFW_KEY_LEFT:
+                (*ActivePage)->HandleArrows(Page::ArrowkeyType::LEFT);
+                break;
+            case GLFW_KEY_DOWN:
+                (*ActivePage)->HandleArrows(Page::ArrowkeyType::DOWN);
+                break;
+            case GLFW_KEY_UP:
+                (*ActivePage)->HandleArrows(Page::ArrowkeyType::UP);
+                break;
         }
     }
 }
@@ -122,21 +122,21 @@ Game::Game() {
                 this->esc_handler();
             });
     glfw.RegisterKeyPress(
-        GLFW_KEY_RIGHT, [this](int key, int, int, int) {
-            this->arrow_press(key);
-        });
+            GLFW_KEY_RIGHT, [this](int key, int, int, int) {
+                this->arrow_press(key);
+            });
     glfw.RegisterKeyPress(
-        GLFW_KEY_LEFT, [this](int key, int, int, int) {
-            this->arrow_press(key);
-        });
+            GLFW_KEY_LEFT, [this](int key, int, int, int) {
+                this->arrow_press(key);
+            });
     glfw.RegisterKeyPress(
-        GLFW_KEY_DOWN, [this](int key, int, int, int) {
-            this->arrow_press(key);
-        });
+            GLFW_KEY_DOWN, [this](int key, int, int, int) {
+                this->arrow_press(key);
+            });
     glfw.RegisterKeyPress(
-        GLFW_KEY_UP, [this](int key, int, int, int) {
-            this->arrow_press(key);
-        });
+            GLFW_KEY_UP, [this](int key, int, int, int) {
+                this->arrow_press(key);
+            });
     glfw.RegisterMousePosCallback(
             [this](double x, double y) {
                 this->mouse_pos_callback(x, y);
@@ -155,7 +155,7 @@ Game::Game() {
             });
     glfw.RegisterMousePress(
             GLFW_MOUSE_BUTTON_RIGHT, [this](int, int, int) {
-                this->right_click_release();
+                this->right_click_press();
             });
     glfw.RegisterMouseRelease(
             GLFW_MOUSE_BUTTON_RIGHT, [this](int, int, int) {
@@ -278,26 +278,26 @@ void Game::UpdateMouse() {
         ScrollDirection = 0;
     }
     switch (current_hover_type) {
-        case CENTER:
+        case Page::MouseHoverType::CENTER:
             gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
-        case E:
-        case W:
+        case Page::MouseHoverType::E:
+        case Page::MouseHoverType::W:
             gui.SetCursor(ImGuiMouseCursor_ResizeEW);
             break;
-        case N:
-        case S:
+        case Page::MouseHoverType::N:
+        case Page::MouseHoverType::S:
             gui.SetCursor(ImGuiMouseCursor_ResizeNS);
             break;
-        case NE:
-        case SW:
+        case Page::MouseHoverType::NE:
+        case Page::MouseHoverType::SW:
             //Put NESW cursor here if one exists, otherwise use hand cursor
-        case NW:
-        case SE:
+        case Page::MouseHoverType::NW:
+        case Page::MouseHoverType::SE:
             //Put NWSE cursor here if one exists, otherwise use hand cursor
             gui.SetCursor(ImGuiMouseCursor_Hand);
             break;
-        case NONE:
+        case Page::MouseHoverType::NONE:
         default:
             gui.SetCursor(ImGuiMouseCursor_Arrow);
     }
@@ -308,10 +308,7 @@ bool registered = false;
 void Game::Update(float dt) {
     ProcessUIEvents();
     Page &pg = **ActivePage;
-    pg.Update(dt);
-    if (pg.Placing) {
-        pg.UpdatePlacing(MousePos);
-    }
+    pg.Update(MousePos);
     UpdateMouse();
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
@@ -339,9 +336,10 @@ void Game::ProcessUIEvents() {
                 file_name);
         (**ActivePage).BeginPlacePiece(
                 std::make_unique<GameObject>(
-                        glm::vec2(0.0f, 0.0f),
-                        glm::vec2(98.0f, 98.0f),
-                        ResourceManager::GetTexture(file_name)));
+                        Transform(
+                                glm::vec2(0.0f, 0.0f),
+                                glm::vec2(98.0f, 98.0f),
+                                0), ResourceManager::GetTexture(file_name)));
         UserInterface->FileDialog->ClearSelected();
     }
     if (UserInterface->AddPage) {
@@ -404,7 +402,7 @@ void Game::handle_page_move_piece(Util::NetworkData &&q) {
         auto piece_it = pg.PiecesMap.find(piece_data.Uid);
         if (piece_it != pg.PiecesMap.end()) {
             GameObject &piece = (*piece_it).second;
-            piece.Position = piece_data.Parse<glm::vec2>();
+            piece.transform.position = piece_data.Parse<glm::vec2>();
         }
     }
 }
@@ -419,7 +417,7 @@ void Game::handle_page_resize_piece(Util::NetworkData &&q) {
         auto piece_it = pg.PiecesMap.find(piece_data.Uid);
         if (piece_it != pg.PiecesMap.end()) {
             GameObject &piece = (*piece_it).second;
-            piece.Size = piece_data.Parse<glm::vec2>();
+            piece.transform.scale = piece_data.Parse<glm::vec2>();
         }
     }
 }

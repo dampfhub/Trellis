@@ -41,9 +41,8 @@ GameObject Util::deserialize<GameObject>(const std::vector<std::byte> &bytes) {
     using std::byte;
     GameObject g;
     const byte *ptr = bytes.data();
-    g.Position = Util::deserialize<glm::vec2>(ptr);
-    g.Size = Util::deserialize<glm::vec2>(ptr += sizeof(g.Position));
-    g.Color = Util::deserialize<glm::vec3>(ptr += sizeof(g.Size));
+    g.transform = Util::deserialize<Transform>(ptr);
+    g.Color = Util::deserialize<glm::vec3>(ptr += sizeof(g.transform));
     g.Uid = Util::deserialize<uint64_t>(ptr += sizeof(g.Color));
     g.Clickable = Util::deserialize<bool>(ptr += sizeof(g.Uid));
     g.Sprite.ImageUID = Util::deserialize<uint64_t>(ptr += sizeof(g.Clickable));
@@ -62,8 +61,7 @@ template<>
 std::vector<std::byte> Util::serialize_vec<GameObject>(const GameObject &object) {
     using std::byte;
     std::vector<std::vector<byte>> bytes;
-    bytes.push_back(Util::serialize_vec(object.Position));
-    bytes.push_back(Util::serialize_vec(object.Size));
+    bytes.push_back(Util::serialize_vec(object.transform));
     bytes.push_back(Util::serialize_vec(object.Color));
     bytes.push_back(Util::serialize_vec(object.Uid));
     bytes.push_back(Util::serialize_vec(object.Clickable));

@@ -1,25 +1,20 @@
 #include "game_object.h"
 #include "util.h"
 
-GameObject::GameObject() : Position(0.0f, 0.0f),
-        Size(1.0f, 1.0f),
+GameObject::GameObject() : transform(),
         Color(1.0f),
-        Rotation(0.0f),
         Sprite(),
         Clickable(true) {
     Uid = Util::generate_uid();
 }
 
 GameObject::GameObject(
-        glm::vec2 pos,
-        glm::vec2 size,
+        const Transform &transform,
         Texture2D sprite,
         uint64_t uid,
         bool clickable,
-        glm::vec3 color) : Position(pos),
-        Size(size),
+        glm::vec3 color) : transform(transform),
         Color(color),
-        Rotation(0.0f),
         Sprite(sprite),
         Clickable(clickable) {
     Uid = uid == 0
@@ -29,5 +24,10 @@ GameObject::GameObject(
 
 void GameObject::Draw(SpriteRenderer *renderer, int border_pixel_width) {
     renderer->DrawSprite(
-            Sprite, Position, border_pixel_width, Size, Rotation, Color);
+            Sprite,
+            transform.position,
+            border_pixel_width,
+            transform.scale,
+            transform.rotation,
+            Color);
 }
