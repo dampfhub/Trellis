@@ -296,13 +296,13 @@ void Page::HandleMiddleClickPress(glm::ivec2 mouse_pos) {
 void Page::HandleMiddleClickHold(glm::ivec2 mouse_pos) {
     glm::vec2 v = mouse_pos - DragOrigin;
     Camera->Move(v);
-    View = Camera->CalculateView(board_transform.scale * TILE_DIMENSIONS);
+    View = Camera->CalculateView(board_transform.scale);
     DragOrigin = mouse_pos;
 }
 
 void Page::HandleScrollWheel(glm::ivec2 mouse_pos, int scroll_direction) {
     Camera->Zoom(mouse_pos, scroll_direction);
-    View = Camera->CalculateView(board_transform.scale * TILE_DIMENSIONS);
+    View = Camera->CalculateView(board_transform.scale);
 }
 
 void Page::HandleArrows(ArrowkeyType key) {
