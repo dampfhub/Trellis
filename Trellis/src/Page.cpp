@@ -26,7 +26,7 @@ Page::Page(
 Page::~Page() {
 }
 
-void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
+void Page::AddPiece(std::unique_ptr <GameObject> &&piece) {
     GameObject &g = *piece;
     piece->renderer = std::make_unique<SpriteRenderer>(
             piece->transform, this->View, g.Sprite);
@@ -369,3 +369,30 @@ bool Page::Deselect() {
     return false;
 }
 
+void Page::DeletePiece(uint64_t uid) {
+    auto piece_it = std::find_if(
+            Pieces.begin(),
+            Pieces.end(),
+            [uid](std::unique_ptr <GameObject> &g) {
+                return g->Uid == uid;
+            });
+    if (piece_it != Pieces.end()) {
+        Pieces.erase(piece_it);
+    }
+    PiecesMap.erase(uid);
+    CurrentSelection = Pieces.end();
+}
+
+void Page::DeleteCurrentSelection() {
+    if (CurrentSelection != Pieces.end()) {
+        if (mouse_hold != MouseHoldType::PLACING) {
+            static ClientServer &cs = ClientServer::GetInstance();
+            cs.RegisterPageChange(
+                    "DELETE_PIECE", Uid, Util::NetworkData(
+                            *CurrentSelection, (*CurrentSelection)->Uid));
+            DeletePiece((*CurrentSelection)->Uid);
+        } else {
+            Deselect();
+        }
+    }
+}

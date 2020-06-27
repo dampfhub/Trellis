@@ -82,25 +82,17 @@ void Game::arrow_press(int key) {
     }
 }
 
+void Game::delete_press() {
+    if (ActivePage != Pages.end()) {
+        (*ActivePage)->DeleteCurrentSelection();
+    }
+}
+
 void Game::snap_callback(int action) {
     if (action == GLFW_PRESS) {
         snapping = false;
     } else if (action == GLFW_RELEASE) {
         snapping = true;
-    }
-}
-
-void Game::start_server_temp(int action) {
-    if (action == GLFW_PRESS) {
-        ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
-        cs.Start(5005);
-    }
-}
-
-void Game::start_client_temp(int action) {
-    if (action == GLFW_PRESS) {
-        ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
-        cs.Start(5005, "Test Client", "localhost");
     }
 }
 
@@ -169,13 +161,17 @@ Game::Game() {
             GLFW_KEY_LEFT_ALT, [this](int, int, int action, int) {
                 this->snap_callback(action);
             });
-    glfw.RegisterKey(
-            GLFW_KEY_A, [this](int, int, int action, int) {
-                this->start_server_temp(action);
+    glfw.RegisterKeyPress(
+            GLFW_KEY_A, [this](int, int, int, int) {
+                this->start_server();
             });
-    glfw.RegisterKey(
-            GLFW_KEY_S, [this](int, int, int action, int) {
-                this->start_client_temp(action);
+    glfw.RegisterKeyPress(
+            GLFW_KEY_S, [this](int, int, int, int) {
+                this->start_client();
+            });
+    glfw.RegisterKeyPress(
+            GLFW_KEY_DELETE, [this](int, int, int, int) {
+                this->delete_press();
             });
 
     // Set projection matrix
@@ -343,18 +339,20 @@ void Game::MakePage(std::string name) {
     AddPage(std::move(pg));
 }
 
-void Game::start_server(int key, int scancode, int action, int mod) {
+void Game::start_server() {
     ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
+    cs.Start(5005);
     register_network_callbacks();
 }
 
-void Game::start_client(int key, int scancode, int action, int mod) {
+void Game::start_client() {
     ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
+    cs.Start(5005, "Test Client", "localhost");
     register_network_callbacks();
 }
 
 void Game::handle_page_add_piece(Util::NetworkData &&q) {
-    static ClientServer &cs= ClientServer::GetInstance();
+    static ClientServer &cs = ClientServer::GetInstance();
     auto g = std::make_unique<GameObject>(q.Parse<GameObject>());
     if (ResourceManager::Images.find(g->Sprite.ImageUID) ==
             ResourceManager::Images.end()) {
@@ -428,6 +426,20 @@ void Game::handle_client_disconnect(Util::NetworkData &&q) {
     std::cout << "Client DC: " << q.Uid << std::endl;
 }
 
+void Game::handle_page_delete_piece(Util::NetworkData &&q) {
+    auto piece_data = q.Parse<Util::NetworkData>();
+    // Find the relevant page
+    auto page_it = PagesMap.find(q.Uid);
+    if (page_it != PagesMap.end()) {
+        Page &pg = page_it->second;
+        // If the page is found, find the relevant piece
+        auto piece_it = pg.PiecesMap.find(piece_data.Uid);
+        if (piece_it != pg.PiecesMap.end()) {
+            pg.DeletePiece((*piece_it).first);
+        }
+    }
+}
+
 void Game::register_network_callbacks() {
     ClientServer &cs = ClientServer::GetInstance();
     cs.RegisterCallback(
@@ -437,6 +449,10 @@ void Game::register_network_callbacks() {
     cs.RegisterCallback(
             "ADD_PIECE", [this](Util::NetworkData &&d) {
                 handle_page_add_piece(std::move(d));
+            });
+    cs.RegisterCallback(
+            "DELETE_PIECE", [this](Util::NetworkData &&d) {
+                handle_page_delete_piece(std::move(d));
             });
     cs.RegisterCallback(
             "RESIZE_PIECE", [this](Util::NetworkData &&d) {
@@ -455,3 +471,4 @@ void Game::register_network_callbacks() {
                 handle_client_disconnect(std::move(d));
             });
 }
+

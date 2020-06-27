@@ -68,6 +68,10 @@ public:
     // Adds a piece to the pieces list and the map
     void AddPiece(std::unique_ptr<GameObject> &&piece);
 
+    void DeletePiece(uint64_t);
+
+    void DeleteCurrentSelection();
+
     // Begin placing a piece on board, this locks it to the mouse and doesn't place until clicked.
     void BeginPlacePiece(const Transform &transform, Texture2D sprite);
 
@@ -88,9 +92,9 @@ public:
 
     std::list<std::unique_ptr<GameObject>> Pieces;
     std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
+    std::list<std::unique_ptr<GameObject>>::iterator CurrentSelection = Pieces.end();
 
 private:
-    std::list<std::unique_ptr<GameObject>>::iterator CurrentSelection = Pieces.end();
     glm::ivec2 DragOrigin = glm::ivec2(0);
     enum class MouseHoldType {
         NONE, PLACING, FOLLOWING, SCALING
