@@ -9,10 +9,8 @@
 using std::make_unique;
 
 Page::Page(
-        std::string name,
-        glm::vec2 pos,
-        glm::vec2 size,
-        uint64_t uid) : Name(name),
+        std::string name, glm::vec2 pos, glm::vec2 size, uint64_t uid) : Name(
+        name),
         Uid(uid),
         board_transform(pos, size, 0) {
     board_renderer = std::make_unique<BoardRenderer>(

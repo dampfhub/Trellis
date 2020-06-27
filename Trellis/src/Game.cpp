@@ -100,7 +100,7 @@ void Game::start_server_temp(int action) {
 void Game::start_client_temp(int action) {
     if (action == GLFW_PRESS) {
         ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
-        cs.Start(5005, "Test Client", "localhost");
+        cs.Start(5005, "Test Client", "71.238.65.215");
     }
 }
 
