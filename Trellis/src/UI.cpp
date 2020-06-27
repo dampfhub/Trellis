@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "glfw_handler.h"
+#include "client_server.h"
 
 #include <iostream>
 #include <iterator>
@@ -19,6 +20,7 @@ void UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     DrawMenu(pages, active_page);
     DrawPageSelect(pages, active_page);
     DrawPageSettings(active_page);
+    DrawClientList();
 }
 
 void UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
@@ -26,7 +28,7 @@ void UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     (void)pages;
 
     GLFW &glfw = GLFW::GetInstance();
-    ImGui::Begin(
+    main_menu_open = ImGui::Begin(
             "Trellis",
             nullptr,
             ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
@@ -109,7 +111,9 @@ void UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     }
     ImGui::End();
 }
-void UI::DrawPageSelect(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
+
+void UI::DrawPageSelect(
+        Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     if (!PageSelectOpen) {
         return;
     }
@@ -177,4 +181,40 @@ void UI::ClearFlags() {
     AddFromPreset = false;
     AddPage = false;
     PageName = "";
+}
+
+void UI::DrawClientList() {
+    static GLFW &glfw = GLFW::GetInstance();
+    if (ClientServer::Started()) {
+        static ClientServer &cs = ClientServer::GetInstance();
+        if (main_menu_open) {
+            if (cs.connected_clients.size() > 0) {
+                ImGui::SetNextWindowSizeConstraints(
+                        ImVec2(0, 50),
+                        ImVec2(FLT_MAX, 50));      // Horizontal only
+                ImGui::Begin(
+                        "Clients",
+                        nullptr,
+                        ImGuiWindowFlags_NoResize |
+                                ImGuiWindowFlags_NoTitleBar |
+                                ImGuiWindowFlags_NoMove);
+                ImGui::SetWindowPos(
+                        ImVec2(
+                                150.0f, (float)glfw.GetScreenHeight() - 50));
+                ImGui::SetWindowSize(
+                        ImVec2(
+                                100 * cs.connected_clients.size(), 50.0f));
+                ImGui::BeginColumns(
+                        "Columns",
+                        cs.connected_clients.size(),
+                        ImGuiColumnsFlags_NoResize);
+                for (Util::ClientInfo &inf : cs.connected_clients) {
+                    ImGui::Text("%s", inf.Name.c_str());
+                    ImGui::NextColumn();
+                }
+                ImGui::EndColumns();
+                ImGui::End();
+            }
+        }
+    }
 }

@@ -422,10 +422,6 @@ void Game::handle_client_join(Util::NetworkData &&q) {
     }
 }
 
-void Game::handle_client_disconnect(Util::NetworkData &&q) {
-    std::cout << "Client DC: " << q.Uid << std::endl;
-}
-
 void Game::handle_page_delete_piece(Util::NetworkData &&q) {
     auto piece_data = q.Parse<Util::NetworkData>();
     // Find the relevant page
@@ -465,10 +461,6 @@ void Game::register_network_callbacks() {
     cs.RegisterCallback(
             "JOIN", [this](Util::NetworkData &&d) {
                 handle_client_join(std::move(d));
-            });
-    cs.RegisterCallback(
-            "DISCONNECT", [this](Util::NetworkData &&d) {
-                handle_client_disconnect(std::move(d));
             });
 }
 
