@@ -83,15 +83,7 @@ void Game::arrow_press(int key) {
 }
 
 void Game::delete_press() {
-    if ((*ActivePage)->CurrentSelection != (*ActivePage)->Pieces.end()) {
-        static ClientServer &cs = ClientServer::GetInstance();
-        cs.RegisterPageChange(
-                "DELETE_PIECE",
-                (*ActivePage)->Uid,
-                Util::NetworkData((*(*ActivePage)->CurrentSelection),
-                        (*(*ActivePage)->CurrentSelection)->Uid));
-        (*ActivePage)->DeleteCurrentSelection();
-    }
+    (*ActivePage)->DeleteCurrentSelection();
 }
 
 void Game::snap_callback(int action) {

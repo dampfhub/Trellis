@@ -371,7 +371,9 @@ bool Page::Deselect() {
 
 void Page::DeletePiece(uint64_t uid) {
     auto piece_it = std::find_if(
-            Pieces.begin(), Pieces.end(), [uid](std::unique_ptr<GameObject> &g) {
+            Pieces.begin(),
+            Pieces.end(),
+            [uid](std::unique_ptr<GameObject> &g) {
                 return g->Uid == uid;
             });
     if (piece_it != Pieces.end()) {
@@ -382,6 +384,12 @@ void Page::DeletePiece(uint64_t uid) {
 }
 
 void Page::DeleteCurrentSelection() {
-    DeletePiece((*CurrentSelection)->Uid);
+    if (CurrentSelection != Pieces.end() &&
+            mouse_hold != MouseHoldType::PLACING) {
+        static ClientServer &cs = ClientServer::GetInstance();
+        cs.RegisterPageChange(
+                "DELETE_PIECE", Uid, Util::NetworkData(
+                        *CurrentSelection, (*CurrentSelection)->Uid));
+        DeletePiece((*CurrentSelection)->Uid);
+    }
 }
-
