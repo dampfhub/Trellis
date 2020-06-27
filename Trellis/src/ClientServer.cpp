@@ -59,7 +59,6 @@ void Client::Update() {
 void Client::handle_image_request(Util::NetworkData &&q) {
     auto img_id = q.Parse<uint64_t>();
     if (ResourceManager::Images.find(img_id) != ResourceManager::Images.end()) {
-        std::cout << "Sending: " << img_id << std::endl;
         RegisterPageChange(
                 "NEW_IMAGE", img_id, ResourceManager::Images[img_id]);
     }
