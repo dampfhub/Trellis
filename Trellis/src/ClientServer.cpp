@@ -73,7 +73,7 @@ void Server::Start(int port, std::string name, std::string hostname) {
                 handle_client_join(std::move(d));
             });
     std::vector<std::string>
-            forward_channels = { "ADD_PIECE", "MOVE_PIECE", "RESIZE_PIECE" };
+            forward_channels = { "ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE" };
     for (auto &str : forward_channels) {
         RegisterCallback(
                 str, [this, str](Util::NetworkData &&d) {

@@ -369,3 +369,19 @@ bool Page::Deselect() {
     return false;
 }
 
+void Page::DeletePiece(uint64_t uid) {
+    auto piece_it = std::find_if(
+            Pieces.begin(), Pieces.end(), [uid](std::unique_ptr<GameObject> &g) {
+                return g->Uid == uid;
+            });
+    if (piece_it != Pieces.end()) {
+        Pieces.erase(piece_it);
+    }
+    PiecesMap.erase(uid);
+    CurrentSelection = Pieces.end();
+}
+
+void Page::DeleteCurrentSelection() {
+    DeletePiece((*CurrentSelection)->Uid);
+}
+
