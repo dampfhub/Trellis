@@ -84,10 +84,10 @@ public:
     private:
         NetworkQueue();
 
+        std::string channel_name;
         static NetworkManager &nm;
         bool should_clear;
         std::mutex mtx;
-        std::string channel_name;
         std::weak_ptr<NetworkQueue> wptr;
         std::vector<std::vector<std::byte>> byte_ars;
     };

@@ -9,18 +9,7 @@
 
 #include "texture.h"
 #include "shader.h"
-
-class ImageData {
-public:
-    bool Alpha;
-    std::vector<unsigned char> Data;
-
-    ImageData() = default;
-
-    ImageData(bool alpha, std::vector<unsigned char> data) : Alpha(alpha),
-            Data(data) {
-    }
-};
+#include "util.h"
 
 class ResourceManager {
 public:
@@ -32,7 +21,7 @@ public:
     // resource storage
     static std::unordered_map<std::string, std::shared_ptr<Shader>> Shaders;
     static std::unordered_map<std::string, Texture2D> Textures;
-    static std::unordered_map<uint64_t, ImageData> Images;
+    static std::unordered_map<uint64_t, Util::ImageData> Images;
 
     // loads (and generates) a sprite_shader program from file loading vertex, fragment (and geometry) sprite_shader's source code. If gShaderFile is not nullptr, it also loads a geometry sprite_shader
     static std::shared_ptr<Shader> LoadShader(

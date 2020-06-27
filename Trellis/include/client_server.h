@@ -42,13 +42,15 @@ public:
         if (pub_queues.find(name) == pub_queues.end()) {
             pub_queues[name] = NetworkManager::NetworkQueue::Subscribe(name);
         }
-        Util::NetworkData nd(data, uid);
+        Util::NetworkData nd(data, uid, this->uid);
         changes.push(std::make_pair(name, std::make_pair(nd, target_uid)));
     }
 
     void PublishPageChanges();
 
     void RegisterCallback(std::string channel_name, queue_handler_f cb);
+
+    virtual void handle_image_request(Util::NetworkData &&q) = 0;
 
     uint64_t uid;
 
@@ -94,12 +96,12 @@ public:
 
     void Update() override;
 
-    uint64_t uid = 0;
-
 private:
     friend class ClientServer;
 
     Client() = default;
+
+    void handle_image_request(Util::NetworkData &&q) override;
 
     std::string client_name;
 };
@@ -115,8 +117,6 @@ public:
 
     void Update() override;
 
-    uint64_t uid = 0;
-
     std::vector<ClientInfo> connected_clients;
 
 private:
@@ -127,6 +127,12 @@ private:
     void handle_client_join(Util::NetworkData d);
 
     void handle_forward_data(std::string channel, Util::NetworkData d);
+
+    void handle_image_request(Util::NetworkData &&q) override;
+
+    void handle_new_image(Util::NetworkData &&q);
+
+    std::vector<std::pair<uint64_t, uint64_t>> pending_image_requests;
 
     int port_num{ };
 };

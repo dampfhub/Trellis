@@ -81,8 +81,6 @@ private:
 
     void handle_new_image(Util::NetworkData &&q);
 
-    void handle_image_request(Util::NetworkData &&q);
-
     void handle_client_join(Util::NetworkData &&q);
 
     void handle_client_disconnect(Util::NetworkData &&q);

@@ -6,9 +6,9 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <functional>
 
 #include "stb_image.h"
-#include "util.h"
 
 using std::make_pair, std::make_shared, std::shared_ptr;
 
@@ -16,7 +16,7 @@ using std::make_pair, std::make_shared, std::shared_ptr;
 std::unordered_map<std::string, Texture2D>    ResourceManager::Textures;
 std::unordered_map<std::string, shared_ptr<Shader>>
         ResourceManager::Shaders;
-std::unordered_map<uint64_t, ImageData>       ResourceManager::Images;
+std::unordered_map<uint64_t, Util::ImageData>       ResourceManager::Images;
 
 ResourceManager &ResourceManager::GetInstance() {
     static ResourceManager instance; // Guaranteed to be destroyed.
@@ -121,19 +121,24 @@ Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha) {
     std::ifstream infile(file, std::ios_base::binary);
     std::vector<unsigned char> buffer((std::istreambuf_iterator<char>(infile)),
             (std::istreambuf_iterator<char>()));
+    for (auto &i : Images) {
+        if (i.second.Hash == Util::hash_image(buffer)) {
+            return loadTextureFromUID(i.first);
+        }
+    }
     unsigned char *data = stbi_load_from_memory(
             buffer.data(), buffer.size(), &width, &height, &nrChannels, 0);
     uint64_t uid = Util::generate_uid();
     // now generate texture
     texture.Generate(width, height, data, uid);
-    Images[uid] = ImageData(alpha, buffer);
+    Images[uid] = Util::ImageData(alpha, buffer);
     stbi_image_free(data);
     return texture;
 }
 
 Texture2D ResourceManager::loadTextureFromUID(uint64_t uid) {
     Texture2D texture;
-    ImageData d = Images[uid];
+    Util::ImageData d = Images[uid];
     if (d.Alpha) {
         texture.Internal_Format = GL_RGBA;
         texture.Image_Format = GL_RGBA;

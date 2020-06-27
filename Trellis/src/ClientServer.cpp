@@ -1,4 +1,5 @@
 #include "client_server.h"
+#include "resource_manager.h"
 
 bool ClientServer::started = false;
 
@@ -45,10 +46,22 @@ void Client::Start(int port_num, std::string name, std::string hostname) {
     NetworkManager &nm = NetworkManager::GetInstance();
     nm.StartClient(name, uid, std::move(hostname), port_num);
     started = true;
+    RegisterCallback(
+            "IMAGE_REQUEST", [this](Util::NetworkData &&d) {
+                handle_image_request(std::move(d));
+            });
 }
 
 void Client::Update() {
     ClientServer::Update();
+}
+
+void Client::handle_image_request(Util::NetworkData &&q) {
+    auto img_id = q.Parse<uint64_t>();
+    if (ResourceManager::Images.find(img_id) != ResourceManager::Images.end()) {
+        RegisterPageChange(
+                "NEW_IMAGE", img_id, ResourceManager::Images[img_id]);
+    }
 }
 
 void Server::Start(int port, std::string name, std::string hostname) {
@@ -67,6 +80,14 @@ void Server::Start(int port, std::string name, std::string hostname) {
                     handle_forward_data(str, std::move(d));
                 });
     }
+    RegisterCallback(
+            "IMAGE_REQUEST", [this](Util::NetworkData &&d) {
+                handle_image_request(std::move(d));
+            });
+    RegisterCallback(
+            "NEW_IMAGE", [this](Util::NetworkData &&d) {
+                handle_new_image(std::move(d));
+            });
     started = true;
 }
 
@@ -79,5 +100,31 @@ void Server::handle_client_join(Util::NetworkData d) {
 }
 
 void Server::handle_forward_data(std::string channel, Util::NetworkData d) {
-    RegisterPageChange(channel, d.Uid, d.Data);
+    for (auto &client : connected_clients) {
+        if (client.Uid != d.ClientUid) {
+            RegisterPageChange(channel, d.Uid, d.Data, client.Uid);
+        }
+    }
+}
+
+void Server::handle_image_request(Util::NetworkData &&q) {
+    auto img_id = q.Parse<uint64_t>();
+    if (ResourceManager::Images.find(img_id) != ResourceManager::Images.end()) {
+        RegisterPageChange(
+                "NEW_IMAGE", img_id, ResourceManager::Images[img_id], q.Uid);
+    } else {
+        // Make a pair of image uid and requesting client
+        pending_image_requests.push_back(std::make_pair(img_id, q.Uid));
+    }
+}
+
+void Server::handle_new_image(Util::NetworkData &&q) {
+    ResourceManager::Images[q.Uid] = q.Parse<Util::ImageData>();
+    // Send all pending requests if they were waiting on an image
+    for (auto request : pending_image_requests) {
+        if (q.Uid == request.first) {
+            RegisterPageChange(
+                    "NEW_IMAGE", q.Uid, ResourceManager::Images[request.first], request.second);
+        }
+    }
 }

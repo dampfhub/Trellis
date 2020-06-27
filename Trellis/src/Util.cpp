@@ -24,13 +24,16 @@ template<>
 Util::NetworkData Util::deserialize<Util::NetworkData>(const std::vector<std::byte> &bytes) {
     using std::byte;
     Util::NetworkData d;
-    d.Uid = *reinterpret_cast<const uint64_t *>(bytes.data());
-    d.Data = std::vector<byte>(bytes.begin() + 8, bytes.end());
+    const byte *ptr = bytes.data();
+    const byte *end = bytes.data() + bytes.size();
+    d.Uid = Util::deserialize<uint64_t>(ptr);
+    d.ClientUid = Util::deserialize<uint64_t>(ptr += sizeof(d.Uid));
+    d.Data = std::vector<byte>(ptr + sizeof(d.ClientUid), end);
     return d;
 }
 
 template<>
-ImageData Util::deserialize<ImageData>(const std::vector<std::byte> &bytes) {
+Util::ImageData Util::deserialize<Util::ImageData>(const std::vector<std::byte> &bytes) {
     using std::byte;
     ImageData d;
     d.Alpha = *reinterpret_cast<const bool * >(bytes.data());
@@ -58,6 +61,8 @@ template<>
 std::vector<std::byte> Util::serialize_vec<Util::NetworkData>(const Util::NetworkData &object) {
     using std::byte;
     std::vector<byte> bytes = Util::serialize_vec(object.Uid);
+    std::vector<byte> client_uid = Util::serialize_vec(object.ClientUid);
+    bytes.insert(bytes.end(), client_uid.begin(), client_uid.end());
     bytes.insert(bytes.end(), object.Data.begin(), object.Data.end());
     return bytes;
 }
@@ -75,15 +80,13 @@ std::vector<std::byte> Util::serialize_vec<GameObject>(const GameObject &object)
 }
 
 template<>
-std::vector<std::byte> Util::serialize_vec<ImageData>(const ImageData &object) {
+std::vector<std::byte> Util::serialize_vec<Util::ImageData>(const Util::ImageData &object) {
     using std::byte;
-    std::vector<std::vector<byte>> bytes;
-    bytes.push_back(Util::serialize_vec(object.Alpha));
-    std::vector<byte> ret = Util::flatten(bytes);
+    std::vector<byte> bytes = Util::serialize_vec(object.Alpha);
     const byte *begin = reinterpret_cast<const byte *>(object.Data.data());
     const byte *end = begin + object.Data.size();
-    ret.insert(ret.end(), begin, end);
-    return ret;
+    bytes.insert(bytes.end(), begin, end);
+    return bytes;
 }
 
 std::vector<std::byte> Util::serialize(const std::string &str) {
@@ -111,4 +114,12 @@ uint64_t Util::generate_uid() {
     std::uniform_int_distribution<long long int>
             dist(std::llround(std::pow(2, 61)), std::llround(std::pow(2, 62)));
     return dist(e2);
+}
+
+size_t Util::hash_image(std::vector<unsigned char> const &vec) {
+    std::size_t seed = vec.size();
+    for(auto& i : vec) {
+        seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+    return seed;
 }

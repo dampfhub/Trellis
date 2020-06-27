@@ -6,25 +6,47 @@
 #include <array>
 #include <random>
 #include <cmath>
+#include <iostream>
 
 #include "game_object.h"
-#include "resource_manager.h"
 
 namespace Util {
+    size_t hash_image(std::vector<unsigned char> const &vec);
+
+    class ImageData {
+    public:
+        size_t Hash;
+        bool Alpha;
+        std::vector<unsigned char> Data;
+
+        ImageData() = default;
+
+        ImageData(bool alpha, std::vector<unsigned char> data) : Alpha(alpha),
+                Data(data) {
+            Hash = hash_image(data);
+        }
+        ImageData(const ImageData &other) {
+            Alpha = other.Alpha;
+            Data = other.Data;
+            Hash = hash_image(Data);
+        }
+    };
+
     class NetworkData {
     public:
         std::vector<std::byte> Data;
         uint64_t Uid;
+        uint64_t ClientUid;
 
         NetworkData() = default;
 
         template<class T>
-        NetworkData(const T &data, uint64_t uid) : Data(Util::serialize_vec(data)),
-                Uid(uid) {
+        NetworkData(const T &data, uint64_t uid, uint64_t client_uid = 0) : Data(Util::serialize_vec(data)),
+                Uid(uid), ClientUid(client_uid) {
         }
 
-        NetworkData(std::vector<std::byte> data, uint64_t uid) : Data(data),
-                Uid(uid) {
+        NetworkData(std::vector<std::byte> data, uint64_t uid, uint64_t client_uid = 0) : Data(data),
+                Uid(uid), ClientUid(client_uid) {
         }
 
         template<class T>
@@ -148,6 +170,7 @@ namespace Util {
     std::vector<std::byte> flatten(std::vector<std::vector<std::byte>> vecs);
 
     uint64_t generate_uid();
+
 }
 
 #endif
