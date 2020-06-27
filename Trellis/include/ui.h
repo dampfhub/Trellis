@@ -36,10 +36,14 @@ public:
 	void DrawPageSelect(Page::page_list_t &pages, Page::page_list_it_t &active_page);
 	void DrawPageSettings(Page::page_list_it_t &active_page);
 
+    void DrawClientList();
+
     Page::page_list_it_t GetActivePage(Page::page_list_t &pages);
 	void ClearFlags();
 
 private:
 	char PageNameBuf[128] = "";
+
+	bool main_menu_open = true;
 };
 #endif

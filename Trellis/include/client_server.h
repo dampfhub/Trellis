@@ -7,18 +7,6 @@
 #include "util.h"
 #include "network_manager.h"
 
-class ClientInfo {
-public:
-    uint64_t Uid{ };
-    std::string Name;
-
-    ClientInfo() = default;
-
-    ClientInfo(uint64_t uid, std::string name) : Uid(uid),
-            Name(std::move(name)) {
-    }
-};
-
 class ClientServer {
 public:
     enum NetworkObject {
@@ -51,6 +39,8 @@ public:
     void RegisterCallback(std::string channel_name, queue_handler_f cb);
 
     virtual void handle_image_request(Util::NetworkData &&q) = 0;
+
+    std::vector<Util::ClientInfo> connected_clients;
 
     uint64_t uid;
 
@@ -103,6 +93,10 @@ private:
 
     void handle_image_request(Util::NetworkData &&q) override;
 
+    void handle_client_add(Util::NetworkData &&q);
+
+    void handle_client_delete(Util::NetworkData &&q);
+
     std::string client_name;
 };
 
@@ -117,7 +111,6 @@ public:
 
     void Update() override;
 
-    std::vector<ClientInfo> connected_clients;
 
 private:
     friend class ClientServer;
@@ -125,6 +118,8 @@ private:
     Server() = default;
 
     void handle_client_join(Util::NetworkData d);
+
+    void handle_client_disconnect(Util::NetworkData &&q);
 
     void handle_forward_data(std::string channel, Util::NetworkData d);
 

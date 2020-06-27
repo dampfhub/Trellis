@@ -58,6 +58,18 @@ GameObject Util::deserialize<GameObject>(const std::vector<std::byte> &bytes) {
 }
 
 template<>
+Util::ClientInfo Util::deserialize<Util::ClientInfo>(const std::vector<std::byte> &bytes) {
+    using std::byte;
+    Util::ClientInfo c;
+    c.Uid = Util::deserialize<uint64_t>(bytes.data());
+    c.Name = Util::deserialize<std::string>(
+            std::vector<byte>(
+                    bytes.begin() + sizeof(c.Uid),
+                    bytes.end()));
+    return c;
+}
+
+template<>
 std::vector<std::byte> Util::serialize_vec<Util::NetworkData>(const Util::NetworkData &object) {
     using std::byte;
     std::vector<byte> bytes = Util::serialize_vec(object.Uid);
@@ -85,6 +97,28 @@ std::vector<std::byte> Util::serialize_vec<Util::ImageData>(const Util::ImageDat
     std::vector<byte> bytes = Util::serialize_vec(object.Alpha);
     const byte *begin = reinterpret_cast<const byte *>(object.Data.data());
     const byte *end = begin + object.Data.size();
+    bytes.insert(bytes.end(), begin, end);
+    return bytes;
+}
+
+template<>
+std::vector<std::byte> Util::serialize_vec<Util::ClientInfo>(const Util::ClientInfo &object) {
+    using std::byte;
+    std::vector<byte> bytes;
+    std::vector<byte> uid = Util::serialize_vec(object.Uid);
+    std::vector<byte> name = Util::serialize_vec(object.Name);
+    bytes.insert(bytes.end(), uid.begin(), uid.end());
+    bytes.insert(bytes.end(), name.begin(), name.end());
+    return bytes;
+}
+
+template<>
+std::vector<std::byte> Util::serialize_vec<std::string>(const std::string &object) {
+    using std::byte;
+    std::vector<byte> bytes;
+    const char *c_str = object.c_str();
+    const byte *begin = reinterpret_cast<const byte *>(c_str);
+    const byte *end = begin + object.length();
     bytes.insert(bytes.end(), begin, end);
     return bytes;
 }
@@ -118,7 +152,7 @@ uint64_t Util::generate_uid() {
 
 size_t Util::hash_image(std::vector<unsigned char> const &vec) {
     std::size_t seed = vec.size();
-    for(auto& i : vec) {
+    for (auto &i : vec) {
         seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
     return seed;

@@ -13,6 +13,19 @@
 namespace Util {
     size_t hash_image(std::vector<unsigned char> const &vec);
 
+    class ClientInfo {
+    public:
+        uint64_t Uid{ };
+        std::string Name;
+
+        ClientInfo() = default;
+
+        ClientInfo(uint64_t uid, std::string name) : Uid(uid),
+                Name(std::move(name)) {
+        }
+    };
+
+
     class ImageData {
     public:
         size_t Hash;
@@ -139,6 +152,9 @@ namespace Util {
     GameObject deserialize<GameObject>(const std::vector<std::byte> &bytes);
 
     template<>
+    ClientInfo deserialize<ClientInfo>(const std::vector<std::byte> &bytes);
+
+    template<>
     std::vector<std::byte> serialize_vec<NetworkData>(const NetworkData &object);
 
     template<>
@@ -146,6 +162,12 @@ namespace Util {
 
     template<>
     std::vector<std::byte> serialize_vec<ImageData>(const ImageData &object);
+
+    template<>
+    std::vector<std::byte> serialize_vec<ClientInfo>(const ClientInfo &object);
+
+    template<>
+    std::vector<std::byte> serialize_vec<std::string>(const std::string &object);
 
     template<class T, size_t N1, size_t N2>
     std::array<T, N1 + N2> concat(
