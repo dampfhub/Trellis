@@ -83,7 +83,9 @@ void Game::arrow_press(int key) {
 }
 
 void Game::delete_press() {
-    (*ActivePage)->DeleteCurrentSelection();
+    if (ActivePage != Pages.end()) {
+        (*ActivePage)->DeleteCurrentSelection();
+    }
 }
 
 void Game::snap_callback(int action) {
