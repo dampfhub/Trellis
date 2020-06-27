@@ -472,7 +472,7 @@ bool NetworkManager::Message::DecodeHeader() {
             DataVec.begin() + MessageHeader::HeaderLength,
             t.begin());
     Header = MessageHeader::Deserialize(t);
-    std::vector<std::byte> v(Header.MessageLength + 1);
+    std::vector<std::byte> v(Header.MessageLength);
     DataVec.insert(DataVec.end(), v.begin(), v.end());
     return true;
 }
@@ -495,7 +495,7 @@ const std::vector<std::byte> &NetworkManager::Message::Msg() {
     std::vector<std::byte> t(
             DataVec.begin() + MessageHeader::HeaderLength,
             DataVec.begin() + MessageHeader::HeaderLength +
-                    Header.MessageLength + 1);
+                    Header.MessageLength);
     msg = t;
     return msg;
 }

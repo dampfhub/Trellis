@@ -6,11 +6,32 @@
 #include <array>
 #include <random>
 #include <cmath>
+#include <iostream>
 
 #include "game_object.h"
-#include "resource_manager.h"
 
 namespace Util {
+    size_t hash_image(std::vector<unsigned char> const &vec);
+
+    class ImageData {
+    public:
+        size_t Hash;
+        bool Alpha;
+        std::vector<unsigned char> Data;
+
+        ImageData() = default;
+
+        ImageData(bool alpha, std::vector<unsigned char> data) : Alpha(alpha),
+                Data(data) {
+            Hash = hash_image(data);
+        }
+        ImageData(const ImageData &other) {
+            Alpha = other.Alpha;
+            Data = other.Data;
+            Hash = hash_image(Data);
+        }
+    };
+
     class NetworkData {
     public:
         std::vector<std::byte> Data;
@@ -149,6 +170,7 @@ namespace Util {
     std::vector<std::byte> flatten(std::vector<std::vector<std::byte>> vecs);
 
     uint64_t generate_uid();
+
 }
 
 #endif

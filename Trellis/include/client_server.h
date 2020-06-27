@@ -50,6 +50,8 @@ public:
 
     void RegisterCallback(std::string channel_name, queue_handler_f cb);
 
+    virtual void handle_image_request(Util::NetworkData &&q) = 0;
+
     uint64_t uid;
 
 protected:
@@ -99,6 +101,8 @@ private:
 
     Client() = default;
 
+    void handle_image_request(Util::NetworkData &&q) override;
+
     std::string client_name;
 };
 
@@ -123,6 +127,12 @@ private:
     void handle_client_join(Util::NetworkData d);
 
     void handle_forward_data(std::string channel, Util::NetworkData d);
+
+    void handle_image_request(Util::NetworkData &&q) override;
+
+    void handle_new_image(Util::NetworkData &&q);
+
+    std::vector<std::pair<uint64_t, uint64_t>> pending_image_requests;
 
     int port_num{ };
 };

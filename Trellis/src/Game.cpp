@@ -354,12 +354,14 @@ void Game::start_client(int key, int scancode, int action, int mod) {
 }
 
 void Game::handle_page_add_piece(Util::NetworkData &&q) {
-    static ClientServer &cs = ClientServer::GetInstance();
+    static ClientServer &cs= ClientServer::GetInstance();
     auto g = std::make_unique<GameObject>(q.Parse<GameObject>());
     if (ResourceManager::Images.find(g->Sprite.ImageUID) ==
             ResourceManager::Images.end()) {
         // Image isn't cached, need to request it
-        cs.RegisterPageChange("IMAGE_REQUEST", g->Sprite.ImageUID, "");
+        cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, g->Sprite.ImageUID);
+    } else {
+        g->Sprite = ResourceManager::GetTexture(g->Sprite.ImageUID);
     }
     // See if page exists and place piece new in it if it does
     auto it = PagesMap.find(q.Uid);
@@ -404,7 +406,7 @@ void Game::handle_page_resize_piece(Util::NetworkData &&q) {
 }
 
 void Game::handle_new_image(Util::NetworkData &&q) {
-    ResourceManager::Images[q.Uid] = q.Parse<ImageData>();
+    ResourceManager::Images[q.Uid] = q.Parse<Util::ImageData>();
     // Check which gameobjects need this texture and apply it.
     for (auto &pg : Pages) {
         for (auto &go : pg->Pieces) {
@@ -412,14 +414,6 @@ void Game::handle_new_image(Util::NetworkData &&q) {
                 go->Sprite = ResourceManager::GetTexture(q.Uid);
             }
         }
-    }
-}
-
-void Game::handle_image_request(Util::NetworkData &&q) {
-    static ClientServer &cs = ClientServer::GetInstance();
-    if (ResourceManager::Images.find(q.Uid) != ResourceManager::Images.end()) {
-        cs.RegisterPageChange(
-                "NEW_IMAGE", q.Uid, ResourceManager::Images[q.Uid]);
     }
 }
 
@@ -451,10 +445,6 @@ void Game::register_network_callbacks() {
     cs.RegisterCallback(
             "NEW_IMAGE", [this](Util::NetworkData &&d) {
                 handle_new_image(std::move(d));
-            });
-    cs.RegisterCallback(
-            "IMAGE_REQUEST", [this](Util::NetworkData &&d) {
-                handle_image_request(std::move(d));
             });
     cs.RegisterCallback(
             "JOIN", [this](Util::NetworkData &&d) {
