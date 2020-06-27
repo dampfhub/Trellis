@@ -42,7 +42,7 @@ public:
         if (pub_queues.find(name) == pub_queues.end()) {
             pub_queues[name] = NetworkManager::NetworkQueue::Subscribe(name);
         }
-        Util::NetworkData nd(data, uid);
+        Util::NetworkData nd(data, uid, this->uid);
         changes.push(std::make_pair(name, std::make_pair(nd, target_uid)));
     }
 
@@ -94,8 +94,6 @@ public:
 
     void Update() override;
 
-    uint64_t uid = 0;
-
 private:
     friend class ClientServer;
 
@@ -114,8 +112,6 @@ public:
     void Start(int port_num, std::string name, std::string hostname) override;
 
     void Update() override;
-
-    uint64_t uid = 0;
 
     std::vector<ClientInfo> connected_clients;
 

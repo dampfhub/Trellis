@@ -24,8 +24,10 @@ template<>
 Util::NetworkData Util::deserialize<Util::NetworkData>(const std::vector<std::byte> &bytes) {
     using std::byte;
     Util::NetworkData d;
-    d.Uid = *reinterpret_cast<const uint64_t *>(bytes.data());
-    d.Data = std::vector<byte>(bytes.begin() + 8, bytes.end());
+    const byte *ptr = bytes.data();
+    d.Uid = Util::deserialize<uint64_t>(ptr);
+    d.ClientUid = Util::deserialize<uint64_t>(ptr += sizeof(uint64_t));
+    d.Data = std::vector<byte>(ptr + sizeof(uint64_t), ptr + bytes.size());
     return d;
 }
 
@@ -58,6 +60,8 @@ template<>
 std::vector<std::byte> Util::serialize_vec<Util::NetworkData>(const Util::NetworkData &object) {
     using std::byte;
     std::vector<byte> bytes = Util::serialize_vec(object.Uid);
+    std::vector<byte> client_uid = Util::serialize_vec(object.ClientUid);
+    bytes.insert(bytes.end(), client_uid.begin(), client_uid.end());
     bytes.insert(bytes.end(), object.Data.begin(), object.Data.end());
     return bytes;
 }

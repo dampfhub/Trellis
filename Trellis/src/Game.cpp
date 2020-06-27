@@ -359,7 +359,6 @@ void Game::handle_page_add_piece(Util::NetworkData &&q) {
     if (ResourceManager::Images.find(g->Sprite.ImageUID) ==
             ResourceManager::Images.end()) {
         // Image isn't cached, need to request it
-        std::cout << "Requesting Image" << std::endl;
         cs.RegisterPageChange("IMAGE_REQUEST", g->Sprite.ImageUID, "");
     }
     // See if page exists and place piece new in it if it does

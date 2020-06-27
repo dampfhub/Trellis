@@ -15,16 +15,17 @@ namespace Util {
     public:
         std::vector<std::byte> Data;
         uint64_t Uid;
+        uint64_t ClientUid;
 
         NetworkData() = default;
 
         template<class T>
-        NetworkData(const T &data, uint64_t uid) : Data(Util::serialize_vec(data)),
-                Uid(uid) {
+        NetworkData(const T &data, uint64_t uid, uint64_t client_uid = 0) : Data(Util::serialize_vec(data)),
+                Uid(uid), ClientUid(client_uid) {
         }
 
-        NetworkData(std::vector<std::byte> data, uint64_t uid) : Data(data),
-                Uid(uid) {
+        NetworkData(std::vector<std::byte> data, uint64_t uid, uint64_t client_uid = 0) : Data(data),
+                Uid(uid), ClientUid(client_uid) {
         }
 
         template<class T>

@@ -79,5 +79,9 @@ void Server::handle_client_join(Util::NetworkData d) {
 }
 
 void Server::handle_forward_data(std::string channel, Util::NetworkData d) {
-    RegisterPageChange(channel, d.Uid, d.Data);
+    for (auto &client : connected_clients) {
+        if (client.Uid != d.ClientUid) {
+            RegisterPageChange(channel, d.Uid, d.Data, client.Uid);
+        }
+    }
 }
