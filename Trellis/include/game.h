@@ -8,9 +8,9 @@
 #include <functional>
 
 #include "page.h"
-#include "util.h"
 #include "client_server.h"
 #include "ui.h"
+#include "data.h"
 
 // Represents the current state of the game
 enum GameState {
@@ -73,25 +73,27 @@ private:
     void register_network_callbacks();
 
     // Callbacks for networking
-    void handle_page_add_piece(Util::NetworkData &&q);
+    void handle_page_add_piece(Data::NetworkData &&q);
 
-    void handle_page_delete_piece(Util::NetworkData &&q);
+    void handle_page_delete_piece(Data::NetworkData &&q);
 
-    void handle_page_move_piece(Util::NetworkData &&q);
+    void handle_page_move_piece(Data::NetworkData &&q);
 
-    void handle_page_resize_piece(Util::NetworkData &&q);
+    void handle_page_resize_piece(Data::NetworkData &&q);
 
-    void handle_new_image(Util::NetworkData &&q);
+    void handle_new_image(Data::NetworkData &&q);
 
-    void handle_client_join(Util::NetworkData &&q);
+    void handle_client_join(Data::NetworkData &&q);
 
-    void handle_add_page(Util::NetworkData &&q);
+    void handle_add_page(Data::NetworkData &&q);
 
     Page::MouseHoverType current_hover_type = Page::MouseHoverType::NONE;
 
     void AddPage(std::unique_ptr<Page> &&pg);
 
     void MakePage(std::string name);
+
+    void SendAllPages(uint64_t client_uid);
 
     void esc_handler();
 

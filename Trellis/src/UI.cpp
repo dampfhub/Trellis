@@ -1,9 +1,12 @@
+#include <iostream>
+#include <iterator>
+
 #include "ui.h"
 #include "glfw_handler.h"
 #include "client_server.h"
+#include "data.h"
 
-#include <iostream>
-#include <iterator>
+using Data::ClientInfo;
 
 UI::~UI() {
     delete FileDialog;
@@ -208,7 +211,7 @@ void UI::DrawClientList() {
                         "Columns",
                         cs.connected_clients.size(),
                         ImGuiColumnsFlags_NoResize);
-                for (Util::ClientInfo &inf : cs.connected_clients) {
+                for (ClientInfo &inf : cs.connected_clients) {
                     ImGui::Text("%s", inf.Name.c_str());
                     ImGui::NextColumn();
                 }

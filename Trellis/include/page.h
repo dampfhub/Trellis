@@ -12,7 +12,7 @@
 #include "page_ui.h"
 #include "util.h"
 
-class Page {
+class Page : public Util::Serializable<Page> {
 public:
     enum class MouseHoverType {
         NONE, N, E, S, W, NE, SE, SW, NW, CENTER
@@ -45,7 +45,7 @@ public:
             glm::vec2 pos = glm::vec2(0.0f, 0.0f),
             glm::vec2 size = glm::vec2(100.0f, 100.0f),
             // TODO: This should be 0 when we are sending pages correctly
-            uint64_t uid = 1);
+            uint64_t uid = 0);
 
     Page(const Page &) = delete;
     Page &operator=(const Page &) = delete;
@@ -101,10 +101,7 @@ public:
     std::list<std::unique_ptr<GameObject>>::iterator
             CurrentSelection = Pieces.end();
 
-    std::vector<std::byte> Serialize();
-
-    static Page Deserialize(std::vector<std::byte> bytes);
-
+    std::vector<std::byte> Serialize() const override;
 private:
     glm::ivec2 DragOrigin = glm::ivec2(0);
     enum class MouseHoldType {
@@ -124,6 +121,9 @@ private:
     void MoveCurrentSelection(glm::vec2 mouse_pos);
 
     void HandleUIEvents();
+
+    friend Serializable<Page>;
+    static Page deserialize_impl(const std::vector<std::byte> &vec);
 };
 
 #endif

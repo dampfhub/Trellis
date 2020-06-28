@@ -1,6 +1,8 @@
 #include "client_server.h"
 #include "resource_manager.h"
 
+using Data::NetworkData, Data::ClientInfo, Data::ImageData;
+
 bool ClientServer::started = false;
 
 ClientServer &ClientServer::GetInstance(NetworkObject type) {
@@ -47,15 +49,15 @@ void Client::Start(int port_num, std::string name, std::string hostname) {
     nm.StartClient(name, uid, std::move(hostname), port_num);
     started = true;
     RegisterCallback(
-            "IMAGE_REQUEST", [this](Util::NetworkData &&d) {
+            "IMAGE_REQUEST", [this](NetworkData &&d) {
                 handle_image_request(std::move(d));
             });
     RegisterCallback(
-            "CLIENT_ADD", [this](Util::NetworkData &&d) {
+            "CLIENT_ADD", [this](NetworkData &&d) {
                 handle_client_add(std::move(d));
             });
     RegisterCallback(
-            "CLIENT_DELETE", [this](Util::NetworkData &&d) {
+            "CLIENT_DELETE", [this](NetworkData &&d) {
                 handle_client_delete(std::move(d));
             });
 }
@@ -64,7 +66,7 @@ void Client::Update() {
     ClientServer::Update();
 }
 
-void Client::handle_image_request(Util::NetworkData &&q) {
+void Client::handle_image_request(NetworkData &&q) {
     auto img_id = q.Parse<uint64_t>();
     if (ResourceManager::Images.find(img_id) != ResourceManager::Images.end()) {
         RegisterPageChange(
@@ -72,22 +74,22 @@ void Client::handle_image_request(Util::NetworkData &&q) {
     }
 }
 
-void Client::handle_client_add(Util::NetworkData &&q) {
-    auto client = q.Parse<Util::ClientInfo>();
+void Client::handle_client_add(NetworkData &&q) {
+    auto client = q.Parse<ClientInfo>();
     connected_clients.push_back(client);
     std::sort(
             connected_clients.begin(),
             connected_clients.end(),
-            [](Util::ClientInfo c1, Util::ClientInfo c2) {
+            [](ClientInfo c1, ClientInfo c2) {
                 return c1.Uid < c2.Uid;
             });
 }
 
-void Client::handle_client_delete(Util::NetworkData &&q) {
+void Client::handle_client_delete(NetworkData &&q) {
     auto it = std::find_if(
             connected_clients.begin(),
             connected_clients.end(),
-            [q](Util::ClientInfo &c) {
+            [q](ClientInfo &c) {
                 return c.Uid == q.Uid;
             });
     if (it != connected_clients.end()) {
@@ -100,27 +102,27 @@ void Server::Start(int port, std::string name, std::string hostname) {
     NetworkManager &nm = NetworkManager::GetInstance();
     nm.StartServer(port);
     std::vector<std::string> forward_channels =
-            { "ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE" };
+            { "ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE" , "ADD_PAGE"};
     for (auto &str : forward_channels) {
         RegisterCallback(
-                str, [this, str](Util::NetworkData &&d) {
+                str, [this, str](NetworkData &&d) {
                     handle_forward_data(str, std::move(d));
                 });
     }
     RegisterCallback(
-            "JOIN", [this](Util::NetworkData &&d) {
+            "JOIN", [this](NetworkData &&d) {
                 handle_client_join(std::move(d));
             });
     RegisterCallback(
-            "IMAGE_REQUEST", [this](Util::NetworkData &&d) {
+            "IMAGE_REQUEST", [this](NetworkData &&d) {
                 handle_image_request(std::move(d));
             });
     RegisterCallback(
-            "NEW_IMAGE", [this](Util::NetworkData &&d) {
+            "NEW_IMAGE", [this](NetworkData &&d) {
                 handle_new_image(std::move(d));
             });
     RegisterCallback(
-            "DISCONNECT", [this](Util::NetworkData &&d) {
+            "DISCONNECT", [this](NetworkData &&d) {
                 handle_client_disconnect(std::move(d));
             });
     started = true;
@@ -132,8 +134,8 @@ void Server::Update() {
     ClientServer::Update();
 }
 
-void Server::handle_client_join(Util::NetworkData d) {
-    auto new_client = Util::ClientInfo(d.Uid, d.Parse<std::string>());
+void Server::handle_client_join(NetworkData d) {
+    auto new_client = ClientInfo(d.Uid, d.Parse<std::string>());
     // Send new client out to all connected clients
     RegisterPageChange("CLIENT_ADD", uid, new_client);
     // Send all clients to the client that just connected
@@ -148,12 +150,12 @@ void Server::handle_client_join(Util::NetworkData d) {
     std::sort(
             connected_clients.begin(),
             connected_clients.end(),
-            [](const Util::ClientInfo &c1, const Util::ClientInfo &c2) {
+            [](const ClientInfo &c1, const ClientInfo &c2) {
                 return c1.Uid < c2.Uid;
             });
 }
 
-void Server::handle_forward_data(std::string channel, Util::NetworkData d) {
+void Server::handle_forward_data(std::string channel, NetworkData d) {
     for (auto &client : connected_clients) {
         if (client.Uid != d.ClientUid) {
             RegisterPageChange(channel, d.Uid, d.Data, client.Uid);
@@ -161,7 +163,7 @@ void Server::handle_forward_data(std::string channel, Util::NetworkData d) {
     }
 }
 
-void Server::handle_image_request(Util::NetworkData &&q) {
+void Server::handle_image_request(NetworkData &&q) {
     auto img_id = q.Parse<uint64_t>();
     if (ResourceManager::Images.find(img_id) != ResourceManager::Images.end()) {
         RegisterPageChange(
@@ -172,8 +174,8 @@ void Server::handle_image_request(Util::NetworkData &&q) {
     }
 }
 
-void Server::handle_new_image(Util::NetworkData &&q) {
-    ResourceManager::Images[q.Uid] = q.Parse<Util::ImageData>();
+void Server::handle_new_image(NetworkData &&q) {
+    ResourceManager::Images[q.Uid] = q.Parse<ImageData>();
     // Send all pending requests if they were waiting on an image
     for (auto request : pending_image_requests) {
         if (q.Uid == request.first) {
@@ -186,11 +188,11 @@ void Server::handle_new_image(Util::NetworkData &&q) {
     }
 }
 
-void Server::handle_client_disconnect(Util::NetworkData &&q) {
+void Server::handle_client_disconnect(NetworkData &&q) {
     auto it = std::find_if(
             connected_clients.begin(),
             connected_clients.end(),
-            [q](Util::ClientInfo &c) {
+            [q](ClientInfo &c) {
                 return c.Uid == q.Uid;
             });
     if (it != connected_clients.end()) {

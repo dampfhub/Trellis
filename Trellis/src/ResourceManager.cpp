@@ -11,12 +11,13 @@
 #include "stb_image.h"
 
 using std::make_pair, std::make_shared, std::shared_ptr;
+using Data::ImageData;
 
 // Instantiate static variables
 std::unordered_map<std::string, Texture2D>    ResourceManager::Textures;
 std::unordered_map<std::string, shared_ptr<Shader>>
         ResourceManager::Shaders;
-std::unordered_map<uint64_t, Util::ImageData>       ResourceManager::Images;
+std::unordered_map<uint64_t, ImageData>       ResourceManager::Images;
 
 ResourceManager &ResourceManager::GetInstance() {
     static ResourceManager instance; // Guaranteed to be destroyed.
@@ -131,14 +132,14 @@ Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha) {
     uint64_t uid = Util::generate_uid();
     // now generate texture
     texture.Generate(width, height, data, uid);
-    Images[uid] = Util::ImageData(alpha, buffer);
+    Images[uid] = ImageData(alpha, buffer);
     stbi_image_free(data);
     return texture;
 }
 
 Texture2D ResourceManager::loadTextureFromUID(uint64_t uid) {
     Texture2D texture;
-    Util::ImageData d = Images[uid];
+    ImageData d = Images[uid];
     if (d.Alpha) {
         texture.Internal_Format = GL_RGBA;
         texture.Image_Format = GL_RGBA;

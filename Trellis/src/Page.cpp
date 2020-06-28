@@ -4,8 +4,11 @@
 #include "client_server.h"
 #include "board_renderer.h"
 #include "sprite_renderer.h"
+#include "data.h"
 
 using std::make_unique;
+
+using Data::NetworkData;
 
 Page::Page(
         std::string name, glm::vec2 pos, glm::vec2 size, uint64_t uid) : Name(
@@ -27,10 +30,11 @@ Page::~Page() {
 
 Page::Page(Page &&other) noexcept: Name(std::move(other.Name)),
         board_transform(other.board_transform),
-        board_renderer(std::exchange(other.board_renderer, nullptr)),
         Camera(std::exchange(other.Camera, nullptr)),
         UserInterface(std::exchange(other.UserInterface, nullptr)),
         Uid(std::exchange(other.Uid, -1)) {
+    board_renderer = std::make_unique<BoardRenderer>(
+            this->board_transform, this->View);
 }
 
 void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
@@ -263,13 +267,13 @@ void Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                 cs.RegisterPageChange(
                         "MOVE_PIECE",
                         Uid,
-                        Util::NetworkData(piece.transform.position, piece.Uid));
+                        NetworkData(piece.transform.position, piece.Uid));
             }
             if (piece.transform.scale != prev_size) {
                 cs.RegisterPageChange(
                         "RESIZE_PIECE",
                         Uid,
-                        Util::NetworkData(piece.transform.scale, piece.Uid));
+                        NetworkData(piece.transform.scale, piece.Uid));
             }
         }
     }
@@ -395,7 +399,7 @@ void Page::DeleteCurrentSelection() {
         if (mouse_hold != MouseHoldType::PLACING) {
             static ClientServer &cs = ClientServer::GetInstance();
             cs.RegisterPageChange(
-                    "DELETE_PIECE", Uid, Util::NetworkData(
+                    "DELETE_PIECE", Uid, NetworkData(
                             *CurrentSelection, (*CurrentSelection)->Uid));
             DeletePiece((*CurrentSelection)->Uid);
         } else {
@@ -404,7 +408,7 @@ void Page::DeleteCurrentSelection() {
     }
 }
 
-std::vector<std::byte> Page::Serialize() {
+std::vector<std::byte> Page::Serialize() const {
     using std::byte;
     std::vector<std::vector<byte>> bytes;
     bytes.push_back(Util::serialize_vec(Uid));
@@ -413,13 +417,13 @@ std::vector<std::byte> Page::Serialize() {
     return Util::flatten(bytes);
 }
 
-Page Page::Deserialize(std::vector<std::byte> bytes) {
+Page Page::deserialize_impl(const std::vector<std::byte> &vec) {
     using std::byte;
-    const byte *ptr = bytes.data();
+    const byte *ptr = vec.data();
     uint64_t uid = Util::deserialize<uint64_t>(ptr);
     Transform t = Util::deserialize<Transform>(ptr += sizeof(uid));
     std::string name = Util::deserialize<std::string>(
             std::vector(
-                    bytes.begin() + sizeof(uid) + sizeof(t), bytes.end()));
+                    vec.begin() + sizeof(uid) + sizeof(t), vec.end()));
     return Page(name, t.position, t.scale, uid);
 }
