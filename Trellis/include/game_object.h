@@ -30,8 +30,8 @@ public:
     GameObject(const GameObject &) = delete;
     GameObject &operator=(const GameObject &) = delete;
 
-    GameObject(GameObject &&other);
-    GameObject &operator=(GameObject &&other);
+    GameObject(GameObject &&other) noexcept;
+    GameObject &operator=(GameObject &&other) noexcept;
 
     void Draw(int border_pixel_width);
 

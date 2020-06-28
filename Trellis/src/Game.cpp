@@ -284,8 +284,6 @@ void Game::UpdateMouse() {
     }
 }
 
-bool registered = false;
-
 void Game::Update(float dt) {
     ProcessUIEvents();
     Page &pg = **ActivePage;
@@ -294,10 +292,6 @@ void Game::Update(float dt) {
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.Update();
-        if (!registered) {
-            register_network_callbacks();
-            registered = true;
-        }
     }
 }
 
@@ -336,6 +330,10 @@ void Game::AddPage(std::unique_ptr<Page> &&pg) {
 void Game::MakePage(std::string name) {
     auto pg = std::make_unique<Page>(
             name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
+    if (ClientServer::Started()) {
+        static ClientServer &cs = ClientServer::GetInstance();
+        cs.RegisterPageChange("ADD_PAGE", cs.uid, pg->Serialize());
+    }
     AddPage(std::move(pg));
 }
 
@@ -436,6 +434,16 @@ void Game::handle_page_delete_piece(Util::NetworkData &&q) {
     }
 }
 
+void Game::handle_add_page(Util::NetworkData &&q) {
+    auto pg = Page::Deserialize(q.Data);
+    std::cout << pg.Name << std::endl;
+    auto page_it = PagesMap.find(q.Uid);
+    if (page_it == PagesMap.end()) {
+        AddPage(std::make_unique<Page>(std::move(pg)));
+    }
+    std::cout << "Got add page" << std::endl;
+}
+
 void Game::register_network_callbacks() {
     ClientServer &cs = ClientServer::GetInstance();
     cs.RegisterCallback(
@@ -462,5 +470,8 @@ void Game::register_network_callbacks() {
             "JOIN", [this](Util::NetworkData &&d) {
                 handle_client_join(std::move(d));
             });
+    cs.RegisterCallback(
+            "ADD_PAGE", [this](Util::NetworkData &&d) {
+                handle_add_page(std::move(d));
+            });
 }
-

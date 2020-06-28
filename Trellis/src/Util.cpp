@@ -17,7 +17,7 @@ template<>
 std::string Util::deserialize<std::string>(const std::vector<std::byte> &bytes) {
     using std::byte;
     const char *ptr = reinterpret_cast<const char *>(bytes.data());
-    return std::string(ptr);
+    return std::string(ptr, ptr + bytes.size());
 }
 
 template<>

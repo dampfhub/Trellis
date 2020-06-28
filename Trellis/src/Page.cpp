@@ -1,7 +1,6 @@
 #include "page.h"
 #include "resource_manager.h"
 #include "game.h"
-#include "util.h"
 #include "client_server.h"
 #include "board_renderer.h"
 #include "sprite_renderer.h"
@@ -26,7 +25,15 @@ Page::Page(
 Page::~Page() {
 }
 
-void Page::AddPiece(std::unique_ptr <GameObject> &&piece) {
+Page::Page(Page &&other) noexcept: Name(std::move(other.Name)),
+        board_transform(other.board_transform),
+        board_renderer(std::exchange(other.board_renderer, nullptr)),
+        Camera(std::exchange(other.Camera, nullptr)),
+        UserInterface(std::exchange(other.UserInterface, nullptr)),
+        Uid(std::exchange(other.Uid, -1)) {
+}
+
+void Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
     GameObject &g = *piece;
     piece->renderer = std::make_unique<SpriteRenderer>(
             piece->transform, this->View, g.Sprite);
@@ -373,7 +380,7 @@ void Page::DeletePiece(uint64_t uid) {
     auto piece_it = std::find_if(
             Pieces.begin(),
             Pieces.end(),
-            [uid](std::unique_ptr <GameObject> &g) {
+            [uid](std::unique_ptr<GameObject> &g) {
                 return g->Uid == uid;
             });
     if (piece_it != Pieces.end()) {
@@ -395,4 +402,24 @@ void Page::DeleteCurrentSelection() {
             Deselect();
         }
     }
+}
+
+std::vector<std::byte> Page::Serialize() {
+    using std::byte;
+    std::vector<std::vector<byte>> bytes;
+    bytes.push_back(Util::serialize_vec(Uid));
+    bytes.push_back(Util::serialize_vec(board_transform));
+    bytes.push_back(Util::serialize_vec(Name));
+    return Util::flatten(bytes);
+}
+
+Page Page::Deserialize(std::vector<std::byte> bytes) {
+    using std::byte;
+    const byte *ptr = bytes.data();
+    uint64_t uid = Util::deserialize<uint64_t>(ptr);
+    Transform t = Util::deserialize<Transform>(ptr += sizeof(uid));
+    std::string name = Util::deserialize<std::string>(
+            std::vector(
+                    bytes.begin() + sizeof(uid) + sizeof(t), bytes.end()));
+    return Page(name, t.position, t.scale, uid);
 }

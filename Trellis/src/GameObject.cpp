@@ -30,7 +30,7 @@ void GameObject::Draw(int border_pixel_width) {
     this->renderer->Draw();
 }
 
-GameObject::GameObject(GameObject &&other) : transform(other.transform),
+GameObject::GameObject(GameObject &&other) noexcept: transform(other.transform),
         Color(other.Color),
         Uid(exchange(other.Uid, -1)),
         Sprite(other.Sprite),
@@ -38,7 +38,7 @@ GameObject::GameObject(GameObject &&other) : transform(other.transform),
         renderer(exchange(other.renderer, nullptr)) {
 }
 
-GameObject &GameObject::operator=(GameObject &&other) {
+GameObject &GameObject::operator=(GameObject &&other) noexcept {
     GameObject copy(move(other));
     copy.swap(*this);
     return *this;

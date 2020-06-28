@@ -85,7 +85,7 @@ private:
 
     void handle_client_join(Util::NetworkData &&q);
 
-    void handle_client_disconnect(Util::NetworkData &&q);
+    void handle_add_page(Util::NetworkData &&q);
 
     Page::MouseHoverType current_hover_type = Page::MouseHoverType::NONE;
 
