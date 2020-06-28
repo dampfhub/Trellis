@@ -64,7 +64,7 @@ vector<byte> GameObject::Serialize() const {
     return Util::flatten(bytes);
 }
 
-GameObject GameObject::deserialize(const vector<byte> &vec) {
+GameObject GameObject::deserialize_impl(const vector<byte> &vec) {
     GameObject g;
     const byte *ptr = vec.data();
     g.transform = Util::deserialize<Transform>(ptr);

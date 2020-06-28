@@ -15,7 +15,7 @@ namespace Util {
         virtual std::vector<std::byte> Serialize() const = 0;
 
         static T Deserialize(const std::vector<std::byte> &vec) {
-            return T::deserialize(vec);
+            return T::deserialize_impl(vec);
         }
 
         virtual ~Serializable() {
@@ -56,7 +56,7 @@ namespace Util {
         }
     };
 
-    class NetworkData {
+    class NetworkData: public Serializable<NetworkData> {
     public:
         std::vector<std::byte> Data;
         uint64_t Uid;
@@ -85,6 +85,11 @@ namespace Util {
         T Parse() {
             return deserialize<T>(Data);
         }
+
+        std::vector<std::byte> Serialize() const override;
+    private:
+        friend Serializable<NetworkData>;
+        static NetworkData deserialize_impl(const std::vector<std::byte> &vec);
     };
 
     std::string PathBaseName(std::string const &path);
@@ -185,9 +190,6 @@ namespace Util {
     }
 
     template<>
-    NetworkData deserialize<NetworkData>(const std::vector<std::byte> &bytes);
-
-    template<>
     ImageData deserialize<ImageData>(const std::vector<std::byte> &bytes);
 
     template<>
@@ -195,9 +197,6 @@ namespace Util {
 
     template<>
     ClientInfo deserialize<ClientInfo>(const std::vector<std::byte> &bytes);
-
-    template<>
-    std::vector<std::byte> serialize_vec<NetworkData>(const NetworkData &object);
 
     template<>
     std::vector<std::byte> serialize_vec<ImageData>(const ImageData &object);

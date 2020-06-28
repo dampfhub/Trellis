@@ -42,7 +42,7 @@ public:
     std::vector<std::byte> Serialize() const override;
 private:
     friend Serializable<GameObject>;
-    static GameObject deserialize(const std::vector<std::byte> &vec);
+    static GameObject deserialize_impl(const std::vector<std::byte> &vec);
 private:
 };
 
