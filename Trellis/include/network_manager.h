@@ -31,8 +31,6 @@ class NetworkManager {
 
     void StartClient(std::string client_name, uint64_t client_uid, std::string hostname, int port);
 
-    bool Active();
-
     class NetworkQueue {
         public:
         static std::shared_ptr<NetworkQueue> Subscribe(std::string cname);
@@ -92,7 +90,6 @@ class NetworkManager {
     ~NetworkManager() = default;
 
     std::map<std::string, std::vector<std::weak_ptr<NetworkQueue>>> queues;
-
     class MessageHeader {
         public:
         static const size_t HeaderLength = 32;
@@ -150,7 +147,7 @@ class NetworkManager {
 
         explicit network_object(asio::io_context &con);
 
-        ~network_object();
+        virtual ~network_object();
 
         void WriteSocket(const socket_ptr &sock, const Message &msg);
 

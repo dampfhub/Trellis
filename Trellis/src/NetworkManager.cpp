@@ -39,11 +39,6 @@ NetworkManager::StartClient(
     net_obj->uid = client_uid;
 }
 
-bool
-NetworkManager::Active() {
-    return (net_obj != nullptr);
-}
-
 NetworkManager::NetworkQueue::NetworkQueue()
     : should_clear(false) {}
 
