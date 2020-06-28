@@ -1,41 +1,18 @@
-#include "sprite_renderer.h"
-#include "resource_manager.h"
 #include "glfw_handler.h"
+#include "resource_manager.h"
+#include "sprite_renderer.h"
 
 SpriteRenderer::SpriteRenderer(
-        const Transform &transform,
-        const glm::mat4 &view,
-        const Texture2D &sprite) : Renderer(
-        ResourceManager::GetShader("sprite"), transform, view),
-        Sprite(sprite) {
+  const Transform &transform,
+  const glm::mat4 &view,
+  const Texture2D &sprite)
+    : Renderer(ResourceManager::GetShader("sprite"), transform, view)
+    , Sprite(sprite) {
     unsigned int VBO;
-    float vertices[] = {
-            // pos      // tex
-            0.0f,
-            1.0f,
-            0.0f,
-            1.0f,
-            1.0f,
-            0.0f,
-            1.0f,
-            0.0f,
-            0.0f,
-            0.0f,
-            0.0f,
-            0.0f,
+    float        vertices[] = {// pos      // tex
+                        0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 
-            0.0f,
-            1.0f,
-            0.0f,
-            1.0f,
-            1.0f,
-            1.0f,
-            1.0f,
-            1.0f,
-            1.0f,
-            0.0f,
-            1.0f,
-            0.0f };
+                        0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f};
     glGenVertexArrays(1, &quad_VAO);
     glGenBuffers(1, &VBO);
 
@@ -44,22 +21,19 @@ SpriteRenderer::SpriteRenderer(
 
     glBindVertexArray(quad_VAO);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(
-            0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
-void SpriteRenderer::Draw() {
+void
+SpriteRenderer::Draw() {
     shader->Use();
     glm::mat4 model = Model();
     shader->SetMatrix4("view", view);
     shader->SetMatrix4("model", model);
-    shader->SetVector2f(
-            "screenRes",
-            glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
+    shader->SetVector2f("screenRes", glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
     shader->SetVector3f("spriteColor", glm::vec3(1));
-
 
     glActiveTexture(GL_TEXTURE0);
     Sprite.Bind();
