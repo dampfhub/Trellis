@@ -4,18 +4,18 @@
 #include <GLFW/glfw3.h>
 #include <functional>
 
-typedef void (keyfunc)(int key, int scancode, int action, int mods);
+typedef void(keyfunc)(int key, int scancode, int action, int mods);
 
-typedef void (mousefunc)(int button, int action, int mods);
+typedef void(mousefunc)(int button, int action, int mods);
 
-typedef void (scrollfunc)(double xoffset, double yoffset);
+typedef void(scrollfunc)(double xoffset, double yoffset);
 
-typedef void (mouseposfunc)(double x, double y);
+typedef void(mouseposfunc)(double x, double y);
 
-typedef void (windowsizefun)(int width, int height);
+typedef void(windowsizefun)(int width, int height);
 
 class GLFW {
-public:
+    public:
     GLFW(GLFW const &) = delete; // Disallow copying
     void operator=(GLFW const &) = delete;
 
@@ -39,13 +39,9 @@ public:
 
     void RegisterMouse(int button, const std::function<mousefunc> &callback);
 
-    void RegisterMousePress(
-            int button,
-            const std::function<mousefunc> &callback);
+    void RegisterMousePress(int button, const std::function<mousefunc> &callback);
 
-    void RegisterMouseRelease(
-            int button,
-            const std::function<mousefunc> &callback);
+    void RegisterMouseRelease(int button, const std::function<mousefunc> &callback);
 
     void RegisterScroll(const std::function<scrollfunc> &callback);
 
@@ -57,7 +53,7 @@ public:
 
     static int GetScreenHeight();
 
-private:
+    private:
     GLFW();
 
     ~GLFW();
@@ -65,4 +61,4 @@ private:
     GLFWwindow *window;
 };
 
-#endif //GLFW_HANDLER_H
+#endif // GLFW_HANDLER_H

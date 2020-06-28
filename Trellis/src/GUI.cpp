@@ -1,32 +1,34 @@
 #include "GUI.h"
+
+#include "glfw_handler.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include "glfw_handler.h"
 
-GUI &GUI::GetInstance() {
+GUI &
+GUI::GetInstance() {
     static GUI instance; // Guaranteed to be destroyed.
     // Instantiated on first use.
     return instance;
 }
 
-GUI::GUI() :
-        io((ImGui::CreateContext(), ImGui::GetIO())),
-        WantCaptureMouse(io.WantCaptureMouse),
-        WantCaptureKeyboard(io.WantCaptureKeyboard),
-        WantTextInput(io.WantTextInput),
-        WantSetMousePos(io.WantSetMousePos),
-        WantSaveIniSettings(io.WantSaveIniSettings) {
+GUI::GUI()
+    : io((ImGui::CreateContext(), ImGui::GetIO()))
+    , WantCaptureMouse(io.WantCaptureMouse)
+    , WantCaptureKeyboard(io.WantCaptureKeyboard)
+    , WantTextInput(io.WantTextInput)
+    , WantSetMousePos(io.WantSetMousePos)
+    , WantSaveIniSettings(io.WantSaveIniSettings) {
     IMGUI_CHECKVERSION();
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigWindowsMoveFromTitleBarOnly = true;
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
     // Specific styling
-    ImGui::GetStyle().WindowRounding = 0.0f;
+    ImGui::GetStyle().WindowRounding   = 0.0f;
     ImGui::GetStyle().WindowTitleAlign = ImVec2(0.5f, 0.5f);
     ImGui::GetStyle().WindowBorderSize = 0.0f;
 
@@ -45,17 +47,20 @@ GUI::~GUI() {
     ImGui::DestroyContext();
 }
 
-void GUI::NewFrame() {
+void
+GUI::NewFrame() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void GUI::Render() {
+void
+GUI::Render() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void GUI::SetCursor(ImGuiMouseCursor_ cursor) {
+void
+GUI::SetCursor(ImGuiMouseCursor_ cursor) {
     ImGui::SetMouseCursor(cursor);
 }

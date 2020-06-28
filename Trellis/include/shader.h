@@ -1,22 +1,21 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include <string>
-
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <string>
 
 // General purpsoe sprite_shader object. Compiles from file, generates
-// compile/link-time error messages and hosts several utility 
+// compile/link-time error messages and hosts several utility
 // functions for easy management.
 class Shader {
-public:
+    public:
     // constructor
     Shader(
-            const char *vertexSource,
-            const char *fragmentSource,
-            const char *geometrySource = nullptr); // note: geometry source code is optional
+        const char *vertexSource,
+        const char *fragmentSource,
+        const char *geometrySource = nullptr); // note: geometry source code is optional
     ~Shader();
     Shader(const Shader &) = delete;
     Shader &operator=(const Shader &) = delete;
@@ -43,7 +42,7 @@ public:
 
     void SetMatrix4(const char *name, const glm::mat4 &matrix);
 
-private:
+    private:
     // state
     unsigned int ID;
 

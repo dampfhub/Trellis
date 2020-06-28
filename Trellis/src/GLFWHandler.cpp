@@ -1,51 +1,47 @@
-#include <glad/glad.h>
-#include <functional>
-#include <array>
-
-#include "glfw_handler.h"
 #include "GUI.h"
+#include "glfw_handler.h"
+
+#include <array>
+#include <functional>
+#include <glad/glad.h>
 
 using std::function, std::array;
 
-static array<function<keyfunc>, GLFW_KEY_LAST + 1> key_press_callbacks{ nullptr };
-static array<function<keyfunc>, GLFW_KEY_LAST + 1> key_release_callbacks{ nullptr };
-static array<function<mousefunc>, GLFW_MOUSE_BUTTON_LAST + 1>
-        mouse_press_callbacks{ nullptr };
-static array<function<mousefunc>, GLFW_MOUSE_BUTTON_LAST + 1>
-        mouse_release_callbacks{ nullptr };
+static array<function<keyfunc>, GLFW_KEY_LAST + 1>            key_press_callbacks{nullptr};
+static array<function<keyfunc>, GLFW_KEY_LAST + 1>            key_release_callbacks{nullptr};
+static array<function<mousefunc>, GLFW_MOUSE_BUTTON_LAST + 1> mouse_press_callbacks{nullptr};
+static array<function<mousefunc>, GLFW_MOUSE_BUTTON_LAST + 1> mouse_release_callbacks{nullptr};
 
-static function<scrollfunc> scroll_callback = nullptr;
+static function<scrollfunc>    scroll_callback      = nullptr;
 static function<windowsizefun> window_size_callback = nullptr;
-static function<mouseposfunc> mouse_pos_callback = nullptr;
+static function<mouseposfunc>  mouse_pos_callback   = nullptr;
 
 // The width of the screen
 static int screen_width = 1000;
 // The height of the screen
 static int screen_height = 800;
 
-GLFW &GLFW::GetInstance() {
+GLFW &
+GLFW::GetInstance() {
     static GLFW instance; // Guaranteed to be destroyed.
     // Instantiated on first use.
     return instance;
 }
 
-static void window_size_handler(GLFWwindow *window, int width, int height) {
+static void
+window_size_handler(GLFWwindow *window, int width, int height) {
     (void)window;
-    screen_width = width;
+    screen_width  = width;
     screen_height = height;
-    if (window_size_callback) {
-        window_size_callback(width, height);
-    }
+    if (window_size_callback) { window_size_callback(width, height); }
 }
 
-static void key_handler(
-        GLFWwindow *window, int key, int scancode, int action, int mods) {
+static void
+key_handler(GLFWwindow *window, int key, int scancode, int action, int mods) {
     (void)window;
     static GUI &gui = GUI::GetInstance();
     if (action == GLFW_PRESS) {
-        if (gui.WantCaptureKeyboard) {
-            return;
-        }
+        if (gui.WantCaptureKeyboard) { return; }
         if (key_press_callbacks[key] != nullptr) {
             key_press_callbacks[key](key, scancode, action, mods);
         }
@@ -56,14 +52,12 @@ static void key_handler(
     }
 }
 
-static void mouse_handler(
-        GLFWwindow *window, int button, int action, int mods) {
+static void
+mouse_handler(GLFWwindow *window, int button, int action, int mods) {
     (void)window;
     static GUI &gui = GUI::GetInstance();
     if (action == GLFW_PRESS) {
-        if (gui.WantCaptureMouse) {
-            return;
-        }
+        if (gui.WantCaptureMouse) { return; }
         if (mouse_press_callbacks[button] != nullptr) {
             mouse_press_callbacks[button](button, action, mods);
         }
@@ -74,25 +68,22 @@ static void mouse_handler(
     }
 }
 
-static void scroll_handler(GLFWwindow *window, double xoffset, double yoffset) {
+static void
+scroll_handler(GLFWwindow *window, double xoffset, double yoffset) {
     (void)window;
     static GUI &gui = GUI::GetInstance();
-    if (gui.WantCaptureMouse) {
-        return;
-    }
-    if (scroll_callback != nullptr) {
-        scroll_callback(xoffset, yoffset);
-    }
+    if (gui.WantCaptureMouse) { return; }
+    if (scroll_callback != nullptr) { scroll_callback(xoffset, yoffset); }
 }
 
-static void mouse_pos_handler(GLFWwindow *window, double x, double y) {
+static void
+mouse_pos_handler(GLFWwindow *window, double x, double y) {
     (void)window;
-    if (mouse_pos_callback != nullptr) {
-        mouse_pos_callback(x, y);
-    }
+    if (mouse_pos_callback != nullptr) { mouse_pos_callback(x, y); }
 }
 
-static void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+static void
+framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     (void)window;
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
@@ -111,8 +102,7 @@ GLFW::GLFW() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, true);
 
-    window = glfwCreateWindow(
-            screen_width, screen_height, "Trellis", nullptr, nullptr);
+    window = glfwCreateWindow(screen_width, screen_height, "Trellis", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
     glfwSetKeyCallback(window, key_handler);
@@ -128,90 +118,94 @@ GLFW::~GLFW() {
     glfwTerminate();
 }
 
-int GLFW::WindowShouldClose() const {
+int
+GLFW::WindowShouldClose() const {
     return glfwWindowShouldClose(window);
 }
 
-void GLFW::SetWindowShouldClose(int value) {
+void
+GLFW::SetWindowShouldClose(int value) {
     glfwSetWindowShouldClose(window, value);
 }
 
-void GLFW::SwapBuffers() {
+void
+GLFW::SwapBuffers() {
     glfwSwapBuffers(window);
 }
 
-void GLFW::SetWindowIcon(unsigned char *pixels, int width, int height) {
+void
+GLFW::SetWindowIcon(unsigned char *pixels, int width, int height) {
     GLFWimage icon;
     icon.pixels = pixels;
-    icon.width = width;
+    icon.width  = width;
     icon.height = height;
     glfwSetWindowIcon(window, 1, &icon);
 }
 
-GLFWwindow *GLFW::GetWindow() {
+GLFWwindow *
+GLFW::GetWindow() {
     return window;
 }
 
-void GLFW::RegisterKey(int key, const function<keyfunc> &callback) {
-    if (key < 0 || key > GLFW_KEY_LAST) {
-        return;
-    }
-    key_press_callbacks[key] = callback;
+void
+GLFW::RegisterKey(int key, const function<keyfunc> &callback) {
+    if (key < 0 || key > GLFW_KEY_LAST) { return; }
+    key_press_callbacks[key]   = callback;
     key_release_callbacks[key] = callback;
 }
 
-void GLFW::RegisterKeyPress(int key, const function<keyfunc> &callback) {
-    if (key < 0 || key > GLFW_KEY_LAST) {
-        return;
-    }
+void
+GLFW::RegisterKeyPress(int key, const function<keyfunc> &callback) {
+    if (key < 0 || key > GLFW_KEY_LAST) { return; }
     key_press_callbacks[key] = callback;
 }
 
-void GLFW::RegisterKeyRelease(int key, const function<keyfunc> &callback) {
-    if (key < 0 || key > GLFW_KEY_LAST) {
-        return;
-    }
+void
+GLFW::RegisterKeyRelease(int key, const function<keyfunc> &callback) {
+    if (key < 0 || key > GLFW_KEY_LAST) { return; }
     key_release_callbacks[key] = callback;
 }
 
-void GLFW::RegisterMouse(int button, const function<mousefunc> &callback) {
-    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) {
-        return;
-    }
-    mouse_press_callbacks[button] = callback;
+void
+GLFW::RegisterMouse(int button, const function<mousefunc> &callback) {
+    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) { return; }
+    mouse_press_callbacks[button]   = callback;
     mouse_release_callbacks[button] = callback;
 }
 
-void GLFW::RegisterMousePress(int button, const function<mousefunc> &callback) {
-    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) {
-        return;
-    }
+void
+GLFW::RegisterMousePress(int button, const function<mousefunc> &callback) {
+    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) { return; }
     mouse_press_callbacks[button] = callback;
 }
 
-void GLFW::RegisterMouseRelease(int button, const function<mousefunc> &callback) {
-    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) {
-        return;
-    }
+void
+GLFW::RegisterMouseRelease(int button, const function<mousefunc> &callback) {
+    if (button < 0 || button > GLFW_MOUSE_BUTTON_LAST) { return; }
     mouse_release_callbacks[button] = callback;
 }
 
-void GLFW::RegisterScroll(const function<scrollfunc> &callback) {
+void
+GLFW::RegisterScroll(const function<scrollfunc> &callback) {
     scroll_callback = callback;
 }
 
-void GLFW::RegisterMousePosCallback(const function<mouseposfunc> &callback) {
+void
+GLFW::RegisterMousePosCallback(const function<mouseposfunc> &callback) {
     mouse_pos_callback = callback;
 }
 
-void GLFW::RegisterWindowSizeCallback(const function<windowsizefun> &callback) {
+void
+GLFW::RegisterWindowSizeCallback(const function<windowsizefun> &callback) {
     window_size_callback = callback;
 }
 
-int GLFW::GetScreenWidth() {
+int
+GLFW::GetScreenWidth() {
     return screen_width;
 }
 
-int GLFW::GetScreenHeight() {
+int
+GLFW::GetScreenHeight() {
     return screen_height;
 }

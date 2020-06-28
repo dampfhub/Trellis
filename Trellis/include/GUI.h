@@ -4,7 +4,7 @@
 #include "imgui.h"
 
 class GUI {
-public:
+    public:
     GUI(GUI const &) = delete; // Disallow copying
     void operator=(GUI const &) = delete;
 
@@ -15,21 +15,23 @@ public:
     void Render();
 
     void SetCursor(ImGuiMouseCursor_ cursor);
-private:
+
+    private:
     // Declaration of io must appear above Want... members for correct
     // constructor initialization order.
     ImGuiIO &io;
-public:
+
+    public:
     const bool &WantCaptureMouse;
     const bool &WantCaptureKeyboard;
     const bool &WantTextInput;
     const bool &WantSetMousePos;
     const bool &WantSaveIniSettings;
 
-private:
+    private:
     GUI();
 
     ~GUI();
 };
 
-#endif //GUI_H
+#endif // GUI_H
