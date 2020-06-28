@@ -26,10 +26,10 @@ ResourceManager::GetInstance() {
 
 std::shared_ptr<Shader>
 ResourceManager::LoadShader(
-  const char *vShaderFile,
-  const char *fShaderFile,
-  const char *gShaderFile,
-  std::string name) {
+    const char *vShaderFile,
+    const char *fShaderFile,
+    const char *gShaderFile,
+    std::string name) {
     Shaders.insert(make_pair(name, loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile)));
     return Shaders.at(name);
 }
@@ -62,9 +62,9 @@ ResourceManager::~ResourceManager() {
 
 std::shared_ptr<Shader>
 ResourceManager::loadShaderFromFile(
-  const char *vShaderFile,
-  const char *fShaderFile,
-  const char *gShaderFile) {
+    const char *vShaderFile,
+    const char *fShaderFile,
+    const char *gShaderFile) {
     // 1. retrieve the vertex/fragment source code from filePath
     std::string vertexCode;
     std::string fragmentCode;
@@ -99,9 +99,9 @@ ResourceManager::loadShaderFromFile(
     const char *gShaderCode = geometryCode.c_str();
     // 2. now create sprite_shader object from source code
     return make_shared<Shader>(
-      vShaderCode,
-      fShaderCode,
-      gShaderFile != nullptr ? gShaderCode : nullptr);
+        vShaderCode,
+        fShaderCode,
+        gShaderFile != nullptr ? gShaderCode : nullptr);
 }
 
 Texture2D
@@ -117,13 +117,13 @@ ResourceManager::loadTextureFromFile(const char *file, bool alpha) {
     // unsigned char *data = stbi_load(file, &width, &height, &nrChannels, 0);
     std::ifstream              infile(file, std::ios_base::binary);
     std::vector<unsigned char> buffer(
-      (std::istreambuf_iterator<char>(infile)),
-      (std::istreambuf_iterator<char>()));
+        (std::istreambuf_iterator<char>(infile)),
+        (std::istreambuf_iterator<char>()));
     for (auto &i : Images) {
         if (i.second.Hash == Util::hash_image(buffer)) { return loadTextureFromUID(i.first); }
     }
     unsigned char *data =
-      stbi_load_from_memory(buffer.data(), buffer.size(), &width, &height, &nrChannels, 0);
+        stbi_load_from_memory(buffer.data(), buffer.size(), &width, &height, &nrChannels, 0);
     uint64_t uid = Util::generate_uid();
     // now generate texture
     texture.Generate(width, height, data, uid);
@@ -142,7 +142,7 @@ ResourceManager::loadTextureFromUID(uint64_t uid) {
     }
     int            width, height, nrChannels;
     unsigned char *data =
-      stbi_load_from_memory(d.Data.data(), d.Data.size(), &width, &height, &nrChannels, 0);
+        stbi_load_from_memory(d.Data.data(), d.Data.size(), &width, &height, &nrChannels, 0);
     texture.Generate(width, height, data, uid);
     stbi_image_free(data);
     return texture;

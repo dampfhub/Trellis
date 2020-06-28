@@ -7,9 +7,9 @@ bool ClientServer::started = false;
 
 ClientServer &
 ClientServer::GetInstance(NetworkObject type) {
-    static std::unique_ptr<ClientServer> instance = type == CLIENT
-                                                      ? std::unique_ptr<ClientServer>(new Client())
-                                                      : std::unique_ptr<ClientServer>(new Server());
+    static std::unique_ptr<ClientServer> instance =
+        type == CLIENT ? std::unique_ptr<ClientServer>(new Client())
+                       : std::unique_ptr<ClientServer>(new Server());
     return *instance;
 }
 
@@ -94,7 +94,7 @@ Server::Start(int port, std::string name, std::string hostname) {
     NetworkManager &nm = NetworkManager::GetInstance();
     nm.StartServer(port);
     std::vector<std::string> forward_channels =
-      {"ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE", "ADD_PAGE"};
+        {"ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE", "ADD_PAGE"};
     for (auto &str : forward_channels) {
         RegisterCallback(str, [this, str](NetworkData &&d) {
             handle_forward_data(str, std::move(d));
@@ -127,9 +127,9 @@ Server::handle_client_join(NetworkData d) {
     for (auto &c : connected_clients) { RegisterPageChange("CLIENT_ADD", uid, c, d.Uid); }
     connected_clients.emplace_back(new_client);
     std::sort(
-      connected_clients.begin(),
-      connected_clients.end(),
-      [](const ClientInfo &c1, const ClientInfo &c2) { return c1.Uid < c2.Uid; });
+        connected_clients.begin(),
+        connected_clients.end(),
+        [](const ClientInfo &c1, const ClientInfo &c2) { return c1.Uid < c2.Uid; });
 }
 
 void
@@ -157,10 +157,10 @@ Server::handle_new_image(NetworkData &&q) {
     for (auto request : pending_image_requests) {
         if (q.Uid == request.first) {
             RegisterPageChange(
-              "NEW_IMAGE",
-              q.Uid,
-              ResourceManager::Images[request.first],
-              request.second);
+                "NEW_IMAGE",
+                q.Uid,
+                ResourceManager::Images[request.first],
+                request.second);
         }
     }
 }

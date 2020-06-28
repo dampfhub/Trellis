@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 class Page : public Util::Serializable<Page> {
-    public:
+public:
     enum class MouseHoverType { NONE, N, E, S, W, NE, SE, SW, NW, CENTER };
 
     enum class ArrowkeyType { RIGHT, LEFT, DOWN, UP };
@@ -25,9 +25,7 @@ class Page : public Util::Serializable<Page> {
 
     glm::mat4 View = glm::mat4(1.0f);
 
-    std::string               Name;
-    Transform                 board_transform;
-    std::unique_ptr<Renderer> board_renderer;
+    std::string Name;
 
     std::unique_ptr<Camera2D> Camera;
     std::unique_ptr<PageUI>   UserInterface;
@@ -37,11 +35,11 @@ class Page : public Util::Serializable<Page> {
     ~Page();
 
     Page(
-      std::string name,
-      glm::vec2   pos  = glm::vec2(0.0f, 0.0f),
-      glm::vec2   size = glm::vec2(100.0f, 100.0f),
-      // TODO: This should be 0 when we are sending pages correctly
-      uint64_t uid = 0);
+        std::string name,
+        glm::vec2   pos  = glm::vec2(0.0f, 0.0f),
+        glm::vec2   size = glm::vec2(100.0f, 100.0f),
+        // TODO: This should be 0 when we are sending pages correctly
+        uint64_t uid = 0);
 
     Page(const Page &) = delete;
     Page &operator=(const Page &) = delete;
@@ -98,8 +96,10 @@ class Page : public Util::Serializable<Page> {
 
     std::vector<std::byte> Serialize() const override;
 
-    private:
-    glm::ivec2 DragOrigin                                                     = glm::ivec2(0);
+private:
+    Transform                 board_transform;
+    std::unique_ptr<Renderer> board_renderer;
+    glm::ivec2                DragOrigin                                      = glm::ivec2(0);
     enum class MouseHoldType { NONE, PLACING, FOLLOWING, SCALING } mouse_hold = MouseHoldType::NONE;
     std::pair<int, int> ScaleEdges                                            = {0, 0};
     glm::vec2           initialSize;

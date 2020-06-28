@@ -4,13 +4,13 @@
 #include "game.h"
 
 class StateManager {
-    public:
+public:
     StateManager(StateManager const &) = delete; // Disallow copying
     void operator=(StateManager const &) = delete;
 
     static StateManager &GetInstance();
 
-    private:
+private:
     StateManager() = default;
 };
 

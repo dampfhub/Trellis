@@ -34,7 +34,7 @@ UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
 
     GLFW &glfw = GLFW::GetInstance();
     main_menu_open =
-      ImGui::Begin("Trellis", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        ImGui::Begin("Trellis", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     ImGui::SetWindowPos(ImVec2(0.0f, 0.0f));
     ImGui::SetWindowSize(ImVec2(150.0f, (float)glfw.GetScreenHeight()));
     ImGui::SetNextItemWidth(100.0f);
@@ -60,10 +60,10 @@ UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
         ImGui::Text("Page Name: ");
         ImGui::SameLine();
         if (ImGui::InputText(
-              "##edit",
-              PageNameBuf,
-              IM_ARRAYSIZE(PageNameBuf),
-              ImGuiInputTextFlags_EnterReturnsTrue)) {
+                "##edit",
+                PageNameBuf,
+                IM_ARRAYSIZE(PageNameBuf),
+                ImGuiInputTextFlags_EnterReturnsTrue)) {
             ImGui::CloseCurrentPopup();
             PageName = PageNameBuf;
             strcpy(PageNameBuf, "");
@@ -108,9 +108,9 @@ void
 UI::DrawPageSelect(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     if (!PageSelectOpen) { return; }
     ImGui::Begin(
-      "Page Select",
-      &PageSelectOpen,
-      ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+        "Page Select",
+        &PageSelectOpen,
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
     int i = 0;
     ImGui::Text("Switch Page");
     ImGui::SameLine();
@@ -136,9 +136,9 @@ UI::DrawPageSettings(Page::page_list_it_t &active_page) {
     if (!PageSettingsOpen) { return; }
     Page &pg = **active_page;
     ImGui::Begin(
-      "Page Settings",
-      &PageSettingsOpen,
-      ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+        "Page Settings",
+        &PageSettingsOpen,
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("Page Name: ");
     ImGui::InputText("##name", PageNameBuf, IM_ARRAYSIZE(PageNameBuf));
 
@@ -175,19 +175,19 @@ UI::DrawClientList() {
         if (main_menu_open) {
             if (cs.connected_clients.size() > 0) {
                 ImGui::SetNextWindowSizeConstraints(
-                  ImVec2(0, 50),
-                  ImVec2(FLT_MAX, 50)); // Horizontal only
+                    ImVec2(0, 50),
+                    ImVec2(FLT_MAX, 50)); // Horizontal only
                 ImGui::Begin(
-                  "Clients",
-                  nullptr,
-                  ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
-                    ImGuiWindowFlags_NoMove);
+                    "Clients",
+                    nullptr,
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
+                        ImGuiWindowFlags_NoMove);
                 ImGui::SetWindowPos(ImVec2(150.0f, (float)glfw.GetScreenHeight() - 50));
                 ImGui::SetWindowSize(ImVec2(100 * cs.connected_clients.size(), 50.0f));
                 ImGui::BeginColumns(
-                  "Columns",
-                  cs.connected_clients.size(),
-                  ImGuiColumnsFlags_NoResize);
+                    "Columns",
+                    cs.connected_clients.size(),
+                    ImGuiColumnsFlags_NoResize);
                 for (ClientInfo &inf : cs.connected_clients) {
                     ImGui::Text("%s", inf.Name.c_str());
                     ImGui::NextColumn();

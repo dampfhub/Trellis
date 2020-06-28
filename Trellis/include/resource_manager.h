@@ -12,7 +12,7 @@
 #include <vector>
 
 class ResourceManager {
-    public:
+public:
     ResourceManager(ResourceManager const &) = delete; // Disallow copying
     void operator=(ResourceManager const &) = delete;
 
@@ -27,10 +27,10 @@ class ResourceManager {
     // geometry) sprite_shader's source code. If gShaderFile is not nullptr, it also loads a
     // geometry sprite_shader
     static std::shared_ptr<Shader> LoadShader(
-      const char *vShaderFile,
-      const char *fShaderFile,
-      const char *gShaderFile,
-      std::string name);
+        const char *vShaderFile,
+        const char *fShaderFile,
+        const char *gShaderFile,
+        std::string name);
 
     // retrieves a stored sader
     static std::shared_ptr<Shader> GetShader(std::string name);
@@ -49,7 +49,7 @@ class ResourceManager {
     static void SetGlobalVector4f(const char *name, const glm::vec4 &value);
     static void SetGlobalMatrix4(const char *name, const glm::mat4 &value);
 
-    private:
+private:
     // private constructor, that is we do not want any actual resource manager objects. Its members
     // and functions should be publicly available (static).
     ResourceManager() {}
@@ -58,9 +58,9 @@ class ResourceManager {
 
     // loads and generates a sprite_shader from file
     static std::shared_ptr<Shader> loadShaderFromFile(
-      const char *vShaderFile,
-      const char *fShaderFile,
-      const char *gShaderFile = nullptr);
+        const char *vShaderFile,
+        const char *fShaderFile,
+        const char *gShaderFile = nullptr);
 
     // loads a single texture from file
     static Texture2D loadTextureFromFile(const char *file, bool alpha);

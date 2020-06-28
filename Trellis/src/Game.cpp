@@ -108,7 +108,7 @@ Game::Game() {
     init_objects();
 
     glfw.RegisterWindowSizeCallback(
-      [this](int width, int height) { this->window_size_callback(width, height); });
+        [this](int width, int height) { this->window_size_callback(width, height); });
     glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, [this](int, int, int, int) { this->esc_handler(); });
     glfw.RegisterKeyPress(GLFW_KEY_RIGHT, [this](int key, int, int, int) {
         this->arrow_press(key);
@@ -180,12 +180,12 @@ void
 Game::set_projection() {
     static GLFW &glfw       = GLFW::GetInstance();
     glm::mat4    projection = glm::ortho(
-      0.0f,
-      static_cast<float>(glfw.GetScreenWidth()),
-      static_cast<float>(glfw.GetScreenHeight()),
-      0.0f,
-      -1.0f,
-      1.0f);
+        0.0f,
+        static_cast<float>(glfw.GetScreenWidth()),
+        static_cast<float>(glfw.GetScreenHeight()),
+        0.0f,
+        -1.0f,
+        1.0f);
     ResourceManager::SetGlobalMatrix4("projection", projection);
 }
 
@@ -268,15 +268,15 @@ Game::ProcessUIEvents() {
     ActivePage = UserInterface.GetActivePage(Pages);
     if (UserInterface.FileDialog->HasSelected()) {
         std::string file_name =
-          Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
+            Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
         ResourceManager::LoadTexture(
-          UserInterface.FileDialog->GetSelected().string().c_str(),
-          Util::IsPng(file_name),
-          file_name);
+            UserInterface.FileDialog->GetSelected().string().c_str(),
+            Util::IsPng(file_name),
+            file_name);
         (**ActivePage)
-          .BeginPlacePiece(
-            Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
-            ResourceManager::GetTexture(file_name));
+            .BeginPlacePiece(
+                Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
+                ResourceManager::GetTexture(file_name));
         UserInterface.FileDialog->ClearSelected();
     }
     if (UserInterface.AddPage) {

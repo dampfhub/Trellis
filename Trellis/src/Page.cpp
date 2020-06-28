@@ -62,7 +62,7 @@ Page::Draw() {
     // Draw sprites back-to-front, so the "top" sprite is drawn above the others
     for (auto it = Pieces.rbegin(); it != Pieces.rend(); it++) {
         int border_pixel_width =
-          CurrentSelection != Pieces.end() && (*it) == (*CurrentSelection) ? BorderWidth : 0;
+            CurrentSelection != Pieces.end() && (*it) == (*CurrentSelection) ? BorderWidth : 0;
         (*it)->Draw(border_pixel_width);
     }
     // Draw user interface
@@ -83,10 +83,9 @@ Page::MouseHoverType
 Page::HoverType(glm::ivec2 mouse_pos, GameObject &object) {
     glm::ivec2 NW_corner_screen = WorldPosToScreenPos(object.transform.position);
     glm::ivec2 SE_corner_screen =
-      WorldPosToScreenPos(object.transform.position + object.transform.scale);
-    if (
-      mouse_pos.x < NW_corner_screen.x || mouse_pos.y < NW_corner_screen.y ||
-      mouse_pos.x > SE_corner_screen.x || mouse_pos.y > SE_corner_screen.y) {
+        WorldPosToScreenPos(object.transform.position + object.transform.scale);
+    if (mouse_pos.x < NW_corner_screen.x || mouse_pos.y < NW_corner_screen.y ||
+        mouse_pos.x > SE_corner_screen.x || mouse_pos.y > SE_corner_screen.y) {
         return MouseHoverType::NONE;
     }
     glm::ivec2 size_screen = SE_corner_screen - NW_corner_screen;
@@ -149,24 +148,20 @@ Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
                 mouse_hold = MouseHoldType::FOLLOWING;
             } else {
                 mouse_hold = MouseHoldType::SCALING;
-                if (
-                  hover == MouseHoverType::N || hover == MouseHoverType::NE ||
-                  hover == MouseHoverType::NW) {
+                if (hover == MouseHoverType::N || hover == MouseHoverType::NE ||
+                    hover == MouseHoverType::NW) {
                     ScaleEdges.second = -1;
                 }
-                if (
-                  hover == MouseHoverType::E || hover == MouseHoverType::NE ||
-                  hover == MouseHoverType::SE) {
+                if (hover == MouseHoverType::E || hover == MouseHoverType::NE ||
+                    hover == MouseHoverType::SE) {
                     ScaleEdges.first = 1;
                 }
-                if (
-                  hover == MouseHoverType::S || hover == MouseHoverType::SE ||
-                  hover == MouseHoverType::SW) {
+                if (hover == MouseHoverType::S || hover == MouseHoverType::SE ||
+                    hover == MouseHoverType::SW) {
                     ScaleEdges.second = 1;
                 }
-                if (
-                  hover == MouseHoverType::W || hover == MouseHoverType::SW ||
-                  hover == MouseHoverType::NW) {
+                if (hover == MouseHoverType::W || hover == MouseHoverType::SW ||
+                    hover == MouseHoverType::NW) {
                     ScaleEdges.first = -1;
                 }
             }
@@ -203,39 +198,39 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                 switch (ScaleEdges.first) {
                     case 1:
                         piece.transform.scale.x =
-                          fmax(initialSize.x + diff.x, TILE_DIMENSIONS / (float)inc);
+                            fmax(initialSize.x + diff.x, TILE_DIMENSIONS / (float)inc);
                         closest =
-                          floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
                         piece.transform.scale.x = closest * TILE_DIMENSIONS / (float)inc - 2;
                         break;
                     case -1:
                         piece.transform.scale.x = fmax(
-                          DragOrigin.x + initialSize.x - world_mouse.x,
-                          TILE_DIMENSIONS / (float)inc);
+                            DragOrigin.x + initialSize.x - world_mouse.x,
+                            TILE_DIMENSIONS / (float)inc);
                         closest =
-                          floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
                         piece.transform.scale.x = closest * TILE_DIMENSIONS / (float)inc - 2;
                         piece.transform.position.x =
-                          initialPos.x + initialSize.x - piece.transform.scale.x;
+                            initialPos.x + initialSize.x - piece.transform.scale.x;
                         break;
                 }
                 switch (ScaleEdges.second) {
                     case 1:
                         piece.transform.scale.y =
-                          fmax(initialSize.y + diff.y, TILE_DIMENSIONS / (float)inc);
+                            fmax(initialSize.y + diff.y, TILE_DIMENSIONS / (float)inc);
                         closest =
-                          floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
                         piece.transform.scale.y = closest * TILE_DIMENSIONS / (float)inc - 2;
                         break;
                     case -1:
                         piece.transform.scale.y = fmax(
-                          DragOrigin.y + initialSize.y - world_mouse.y,
-                          TILE_DIMENSIONS / (float)inc);
+                            DragOrigin.y + initialSize.y - world_mouse.y,
+                            TILE_DIMENSIONS / (float)inc);
                         closest =
-                          floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
                         piece.transform.scale.y = closest * TILE_DIMENSIONS / (float)inc - 2;
                         piece.transform.position.y =
-                          initialPos.y + initialSize.y - piece.transform.scale.y;
+                            initialPos.y + initialSize.y - piece.transform.scale.y;
                         break;
                 }
                 break;
@@ -248,15 +243,15 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
             static ClientServer &cs = ClientServer::GetInstance();
             if (piece.transform.position != prev_pos) {
                 cs.RegisterPageChange(
-                  "MOVE_PIECE",
-                  Uid,
-                  NetworkData(piece.transform.position, piece.Uid));
+                    "MOVE_PIECE",
+                    Uid,
+                    NetworkData(piece.transform.position, piece.Uid));
             }
             if (piece.transform.scale != prev_size) {
                 cs.RegisterPageChange(
-                  "RESIZE_PIECE",
-                  Uid,
-                  NetworkData(piece.transform.scale, piece.Uid));
+                    "RESIZE_PIECE",
+                    Uid,
+                    NetworkData(piece.transform.scale, piece.Uid));
             }
         }
     }
@@ -320,12 +315,12 @@ Page::HandleArrows(ArrowkeyType key) {
 void
 Page::SnapPieceToGrid(GameObject &piece, int increments) {
     float closest_x =
-      (float)floor(piece.transform.position.x / (TILE_DIMENSIONS / (float)increments) + 0.5);
+        (float)floor(piece.transform.position.x / (TILE_DIMENSIONS / (float)increments) + 0.5);
     float closest_y =
-      (float)floor(piece.transform.position.y / (TILE_DIMENSIONS / (float)increments) + 0.5);
+        (float)floor(piece.transform.position.y / (TILE_DIMENSIONS / (float)increments) + 0.5);
     piece.transform.position = glm::vec2(
-      closest_x * TILE_DIMENSIONS / (float)increments + 1,
-      closest_y * TILE_DIMENSIONS / (float)increments + 1);
+        closest_x * TILE_DIMENSIONS / (float)increments + 1,
+        closest_y * TILE_DIMENSIONS / (float)increments + 1);
 }
 
 glm::vec2
@@ -367,9 +362,9 @@ Page::Deselect() {
 void
 Page::DeletePiece(uint64_t uid) {
     auto piece_it =
-      std::find_if(Pieces.begin(), Pieces.end(), [uid](std::unique_ptr<GameObject> &g) {
-          return g->Uid == uid;
-      });
+        std::find_if(Pieces.begin(), Pieces.end(), [uid](std::unique_ptr<GameObject> &g) {
+            return g->Uid == uid;
+        });
     if (piece_it != Pieces.end()) { Pieces.erase(piece_it); }
     PiecesMap.erase(uid);
     CurrentSelection = Pieces.end();
@@ -381,9 +376,9 @@ Page::DeleteCurrentSelection() {
         if (mouse_hold != MouseHoldType::PLACING) {
             static ClientServer &cs = ClientServer::GetInstance();
             cs.RegisterPageChange(
-              "DELETE_PIECE",
-              Uid,
-              NetworkData(*CurrentSelection, (*CurrentSelection)->Uid));
+                "DELETE_PIECE",
+                Uid,
+                NetworkData(*CurrentSelection, (*CurrentSelection)->Uid));
             DeletePiece((*CurrentSelection)->Uid);
         } else {
             Deselect();
@@ -404,10 +399,10 @@ Page::Serialize() const {
 Page
 Page::deserialize_impl(const std::vector<std::byte> &vec) {
     using std::byte;
-    const byte *ptr = vec.data();
-    uint64_t    uid = Util::deserialize<uint64_t>(ptr);
-    Transform   t   = Util::deserialize<Transform>(ptr += sizeof(uid));
-    std::string name =
-      Util::deserialize<std::string>(std::vector(vec.begin() + sizeof(uid) + sizeof(t), vec.end()));
+    const byte *ptr  = vec.data();
+    uint64_t    uid  = Util::deserialize<uint64_t>(ptr);
+    Transform   t    = Util::deserialize<Transform>(ptr += sizeof(uid));
+    std::string name = Util::deserialize<std::string>(
+        std::vector(vec.begin() + sizeof(uid) + sizeof(t), vec.end()));
     return Page(name, t.position, t.scale, uid);
 }

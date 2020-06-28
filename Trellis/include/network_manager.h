@@ -21,7 +21,7 @@
 using asio::ip::tcp;
 
 class NetworkManager {
-    public:
+public:
     NetworkManager(NetworkManager const &) = delete; // Disallow copying
     void operator=(NetworkManager const &) = delete;
 
@@ -34,7 +34,7 @@ class NetworkManager {
     bool Active();
 
     class NetworkQueue {
-        public:
+    public:
         static std::shared_ptr<NetworkQueue> Subscribe(std::string cname);
 
         template<class T>
@@ -73,7 +73,7 @@ class NetworkManager {
             return q;
         }
 
-        private:
+    private:
         NetworkQueue();
 
         std::string                         channel_name;
@@ -84,7 +84,7 @@ class NetworkManager {
         std::vector<std::vector<std::byte>> byte_ars;
     };
 
-    private:
+private:
     asio::io_context context;
 
     NetworkManager() = default;
@@ -94,7 +94,7 @@ class NetworkManager {
     std::map<std::string, std::vector<std::weak_ptr<NetworkQueue>>> queues;
 
     class MessageHeader {
-        public:
+    public:
         static const size_t HeaderLength = 32;
 
         uint64_t    Uid;
@@ -113,7 +113,7 @@ class NetworkManager {
     };
 
     class Message {
-        public:
+    public:
         MessageHeader          Header;
         int                    Length;
         std::vector<std::byte> DataVec;
@@ -138,12 +138,12 @@ class NetworkManager {
 
         std::vector<std::byte> RawMsg();
 
-        private:
+    private:
         std::vector<std::byte> msg;
     };
 
     class network_object {
-        public:
+    public:
         using socket_ptr = std::shared_ptr<tcp::socket>;
 
         glm::vec2 move;
@@ -164,23 +164,23 @@ class NetworkManager {
         handle_write(const socket_ptr &sock, const asio::error_code &error, size_t bytes);
 
         void handle_read_header(
-          const socket_ptr &      sock,
-          Message &               buf,
-          const asio::error_code &error,
-          size_t                  bytes);
+            const socket_ptr &      sock,
+            Message &               buf,
+            const asio::error_code &error,
+            size_t                  bytes);
 
         void handle_read_body(
-          const socket_ptr &      sock,
-          Message &               buf,
-          const asio::error_code &error,
-          size_t                  bytes);
+            const socket_ptr &      sock,
+            Message &               buf,
+            const asio::error_code &error,
+            size_t                  bytes);
 
         virtual void
         handle_error(const socket_ptr &sock, Message &buf, const asio::error_code &error){};
 
         uint64_t uid;
 
-        protected:
+    protected:
         asio::io_context &  context;
         std::deque<Message> write_msgs;
         Message             read_msg;
@@ -189,14 +189,14 @@ class NetworkManager {
     };
 
     class server : public network_object {
-        public:
+    public:
         void handle_header_action(const socket_ptr &sock) override;
 
         void handle_read_header_connect(
-          const socket_ptr &      sock,
-          Message &               buf,
-          const asio::error_code &error,
-          size_t                  bytes);
+            const socket_ptr &      sock,
+            Message &               buf,
+            const asio::error_code &error,
+            size_t                  bytes);
 
         server(asio::io_context &con, int port_num);
 
@@ -210,7 +210,7 @@ class NetworkManager {
         void
         handle_error(const socket_ptr &sock, Message &buf, const asio::error_code &error) override;
 
-        private:
+    private:
         tcp::acceptor                  acceptor;
         std::map<uint64_t, socket_ptr> socks;
         asio::thread_pool              tp;
@@ -225,23 +225,23 @@ class NetworkManager {
     };
 
     class client : public network_object {
-        public:
+    public:
         std::string ClientName;
 
         void handle_header_action(const socket_ptr &sock) override;
 
         client(
-          std::string       client_name,
-          uint64_t          client_uid,
-          asio::io_context &con,
-          std::string       hostname,
-          int               port_num);
+            std::string       client_name,
+            uint64_t          client_uid,
+            asio::io_context &con,
+            std::string       hostname,
+            int               port_num);
 
         ~client();
 
         void Write(Message msg) override;
 
-        private:
+    private:
         socket_ptr                    server_sock;
         tcp::resolver                 resolver;
         std::shared_ptr<asio::thread> client_thread;

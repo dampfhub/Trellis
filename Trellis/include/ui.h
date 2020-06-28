@@ -12,7 +12,7 @@
 #include <vector>
 
 class UI {
-    public:
+public:
     ImGui::FileBrowser *FileDialog;
 
     // Flags
@@ -41,7 +41,7 @@ class UI {
     Page::page_list_it_t GetActivePage(Page::page_list_t &pages);
     void                 ClearFlags();
 
-    private:
+private:
     char PageNameBuf[128] = "";
 
     bool main_menu_open = true;

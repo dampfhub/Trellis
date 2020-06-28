@@ -7,7 +7,7 @@
 #include <utility>
 
 class Camera2D {
-    public:
+public:
     glm::vec2 Position   = glm::vec2(0.0f);
     float     ZoomFactor = 1.0f;
 

@@ -8,9 +8,10 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec2 screenRes;
+uniform ivec2 num_cells;
 
 void main() {
-    TexCoords = vertex.zw * 20;
+    TexCoords = vertex.zw * num_cells;
     mat4 mat = projection * view * model;
     gl_Position = mat * vec4(vertex.xy, 0.0, 1.0);
     screen_corners = vec4(screenRes.xy, screenRes.xy) * (vec4(

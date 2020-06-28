@@ -11,7 +11,7 @@
 #include <memory>
 
 class GameObject : public Util::Serializable<GameObject> {
-    public:
+public:
     Transform transform;
     glm::vec3 Color;
     uint64_t  Uid;
@@ -22,11 +22,11 @@ class GameObject : public Util::Serializable<GameObject> {
 
     GameObject();
     GameObject(
-      const Transform &transform,
-      Texture2D        sprite,
-      uint64_t         uid       = 0,
-      bool             clickable = true,
-      glm::vec3        color     = glm::vec3(1.0f));
+        const Transform &transform,
+        Texture2D        sprite,
+        uint64_t         uid       = 0,
+        bool             clickable = true,
+        glm::vec3        color     = glm::vec3(1.0f));
 
     GameObject(const GameObject &) = delete;
     GameObject &operator=(const GameObject &) = delete;
@@ -41,11 +41,11 @@ class GameObject : public Util::Serializable<GameObject> {
 
     std::vector<std::byte> Serialize() const override;
 
-    private:
+private:
     friend Serializable<GameObject>;
     static GameObject deserialize_impl(const std::vector<std::byte> &vec);
 
-    private:
+private:
 };
 
 void swap(GameObject &a, GameObject &b);

@@ -16,7 +16,7 @@ typedef void(mouseposfunc)(double x, double y);
 typedef void(windowsizefun)(int width, int height);
 
 class GLFW {
-    public:
+public:
     GLFW(GLFW const &) = delete; // Disallow copying
     void operator=(GLFW const &) = delete;
 
@@ -54,7 +54,7 @@ class GLFW {
 
     static int GetScreenHeight();
 
-    private:
+private:
     GLFW();
 
     ~GLFW();

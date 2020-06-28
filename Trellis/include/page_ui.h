@@ -7,7 +7,7 @@
 #include "imgui_internal.h"
 
 class PageUI {
-    public:
+public:
     bool ClickMenuActive = false;
     bool MoveToFront     = false;
     bool MoveToBack      = false;

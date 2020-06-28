@@ -3,9 +3,9 @@
 #include "sprite_renderer.h"
 
 SpriteRenderer::SpriteRenderer(
-  const Transform &transform,
-  const glm::mat4 &view,
-  const Texture2D &sprite)
+    const Transform &transform,
+    const glm::mat4 &view,
+    const Texture2D &sprite)
     : Renderer(ResourceManager::GetShader("sprite"), transform, view)
     , Sprite(sprite) {
     unsigned int VBO;
