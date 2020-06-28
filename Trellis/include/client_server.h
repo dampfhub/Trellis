@@ -4,15 +4,15 @@
 #include <memory>
 #include <vector>
 #include <queue>
-#include "util.h"
 #include "network_manager.h"
+#include "data.h"
 
 class ClientServer {
 public:
     enum NetworkObject {
         SERVER, CLIENT
     };
-    using queue_handler_f = std::function<void(Util::NetworkData &&)>;
+    using queue_handler_f = std::function<void(Data::NetworkData &&)>;
 
     virtual ~ClientServer() = default;
 
@@ -30,7 +30,7 @@ public:
         if (pub_queues.find(name) == pub_queues.end()) {
             pub_queues[name] = NetworkManager::NetworkQueue::Subscribe(name);
         }
-        Util::NetworkData nd(data, uid, this->uid);
+        Data::NetworkData nd(data, uid, this->uid);
         changes.push(std::make_pair(name, std::make_pair(nd, target_uid)));
     }
 
@@ -38,9 +38,9 @@ public:
 
     void RegisterCallback(std::string channel_name, queue_handler_f cb);
 
-    virtual void handle_image_request(Util::NetworkData &&q) = 0;
+    virtual void handle_image_request(Data::NetworkData &&q) = 0;
 
-    std::vector<Util::ClientInfo> connected_clients;
+    std::vector<Data::ClientInfo> connected_clients;
 
     uint64_t uid;
 
@@ -57,7 +57,7 @@ protected:
         };
 
         void operator()() {
-            auto q = queue->Query<Util::NetworkData>();
+            auto q = queue->Query<Data::NetworkData>();
             while (!q.empty()) {
                 auto nd = q.front();
                 q.pop();
@@ -71,7 +71,7 @@ protected:
     std::map<std::string, std::vector<NetworkQueueCallback>> sub_queues;
     std::map<std::string, std::shared_ptr<NetworkManager::NetworkQueue>>
             pub_queues;
-    std::queue<std::pair<std::string, std::pair<Util::NetworkData, uint64_t>>> changes;
+    std::queue<std::pair<std::string, std::pair<Data::NetworkData, uint64_t>>> changes;
     static bool started;
 };
 
@@ -91,11 +91,11 @@ private:
 
     Client() = default;
 
-    void handle_image_request(Util::NetworkData &&q) override;
+    void handle_image_request(Data::NetworkData &&q) override;
 
-    void handle_client_add(Util::NetworkData &&q);
+    void handle_client_add(Data::NetworkData &&q);
 
-    void handle_client_delete(Util::NetworkData &&q);
+    void handle_client_delete(Data::NetworkData &&q);
 
     std::string client_name;
 };
@@ -117,15 +117,15 @@ private:
 
     Server() = default;
 
-    void handle_client_join(Util::NetworkData d);
+    void handle_client_join(Data::NetworkData d);
 
-    void handle_client_disconnect(Util::NetworkData &&q);
+    void handle_client_disconnect(Data::NetworkData &&q);
 
-    void handle_forward_data(std::string channel, Util::NetworkData d);
+    void handle_forward_data(std::string channel, Data::NetworkData d);
 
-    void handle_image_request(Util::NetworkData &&q) override;
+    void handle_image_request(Data::NetworkData &&q) override;
 
-    void handle_new_image(Util::NetworkData &&q);
+    void handle_new_image(Data::NetworkData &&q);
 
     std::vector<std::pair<uint64_t, uint64_t>> pending_image_requests;
 

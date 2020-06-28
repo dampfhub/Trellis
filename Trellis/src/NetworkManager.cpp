@@ -1,11 +1,13 @@
-#include "network_manager.h"
-#include "util.h"
-
-#include <iomanip>
 #include <sstream>
 #include <utility>
 
+#include "network_manager.h"
+#include "data.h"
+#include "util.h"
+
 using asio::ip::tcp;
+
+using Data::NetworkData;
 
 NetworkManager
         &NetworkManager::NetworkQueue::nm = NetworkManager::GetInstance();
@@ -256,7 +258,7 @@ void NetworkManager::server::handle_header_action(const socket_ptr &sock) {
         uint64_t uid = read_msg.Header.Uid;
         socks[uid] = sock;
         read_msgs[sock] = Message();
-        Util::NetworkData con(read_msg.Msg(), uid);
+        NetworkData con(read_msg.Msg(), uid);
         // Push this into the CLIENT_JOIN channel so new clients can be tracked
         for (auto &ptr : nm.queues["JOIN"]) {
             ptr.lock()->Push(Util::serialize_vec(con));
@@ -279,8 +281,7 @@ void NetworkManager::server::handle_write(
             Message &m = write_msgs.front();
             asio::async_write(
                     *socks[m.Header.Uid], asio::buffer(
-                            m.Data(),
-                            m.Length), [this, sock](
+                            m.Data(), m.Length), [this, sock](
                             const asio::error_code &error,
                             size_t bytes_transferred) {
                         handle_write(
@@ -300,10 +301,8 @@ void NetworkManager::server::do_write(
     if (!write_in_progress) {
         Message &m = write_msgs.front();
         asio::async_write(
-                *socks[m.Header.Uid],
-                asio::buffer(
-                        m.Data(), m.Length),
-                [this, sock](
+                *socks[m.Header.Uid], asio::buffer(
+                        m.Data(), m.Length), [this, sock](
                         const asio::error_code &error,
                         size_t bytes_transferred) {
                     handle_write(
@@ -323,7 +322,7 @@ void NetworkManager::server::handle_error(
             // Find the relevant client and delete it
             if (kv.second == sock) {
                 // Send the client uid that has disconnected so it can be untracked
-                Util::NetworkData con("", kv.first);
+                NetworkData con("", kv.first);
                 // Push this into the CLIENT_JOIN channel so new clients can be tracked
                 for (auto &ptr : nm.queues["DISCONNECT"]) {
                     ptr.lock()->Push(Util::serialize_vec(con));

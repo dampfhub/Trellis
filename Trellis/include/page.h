@@ -10,8 +10,9 @@
 #include "camera.h"
 #include "game_object.h"
 #include "page_ui.h"
+#include "util.h"
 
-class Page {
+class Page : public Util::Serializable<Page> {
 public:
     enum class MouseHoverType {
         NONE, N, E, S, W, NE, SE, SW, NW, CENTER
@@ -27,7 +28,6 @@ public:
     using page_list_it_t = std::list<std::unique_ptr<Page>>::iterator;
 
     glm::mat4 View = glm::mat4(1.0f);
-
 
     std::string Name;
     Transform board_transform;
@@ -45,7 +45,13 @@ public:
             glm::vec2 pos = glm::vec2(0.0f, 0.0f),
             glm::vec2 size = glm::vec2(100.0f, 100.0f),
             // TODO: This should be 0 when we are sending pages correctly
-            uint64_t uid = 1);
+            uint64_t uid = 0);
+
+    Page(const Page &) = delete;
+    Page &operator=(const Page &) = delete;
+
+    Page(Page &&other) noexcept;
+    Page &operator=(Page &&other) noexcept = delete;
 
     // Mouse event handlers
     void HandleLeftClickPress(glm::ivec2 mouse_pos);
@@ -92,14 +98,16 @@ public:
 
     std::list<std::unique_ptr<GameObject>> Pieces;
     std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
-    std::list<std::unique_ptr<GameObject>>::iterator CurrentSelection = Pieces.end();
+    std::list<std::unique_ptr<GameObject>>::iterator
+            CurrentSelection = Pieces.end();
 
+    std::vector<std::byte> Serialize() const override;
 private:
     glm::ivec2 DragOrigin = glm::ivec2(0);
     enum class MouseHoldType {
         NONE, PLACING, FOLLOWING, SCALING
     } mouse_hold = MouseHoldType::NONE;
-    std::pair<int, int> ScaleEdges = {0, 0};
+    std::pair<int, int> ScaleEdges = { 0, 0 };
     glm::vec2 initialSize;
     glm::vec2 initialPos;
     int BorderWidth = 5;
@@ -113,6 +121,9 @@ private:
     void MoveCurrentSelection(glm::vec2 mouse_pos);
 
     void HandleUIEvents();
+
+    friend Serializable<Page>;
+    static Page deserialize_impl(const std::vector<std::byte> &vec);
 };
 
 #endif

@@ -9,8 +9,11 @@
 #include "util.h"
 #include "GUI.h"
 #include "client_server.h"
+#include "data.h"
 
 using std::unique_ptr, std::make_unique, std::move;
+
+using Data::ImageData, Data::NetworkData;
 
 Game &Game::GetInstance() {
     static Game instance; // Guaranteed to be destroyed.
@@ -218,6 +221,9 @@ void Game::set_projection() {
 
 void Game::UpdateMouse() {
     static GUI &gui = GUI::GetInstance();
+    if (ActivePage == Pages.end()) {
+        return;
+    }
     Page &pg = **ActivePage;
     switch (LeftClick) {
         case PRESS:
@@ -284,25 +290,23 @@ void Game::UpdateMouse() {
     }
 }
 
-bool registered = false;
-
 void Game::Update(float dt) {
     ProcessUIEvents();
-    Page &pg = **ActivePage;
-    pg.Update(MousePos);
+    if (ActivePage != Pages.end()) {
+        Page &pg = **ActivePage;
+        pg.Update(MousePos);
+    }
     UpdateMouse();
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.Update();
-        if (!registered) {
-            register_network_callbacks();
-            registered = true;
-        }
     }
 }
 
 void Game::Render() {
-    (**ActivePage).Draw();
+    if (ActivePage != Pages.end()) {
+        (**ActivePage).Draw();
+    }
     UserInterface.Draw(Pages, ActivePage);
 }
 
@@ -323,7 +327,7 @@ void Game::ProcessUIEvents() {
     }
     if (UserInterface.AddPage) {
         MakePage(UserInterface.PageName);
-        UserInterface.ActivePage = Pages.size() - 1;
+        //UserInterface.ActivePage = Pages.size() - 1;
     }
     UserInterface.ClearFlags();
 }
@@ -336,6 +340,10 @@ void Game::AddPage(std::unique_ptr<Page> &&pg) {
 void Game::MakePage(std::string name) {
     auto pg = std::make_unique<Page>(
             name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
+    if (ClientServer::Started()) {
+        static ClientServer &cs = ClientServer::GetInstance();
+        cs.RegisterPageChange("ADD_PAGE", cs.uid, pg->Serialize());
+    }
     AddPage(std::move(pg));
 }
 
@@ -346,12 +354,15 @@ void Game::start_server() {
 }
 
 void Game::start_client() {
+    Pages.clear();
+    PagesMap.clear();
+    ActivePage = Pages.end();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
     cs.Start(5005, "Test Client", "localhost");
     register_network_callbacks();
 }
 
-void Game::handle_page_add_piece(Util::NetworkData &&q) {
+void Game::handle_page_add_piece(NetworkData &&q) {
     static ClientServer &cs = ClientServer::GetInstance();
     auto g = std::make_unique<GameObject>(q.Parse<GameObject>());
     if (ResourceManager::Images.find(g->Sprite.ImageUID) ==
@@ -373,8 +384,8 @@ void Game::handle_page_add_piece(Util::NetworkData &&q) {
     }
 }
 
-void Game::handle_page_move_piece(Util::NetworkData &&q) {
-    auto piece_data = q.Parse<Util::NetworkData>();
+void Game::handle_page_move_piece(NetworkData &&q) {
+    auto piece_data = q.Parse<NetworkData>();
     // Find the relevant page
     auto page_it = PagesMap.find(q.Uid);
     if (page_it != PagesMap.end()) {
@@ -388,8 +399,8 @@ void Game::handle_page_move_piece(Util::NetworkData &&q) {
     }
 }
 
-void Game::handle_page_resize_piece(Util::NetworkData &&q) {
-    auto piece_data = q.Parse<Util::NetworkData>();
+void Game::handle_page_resize_piece(NetworkData &&q) {
+    auto piece_data = q.Parse<NetworkData>();
     // Find the relevant page
     auto page_it = PagesMap.find(q.Uid);
     if (page_it != PagesMap.end()) {
@@ -403,8 +414,8 @@ void Game::handle_page_resize_piece(Util::NetworkData &&q) {
     }
 }
 
-void Game::handle_new_image(Util::NetworkData &&q) {
-    ResourceManager::Images[q.Uid] = q.Parse<Util::ImageData>();
+void Game::handle_new_image(NetworkData &&q) {
+    ResourceManager::Images[q.Uid] = q.Parse<ImageData>();
     // Check which gameobjects need this texture and apply it.
     for (auto &pg : Pages) {
         for (auto &go : pg->Pieces) {
@@ -415,15 +426,13 @@ void Game::handle_new_image(Util::NetworkData &&q) {
     }
 }
 
-void Game::handle_client_join(Util::NetworkData &&q) {
+void Game::handle_client_join(NetworkData &&q) {
     static ClientServer &cs = ClientServer::GetInstance();
-    for (auto &pg : Pages) {
-        pg->SendAllPieces(q.Uid);
-    }
+    SendAllPages(q.Uid);
 }
 
-void Game::handle_page_delete_piece(Util::NetworkData &&q) {
-    auto piece_data = q.Parse<Util::NetworkData>();
+void Game::handle_page_delete_piece(NetworkData &&q) {
+    auto piece_data = q.Parse<NetworkData>();
     // Find the relevant page
     auto page_it = PagesMap.find(q.Uid);
     if (page_it != PagesMap.end()) {
@@ -436,31 +445,53 @@ void Game::handle_page_delete_piece(Util::NetworkData &&q) {
     }
 }
 
+void Game::handle_add_page(NetworkData &&q) {
+    auto pg = Page::Deserialize(q.Data);
+    auto page_it = PagesMap.find(q.Uid);
+    if (page_it == PagesMap.end()) {
+        AddPage(std::make_unique<Page>(std::move(pg)));
+    }
+    std::cout << "Got add page" << std::endl;
+}
+
 void Game::register_network_callbacks() {
     ClientServer &cs = ClientServer::GetInstance();
     cs.RegisterCallback(
-            "MOVE_PIECE", [this](Util::NetworkData &&d) {
+            "MOVE_PIECE", [this](NetworkData &&d) {
                 handle_page_move_piece(std::move(d));
             });
     cs.RegisterCallback(
-            "ADD_PIECE", [this](Util::NetworkData &&d) {
+            "ADD_PIECE", [this](NetworkData &&d) {
                 handle_page_add_piece(std::move(d));
             });
     cs.RegisterCallback(
-            "DELETE_PIECE", [this](Util::NetworkData &&d) {
+            "DELETE_PIECE", [this](NetworkData &&d) {
                 handle_page_delete_piece(std::move(d));
             });
     cs.RegisterCallback(
-            "RESIZE_PIECE", [this](Util::NetworkData &&d) {
+            "RESIZE_PIECE", [this](NetworkData &&d) {
                 handle_page_resize_piece(std::move(d));
             });
     cs.RegisterCallback(
-            "NEW_IMAGE", [this](Util::NetworkData &&d) {
+            "NEW_IMAGE", [this](NetworkData &&d) {
                 handle_new_image(std::move(d));
             });
     cs.RegisterCallback(
-            "JOIN", [this](Util::NetworkData &&d) {
+            "JOIN", [this](NetworkData &&d) {
                 handle_client_join(std::move(d));
+            });
+    cs.RegisterCallback(
+            "ADD_PAGE", [this](NetworkData &&d) {
+                handle_add_page(std::move(d));
             });
 }
 
+void Game::SendAllPages(uint64_t client_uid) {
+    if (ClientServer::Started()) {
+        for (auto &pg : Pages) {
+            ClientServer &cs = ClientServer::GetInstance();
+            cs.RegisterPageChange("ADD_PAGE", pg->Uid, Util::serialize_vec(*pg), client_uid);
+            pg->SendAllPieces(client_uid);
+        }
+    }
+}
