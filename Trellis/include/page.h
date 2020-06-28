@@ -76,7 +76,7 @@ public:
 
     void Update(glm::ivec2 mouse_pos);
 
-    void UpdatePage(const Page &other);
+    void CopySettingsFromPage(const Page &other);
 
     void Draw();
 
@@ -123,7 +123,6 @@ private:
 
     friend Serializable<Page>;
     static Page deserialize_impl(const std::vector<std::byte> &vec);
-    void        swap(Page &other);
 };
 
 #endif

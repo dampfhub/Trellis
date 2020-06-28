@@ -172,7 +172,7 @@ Game::init_shaders() {
 
 void
 Game::init_objects() {
-    MakePage("Default");
+    SendNewPage("Default");
     ActivePage = Pages.begin();
 }
 
@@ -280,12 +280,10 @@ Game::ProcessUIEvents() {
         UserInterface.FileDialog->ClearSelected();
     }
     if (UserInterface.AddPage) {
-        MakePage(UserInterface.PageName);
+        SendNewPage(UserInterface.PageName);
         // UserInterface.ActivePage = Pages.size() - 1;
     }
-    if (UserInterface.SettingsPage) {
-        UpdatePage();
-    }
+    if (UserInterface.SettingsPage) { SendUpdatedPage(); }
     UserInterface.ClearFlags();
 }
 
@@ -296,7 +294,7 @@ Game::AddPage(std::unique_ptr<Page> &&pg) {
 }
 
 void
-Game::MakePage(std::string name) {
+Game::SendNewPage(std::string name) {
     auto pg = std::make_unique<Page>(name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
@@ -306,7 +304,7 @@ Game::MakePage(std::string name) {
 }
 
 void
-Game::UpdatePage() {
+Game::SendUpdatedPage() {
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.RegisterPageChange("ADD_PAGE", (*ActivePage)->Uid, (*ActivePage)->Serialize());
@@ -419,7 +417,7 @@ Game::handle_add_page(NetworkData &&q) {
     if (page_it == PagesMap.end()) {
         AddPage(std::make_unique<Page>(std::move(pg)));
     } else {
-        page_it->second.get().UpdatePage(pg);
+        page_it->second.get().CopySettingsFromPage(pg);
     }
 }
 

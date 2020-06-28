@@ -35,29 +35,6 @@ Page::Page(Page &&other) noexcept
     , board_renderer(this->board_transform, this->View, this->cell_dims) {}
 
 void
-Page::swap(Page &other) {
-    using std::swap;
-    swap(View, other.View);
-    swap(Name, other.Name);
-    swap(Camera, other.Camera);
-    swap(UserInterface, other.UserInterface);
-    swap(Uid, other.Uid);
-    swap(Pieces, other.Pieces);
-    swap(PiecesMap, other.PiecesMap);
-    swap(CurrentSelection, other.CurrentSelection);
-    swap(board_transform, other.board_transform);
-    swap(cell_dims, other.cell_dims);
-    swap(DragOrigin, other.DragOrigin);
-    swap(mouse_hold, other.mouse_hold);
-    swap(ScaleEdges, other.ScaleEdges);
-    swap(initialSize, other.initialSize);
-    swap(initialPos, other.initialPos);
-    swap(BorderWidth, other.BorderWidth);
-    board_renderer.setTransform(board_transform);
-    board_renderer.setView(View);
-}
-
-void
 Page::AddPiece(unique_ptr<GameObject> &&piece) {
     GameObject &g   = *piece;
     piece->renderer = make_unique<SpriteRenderer>(piece->transform, this->View, g.Sprite);
@@ -444,7 +421,7 @@ Page::setCellDims(glm::ivec2 cellDims) {
     board_transform.scale = glm::vec2(cell_dims) * TILE_DIMENSIONS;
 }
 void
-Page::UpdatePage(const Page &other) {
+Page::CopySettingsFromPage(const Page &other) {
     board_transform = other.board_transform;
     cell_dims = other.cell_dims;
     Name = other.Name;

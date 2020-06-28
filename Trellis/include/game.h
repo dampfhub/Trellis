@@ -83,15 +83,13 @@ private:
 
     void handle_add_page(Data::NetworkData &&q);
 
-    void handle_change_page(Data::NetworkData &&q);
-
     Page::MouseHoverType current_hover_type = Page::MouseHoverType::NONE;
 
     void AddPage(std::unique_ptr<Page> &&pg);
 
-    void MakePage(std::string name);
+    void SendNewPage(std::string name);
 
-    void UpdatePage();
+    void SendUpdatedPage();
 
     void SendAllPages(uint64_t client_uid);
 
