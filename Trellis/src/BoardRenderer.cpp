@@ -1,43 +1,20 @@
 #include "board_renderer.h"
-#include "resource_manager.h"
 #include "glfw_handler.h"
+#include "resource_manager.h"
 
 BoardRenderer::BoardRenderer(
-        const Transform &transform,
-        const glm::mat4 &view,
-        float line_width,
-        glm::vec3 color) : Renderer(
-        ResourceManager::GetShader("board"), transform, view),
-        LineWidth(line_width),
-        Color(color) {
+  const Transform &transform,
+  const glm::mat4 &view,
+  float            line_width,
+  glm::vec3        color)
+    : Renderer(ResourceManager::GetShader("board"), transform, view)
+    , LineWidth(line_width)
+    , Color(color) {
     unsigned int VBO;
-    float vertices[] = {
-            // pos      // tex
-            0.0f,
-            1.0f,
-            0.0f,
-            1.0f,
-            1.0f,
-            0.0f,
-            1.0f,
-            0.0f,
-            0.0f,
-            0.0f,
-            0.0f,
-            0.0f,
+    float        vertices[] = {// pos      // tex
+                        0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 
-            0.0f,
-            1.0f,
-            0.0f,
-            1.0f,
-            1.0f,
-            1.0f,
-            1.0f,
-            1.0f,
-            1.0f,
-            0.0f,
-            1.0f,
-            0.0f };
+                        0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f};
     glGenVertexArrays(1, &quad_VAO);
     glGenBuffers(1, &VBO);
 
@@ -46,20 +23,18 @@ BoardRenderer::BoardRenderer(
 
     glBindVertexArray(quad_VAO);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(
-            0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
-void BoardRenderer::Draw() {
+void
+BoardRenderer::Draw() {
     shader->Use();
     glm::mat4 model = Model();
     shader->SetMatrix4("view", view);
     shader->SetMatrix4("model", model);
-    shader->SetVector2f(
-            "screenRes",
-            glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
+    shader->SetVector2f("screenRes", glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
     shader->SetFloat("line_width", LineWidth);
     shader->SetVector3f("bg_color", Color);
 

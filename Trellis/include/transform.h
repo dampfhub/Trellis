@@ -4,16 +4,13 @@
 #include <glm/glm.hpp>
 
 class Transform {
-public:
+    public:
     glm::vec2 position;
     glm::vec2 scale;
-    float rotation;
+    float     rotation;
 
     Transform();
-    Transform(
-            const glm::vec2 &position,
-            const glm::vec2 &scale,
-            float rotation);
+    Transform(const glm::vec2 &position, const glm::vec2 &scale, float rotation);
 };
 
-#endif //TRANSFORM_H
+#endif // TRANSFORM_H

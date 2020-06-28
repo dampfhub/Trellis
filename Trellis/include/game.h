@@ -1,27 +1,25 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <glm/glm.hpp>
-#include <vector>
-#include <unordered_map>
-#include <list>
-#include <functional>
-
-#include "page.h"
 #include "client_server.h"
-#include "ui.h"
 #include "data.h"
+#include "page.h"
+#include "ui.h"
+
+#include <functional>
+#include <glm/glm.hpp>
+#include <list>
+#include <unordered_map>
+#include <vector>
 
 // Represents the current state of the game
-enum GameState {
-    GAME_ACTIVE, GAME_MENU
-};
+enum GameState { GAME_ACTIVE, GAME_MENU };
 
 // Game holds all game-related state and functionality.
 // Combines all game-related data into a single class for
 // easy access to each of the components and manageability.
 class Game {
-public:
+    public:
     Game(Game const &) = delete; // Disallow copying
     void operator=(Game const &) = delete;
 
@@ -29,14 +27,12 @@ public:
 
     // game state
     GameState State;
-    enum {
-        NONE, PRESS, HOLD, RELEASE
-    } LeftClick, RightClick, MiddleClick;
+    enum { NONE, PRESS, HOLD, RELEASE } LeftClick, RightClick, MiddleClick;
     glm::ivec2 MousePos;
-    int ScrollDirection;
+    int        ScrollDirection;
 
-    Page::page_list_t Pages;
-    Page::page_list_it_t ActivePage = Pages.end();
+    Page::page_list_t                                          Pages;
+    Page::page_list_it_t                                       ActivePage = Pages.end();
     std::unordered_map<uint64_t, std::reference_wrapper<Page>> PagesMap;
 
     bool snapping = true;
@@ -49,7 +45,7 @@ public:
 
     void Render();
 
-private:
+    private:
     UI UserInterface;
 
     Game();

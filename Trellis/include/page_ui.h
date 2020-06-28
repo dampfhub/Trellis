@@ -2,24 +2,23 @@
 #define PAGE_UI_H
 
 #include "imgui.h"
-#include "imgui_internal.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_internal.h"
 
 class PageUI {
-public:
+    public:
+    bool ClickMenuActive = false;
+    bool MoveToFront     = false;
+    bool MoveToBack      = false;
 
-	bool ClickMenuActive = false;
-	bool MoveToFront = false;
-	bool MoveToBack = false;
+    int ActivePage     = 0;
+    int PlayerPageView = 0;
 
-	int ActivePage = 0;
-	int PlayerPageView = 0;
-
-	~PageUI();
-	PageUI();
-	void DrawPieceClickMenu();
-	void ClearFlags();
+    ~PageUI();
+    PageUI();
+    void DrawPieceClickMenu();
+    void ClearFlags();
 };
 
 #endif

@@ -1,12 +1,13 @@
+#include "GUI.h"
 #include "game.h"
 #include "glfw_handler.h"
 #include "resource_manager.h"
 #include "stb_image.h"
-#include "GUI.h"
 
 #include <iostream>
 
-int main() {
+int
+main() {
     GLFW &glfw = GLFW::GetInstance();
 
     // glad: load all OpenGL function pointersmode->height
@@ -16,16 +17,15 @@ int main() {
         return -1;
     }
 
-    GUI &gui = GUI::GetInstance();
+    GUI & gui = GUI::GetInstance();
     Game &Dnd = Game::GetInstance();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Set window icon
-    int width, height;
-    unsigned char
-            *icon = stbi_load("textures/orcling.png", &width, &height, 0, 4);
+    int            width, height;
+    unsigned char *icon = stbi_load("textures/orcling.png", &width, &height, 0, 4);
     glfw.SetWindowIcon(icon, width, height);
     stbi_image_free(icon);
 
@@ -43,8 +43,8 @@ int main() {
         // calculate delta time
         // --------------------
         auto currentFrame = (float)glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        deltaTime         = currentFrame - lastFrame;
+        lastFrame         = currentFrame;
         glfwPollEvents();
 
         // Start the Dear ImGui frame

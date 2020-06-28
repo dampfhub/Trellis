@@ -1,14 +1,14 @@
-#include <memory>
-#include <utility>
 #include "page_ui.h"
 
-PageUI::~PageUI() {
-}
+#include <memory>
+#include <utility>
 
-PageUI::PageUI() {
-}
+PageUI::~PageUI() {}
 
-void PageUI::DrawPieceClickMenu() {
+PageUI::PageUI() {}
+
+void
+PageUI::DrawPieceClickMenu() {
     if (ClickMenuActive) {
         ImGui::OpenPopup("right_click_menu");
         ClickMenuActive = false;
@@ -17,12 +17,13 @@ void PageUI::DrawPieceClickMenu() {
         ImGui::Text("Piece Options");
         ImGui::Separator();
         MoveToFront = ImGui::Selectable("Move To Front");
-        MoveToBack = ImGui::Selectable("Move To Back");
+        MoveToBack  = ImGui::Selectable("Move To Back");
         ImGui::EndPopup();
     }
 }
 
-void PageUI::ClearFlags() {
-    MoveToBack = false;
+void
+PageUI::ClearFlags() {
+    MoveToBack  = false;
     MoveToFront = false;
 }
