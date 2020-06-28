@@ -283,6 +283,9 @@ Game::ProcessUIEvents() {
         MakePage(UserInterface.PageName);
         // UserInterface.ActivePage = Pages.size() - 1;
     }
+    if (UserInterface.SettingsPage) {
+        UpdatePage();
+    }
     UserInterface.ClearFlags();
 }
 
@@ -297,9 +300,17 @@ Game::MakePage(std::string name) {
     auto pg = std::make_unique<Page>(name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
-        cs.RegisterPageChange("ADD_PAGE", cs.uid, pg->Serialize());
+        cs.RegisterPageChange("ADD_PAGE", pg->Uid, pg->Serialize());
     }
     AddPage(std::move(pg));
+}
+
+void
+Game::UpdatePage() {
+    if (ClientServer::Started()) {
+        static ClientServer &cs = ClientServer::GetInstance();
+        cs.RegisterPageChange("ADD_PAGE", (*ActivePage)->Uid, (*ActivePage)->Serialize());
+    }
 }
 
 void
@@ -405,8 +416,11 @@ void
 Game::handle_add_page(NetworkData &&q) {
     auto pg      = Page::Deserialize(q.Data);
     auto page_it = PagesMap.find(q.Uid);
-    if (page_it == PagesMap.end()) { AddPage(std::make_unique<Page>(std::move(pg))); }
-    std::cout << "Got add page" << std::endl;
+    if (page_it == PagesMap.end()) {
+        AddPage(std::make_unique<Page>(std::move(pg)));
+    } else {
+        page_it->second.get().UpdatePage(pg);
+    }
 }
 
 void

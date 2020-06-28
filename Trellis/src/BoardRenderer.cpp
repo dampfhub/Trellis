@@ -5,9 +5,9 @@
 BoardRenderer::BoardRenderer(
     const Transform &transform,
     const glm::mat4 &view,
+    glm::ivec2 &     cell_dims,
     float            line_width,
-    glm::vec3        color,
-    glm::ivec2       cell_dims)
+    glm::vec3        color)
     : Renderer(ResourceManager::GetShader("board"), transform, view)
     , LineWidth(line_width)
     , Color(color)

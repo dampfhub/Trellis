@@ -36,7 +36,7 @@ SpriteRenderer::Draw() {
     shader->SetVector3f("spriteColor", glm::vec3(1));
 
     glActiveTexture(GL_TEXTURE0);
-    Sprite.Bind();
+    Sprite.get().Bind();
 
     glBindVertexArray(quad_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -45,4 +45,8 @@ SpriteRenderer::Draw() {
 
 SpriteRenderer::~SpriteRenderer() {
     glDeleteVertexArrays(1, &quad_VAO);
+}
+void
+SpriteRenderer::setSprite(const Texture2D &sprite) {
+    Sprite = sprite;
 }

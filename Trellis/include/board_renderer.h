@@ -10,14 +10,13 @@ private:
     glm::vec3    Color;
 
 public:
-    glm::ivec2 CellDims;
-
+    glm::ivec2 &CellDims;
     BoardRenderer(
         const Transform &transform,
         const glm::mat4 &view,
+        glm::ivec2 &     cell_dims,
         float            line_width = 0.04,
-        glm::vec3        color      = glm::vec3(1),
-        glm::ivec2       cell_dims  = glm::ivec2(20, 20));
+        glm::vec3        color      = glm::vec3(1));
 
     ~BoardRenderer() override;
 

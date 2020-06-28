@@ -5,6 +5,7 @@
 #include "game_object.h"
 #include "page_ui.h"
 #include "util.h"
+#include "board_renderer.h"
 
 #include <functional>
 #include <list>
@@ -14,19 +15,16 @@
 
 class Page : public Util::Serializable<Page> {
 public:
-    enum class MouseHoverType { NONE, N, E, S, W, NE, SE, SW, NW, CENTER };
+    using page_list_t    = std::list<std::unique_ptr<Page>>;
+    using page_list_it_t = std::list<std::unique_ptr<Page>>::iterator;
 
+    enum class MouseHoverType { NONE, N, E, S, W, NE, SE, SW, NW, CENTER };
     enum class ArrowkeyType { RIGHT, LEFT, DOWN, UP };
 
     static constexpr float TILE_DIMENSIONS = 100.0f;
 
-    using page_list_t    = std::list<std::unique_ptr<Page>>;
-    using page_list_it_t = std::list<std::unique_ptr<Page>>::iterator;
-
-    glm::mat4 View = glm::mat4(1.0f);
-
-    std::string Name;
-
+    glm::mat4                 View = glm::mat4(1.0f);
+    std::string               Name;
     std::unique_ptr<Camera2D> Camera;
     std::unique_ptr<PageUI>   UserInterface;
 
@@ -36,8 +34,9 @@ public:
 
     Page(
         std::string name,
-        glm::vec2   pos  = glm::vec2(0.0f, 0.0f),
-        glm::vec2   size = glm::vec2(100.0f, 100.0f),
+        glm::vec2   pos       = glm::vec2(0.0f, 0.0f),
+        glm::vec2   size      = glm::vec2(100.0f, 100.0f),
+        glm::ivec2  cell_dims = glm::ivec2(20, 20),
         // TODO: This should be 0 when we are sending pages correctly
         uint64_t uid = 0);
 
@@ -77,6 +76,8 @@ public:
 
     void Update(glm::ivec2 mouse_pos);
 
+    void UpdatePage(const Page &other);
+
     void Draw();
 
     MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject &object);
@@ -96,10 +97,14 @@ public:
 
     std::vector<std::byte> Serialize() const override;
 
+    glm::ivec2 getCellDims() const;
+    void       setCellDims(glm::ivec2 cellDims);
+
 private:
-    Transform                 board_transform;
-    std::unique_ptr<Renderer> board_renderer;
-    glm::ivec2                DragOrigin                                      = glm::ivec2(0);
+    Transform     board_transform;
+    BoardRenderer board_renderer;
+    glm::ivec2    cell_dims                                                   = glm::ivec2(20);
+    glm::ivec2    DragOrigin                                                  = glm::ivec2(0);
     enum class MouseHoldType { NONE, PLACING, FOLLOWING, SCALING } mouse_hold = MouseHoldType::NONE;
     std::pair<int, int> ScaleEdges                                            = {0, 0};
     glm::vec2           initialSize;
@@ -118,6 +123,7 @@ private:
 
     friend Serializable<Page>;
     static Page deserialize_impl(const std::vector<std::byte> &vec);
+    void        swap(Page &other);
 };
 
 #endif

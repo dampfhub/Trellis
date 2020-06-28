@@ -94,7 +94,9 @@ UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     if (ImGui::Button("Page Settings")) {
         PageSettingsOpen = !PageSettingsOpen;
         strcpy(PageNameBuf, (**active_page).Name.c_str());
-        PageSize = (int)(**active_page).board_transform.scale.x;
+        auto pg_dims = (*active_page)->getCellDims();
+        PageX        = pg_dims.x;
+        PageY        = pg_dims.y;
     }
     if (ImGui::IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
         ImGui::BeginTooltip();
@@ -143,12 +145,13 @@ UI::DrawPageSettings(Page::page_list_it_t &active_page) {
     ImGui::InputText("##name", PageNameBuf, IM_ARRAYSIZE(PageNameBuf));
 
     ImGui::Text("Board Dimensions: ");
-    ImGui::InputInt("X", &PageSize);
+    ImGui::InputInt("X", &PageX);
+    ImGui::InputInt("Y", &PageY);
     if (ImGui::Button("Done", ImVec2(120, 0.0f))) {
-        PageSettingsOpen           = false;
-        pg.board_transform.scale.x = (float)PageSize;
-        pg.board_transform.scale.y = (float)PageSize;
-        pg.Name                    = PageNameBuf;
+        PageSettingsOpen = false;
+        pg.setCellDims(glm::ivec2(PageX, PageY));
+        pg.Name = PageNameBuf;
+        SettingsPage = true;
     }
     ImGui::End();
 }
@@ -164,6 +167,7 @@ void
 UI::ClearFlags() {
     AddFromPreset = false;
     AddPage       = false;
+    SettingsPage  = false;
     PageName      = "";
 }
 
