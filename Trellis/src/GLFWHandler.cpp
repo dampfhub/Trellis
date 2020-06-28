@@ -3,7 +3,6 @@
 
 #include <array>
 #include <functional>
-#include <glad/glad.h>
 
 using std::function, std::array;
 
