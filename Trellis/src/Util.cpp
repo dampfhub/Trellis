@@ -20,47 +20,6 @@ string Util::deserialize<string>(const vector<byte> &bytes) {
 }
 
 template<>
-Util::ImageData Util::deserialize<Util::ImageData>(const vector<byte> &bytes) {
-    ImageData d;
-    d.Alpha = *reinterpret_cast<const bool * >(bytes.data());
-    const unsigned char
-            *begin = reinterpret_cast<const unsigned char *>(bytes.data());
-    const unsigned char *end = begin + bytes.size();
-    d.Data = vector<unsigned char>(begin + sizeof(bool), end);
-    return d;
-}
-
-template<>
-Util::ClientInfo Util::deserialize<Util::ClientInfo>(const vector<byte> &bytes) {
-    Util::ClientInfo c;
-    c.Uid = Util::deserialize<uint64_t>(bytes.data());
-    c.Name = Util::deserialize<string>(
-            vector<byte>(
-                    bytes.begin() + sizeof(c.Uid),
-                    bytes.end()));
-    return c;
-}
-
-template<>
-vector<byte> Util::serialize_vec<Util::ImageData>(const Util::ImageData &object) {
-    vector<byte> bytes = Util::serialize_vec(object.Alpha);
-    const byte *begin = reinterpret_cast<const byte *>(object.Data.data());
-    const byte *end = begin + object.Data.size();
-    bytes.insert(bytes.end(), begin, end);
-    return bytes;
-}
-
-template<>
-vector<byte> Util::serialize_vec<Util::ClientInfo>(const Util::ClientInfo &object) {
-    vector<byte> bytes;
-    vector<byte> uid = Util::serialize_vec(object.Uid);
-    vector<byte> name = Util::serialize_vec(object.Name);
-    bytes.insert(bytes.end(), uid.begin(), uid.end());
-    bytes.insert(bytes.end(), name.begin(), name.end());
-    return bytes;
-}
-
-template<>
 vector<byte> Util::serialize_vec<string>(const string &object) {
     vector<byte> bytes;
     const char *c_str = object.c_str();
@@ -118,5 +77,42 @@ Util::NetworkData Util::NetworkData::deserialize_impl(const vector<byte> &vec) {
     d.Uid = Util::deserialize<uint64_t>(ptr);
     d.ClientUid = Util::deserialize<uint64_t>(ptr += sizeof(d.Uid));
     d.Data = vector<byte>(ptr + sizeof(d.ClientUid), end);
+    return d;
+}
+
+std::vector<std::byte> Util::ClientInfo::Serialize() const {
+    vector<byte> bytes;
+    vector<byte> uid = Util::serialize_vec(Uid);
+    vector<byte> name = Util::serialize_vec(Name);
+    bytes.insert(bytes.end(), uid.begin(), uid.end());
+    bytes.insert(bytes.end(), name.begin(), name.end());
+    return bytes;
+}
+
+Util::ClientInfo Util::ClientInfo::deserialize_impl(const vector<std::byte> &vec) {
+    Util::ClientInfo c;
+    c.Uid = Util::deserialize<uint64_t>(vec.data());
+    c.Name = Util::deserialize<string>(
+            vector<byte>(
+                    vec.begin() + sizeof(c.Uid),
+                    vec.end()));
+    return c;
+}
+
+std::vector<std::byte> Util::ImageData::Serialize() const {
+    vector<byte> bytes = Util::serialize_vec(Alpha);
+    const byte *begin = reinterpret_cast<const byte *>(Data.data());
+    const byte *end = begin + Data.size();
+    bytes.insert(bytes.end(), begin, end);
+    return bytes;
+}
+
+Util::ImageData Util::ImageData::deserialize_impl(const vector<std::byte> &vec) {
+    ImageData d;
+    d.Alpha = *reinterpret_cast<const bool * >(vec.data());
+    const unsigned char
+            *begin = reinterpret_cast<const unsigned char *>(vec.data());
+    const unsigned char *end = begin + vec.size();
+    d.Data = vector<unsigned char>(begin + sizeof(bool), end);
     return d;
 }

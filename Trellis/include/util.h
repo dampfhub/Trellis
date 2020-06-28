@@ -24,7 +24,7 @@ namespace Util {
 
     size_t hash_image(std::vector<unsigned char> const &vec);
 
-    class ClientInfo {
+    class ClientInfo: public Serializable<ClientInfo> {
     public:
         uint64_t Uid{ };
         std::string Name;
@@ -34,9 +34,13 @@ namespace Util {
         ClientInfo(uint64_t uid, std::string name) : Uid(uid),
                 Name(std::move(name)) {
         }
+        std::vector<std::byte> Serialize() const override;
+    private:
+        friend Serializable<ClientInfo>;
+        static ClientInfo deserialize_impl(const std::vector<std::byte> &vec);
     };
 
-    class ImageData {
+    class ImageData: public Serializable<ImageData> {
     public:
         size_t Hash;
         bool Alpha;
@@ -54,6 +58,10 @@ namespace Util {
             Data = other.Data;
             Hash = hash_image(Data);
         }
+        std::vector<std::byte> Serialize() const override;
+    private:
+        friend Serializable<ImageData>;
+        static ImageData deserialize_impl(const std::vector<std::byte> &vec);
     };
 
     class NetworkData: public Serializable<NetworkData> {
@@ -190,19 +198,7 @@ namespace Util {
     }
 
     template<>
-    ImageData deserialize<ImageData>(const std::vector<std::byte> &bytes);
-
-    template<>
     std::string deserialize<std::string>(const std::vector<std::byte> &bytes);
-
-    template<>
-    ClientInfo deserialize<ClientInfo>(const std::vector<std::byte> &bytes);
-
-    template<>
-    std::vector<std::byte> serialize_vec<ImageData>(const ImageData &object);
-
-    template<>
-    std::vector<std::byte> serialize_vec<ClientInfo>(const ClientInfo &object);
 
     template<>
     std::vector<std::byte> serialize_vec<std::string>(const std::string &object);
