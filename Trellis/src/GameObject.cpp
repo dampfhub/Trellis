@@ -13,11 +13,11 @@ GameObject::GameObject()
 }
 
 GameObject::GameObject(
-  const Transform &transform,
-  Texture2D        sprite,
-  uint64_t         uid,
-  bool             clickable,
-  glm::vec3        color)
+    const Transform &transform,
+    Texture2D        sprite,
+    uint64_t         uid,
+    bool             clickable,
+    glm::vec3        color)
     : transform(transform)
     , Color(color)
     , Sprite(sprite)

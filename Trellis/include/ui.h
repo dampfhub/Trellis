@@ -12,7 +12,7 @@
 #include <vector>
 
 class UI {
-    public:
+public:
     ImGui::FileBrowser *FileDialog;
 
     // Flags
@@ -21,10 +21,11 @@ class UI {
     bool PageAddOpen      = false;
     bool AddFromPreset    = false;
     bool AddPage          = false;
+    bool SettingsPage     = false;
 
     // Data
     std::string PageName = "";
-    int         PageSize;
+    int         PageX, PageY;
 
     int ActivePage     = 0;
     int PlayerPageView = 0;
@@ -41,7 +42,7 @@ class UI {
     Page::page_list_it_t GetActivePage(Page::page_list_t &pages);
     void                 ClearFlags();
 
-    private:
+private:
     char PageNameBuf[128] = "";
 
     bool main_menu_open = true;

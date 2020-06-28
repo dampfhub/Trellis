@@ -11,7 +11,7 @@
 namespace Util {
 template<class T>
 class Serializable {
-    public:
+public:
     virtual std::vector<std::byte> Serialize() const = 0;
 
     static T Deserialize(const std::vector<std::byte> &vec) {

@@ -10,12 +10,12 @@
 // compile/link-time error messages and hosts several utility
 // functions for easy management.
 class Shader {
-    public:
+public:
     // constructor
     Shader(
-      const char *vertexSource,
-      const char *fragmentSource,
-      const char *geometrySource = nullptr); // note: geometry source code is optional
+        const char *vertexSource,
+        const char *fragmentSource,
+        const char *geometrySource = nullptr); // note: geometry source code is optional
     ~Shader();
     Shader(const Shader &) = delete;
     Shader &operator=(const Shader &) = delete;
@@ -32,6 +32,8 @@ class Shader {
 
     void SetVector2f(const char *name, const glm::vec2 &value);
 
+    void SetVector2i(const char *name, const glm::vec2 &value);
+
     void SetVector3f(const char *name, float x, float y, float z);
 
     void SetVector3f(const char *name, const glm::vec3 &value);
@@ -42,7 +44,7 @@ class Shader {
 
     void SetMatrix4(const char *name, const glm::mat4 &matrix);
 
-    private:
+private:
     // state
     unsigned int ID;
 

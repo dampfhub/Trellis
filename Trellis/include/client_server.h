@@ -9,7 +9,7 @@
 #include <vector>
 
 class ClientServer {
-    public:
+public:
     enum NetworkObject { SERVER, CLIENT };
     using queue_handler_f = std::function<void(Data::NetworkData &&)>;
 
@@ -43,9 +43,9 @@ class ClientServer {
 
     uint64_t uid;
 
-    protected:
+protected:
     class NetworkQueueCallback {
-        public:
+    public:
         std::shared_ptr<NetworkManager::NetworkQueue> queue;
 
         NetworkQueueCallback(std::string channel_name, queue_handler_f cb)
@@ -61,7 +61,7 @@ class ClientServer {
             }
         }
 
-        private:
+    private:
         queue_handler_f callback;
     };
 
@@ -72,7 +72,7 @@ class ClientServer {
 };
 
 class Client : public ClientServer {
-    public:
+public:
     Client(Client const &) = delete; // Disallow copying
     void operator=(Client const &) = delete;
 
@@ -82,7 +82,7 @@ class Client : public ClientServer {
 
     void Update() override;
 
-    private:
+private:
     friend class ClientServer;
 
     Client() = default;
@@ -97,7 +97,7 @@ class Client : public ClientServer {
 };
 
 class Server : public ClientServer {
-    public:
+public:
     Server(Server const &) = delete; // Disallow copying
     void operator=(Server const &) = delete;
 
@@ -107,7 +107,7 @@ class Server : public ClientServer {
 
     void Update() override;
 
-    private:
+private:
     friend class ClientServer;
 
     Server() = default;

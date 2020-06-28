@@ -19,7 +19,7 @@ enum GameState { GAME_ACTIVE, GAME_MENU };
 // Combines all game-related data into a single class for
 // easy access to each of the components and manageability.
 class Game {
-    public:
+public:
     Game(Game const &) = delete; // Disallow copying
     void operator=(Game const &) = delete;
 
@@ -45,7 +45,7 @@ class Game {
 
     void Render();
 
-    private:
+private:
     UI UserInterface;
 
     Game();
@@ -87,7 +87,9 @@ class Game {
 
     void AddPage(std::unique_ptr<Page> &&pg);
 
-    void MakePage(std::string name);
+    void SendNewPage(std::string name);
+
+    void SendUpdatedPage();
 
     void SendAllPages(uint64_t client_uid);
 

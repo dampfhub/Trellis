@@ -65,6 +65,12 @@ Shader::SetVector2f(const char *name, const glm::vec2 &value) {
 }
 
 void
+Shader::SetVector2i(const char *name, const glm::vec2 &value) {
+    Use();
+    glUniform2i(glGetUniformLocation(ID, name), value.x, value.y);
+}
+
+void
 Shader::SetVector3f(const char *name, float x, float y, float z) {
     Use();
     glUniform3f(glGetUniformLocation(ID, name), x, y, z);

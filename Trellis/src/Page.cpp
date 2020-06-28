@@ -7,37 +7,39 @@
 #include "resource_manager.h"
 #include "sprite_renderer.h"
 
-using std::make_unique;
+using std::make_unique, std::move, std::string, std::exchange, std::unique_ptr, std::make_pair,
+    std::ref, std::find_if, std::vector, std::byte;
 
 using Data::NetworkData;
 
-Page::Page(std::string name, glm::vec2 pos, glm::vec2 size, uint64_t uid)
+Page::Page(string name, glm::vec2 pos, glm::vec2 size, glm::ivec2 cell_dims, uint64_t uid)
     : Name(name)
     , Uid(uid)
-    , board_transform(pos, size, 0) {
-    board_renderer = std::make_unique<BoardRenderer>(this->board_transform, this->View);
-    Camera         = std::make_unique<Camera2D>(200.0f, glm::vec2(0.4f, 2.5f));
-    UserInterface  = std::make_unique<PageUI>();
+    , board_transform(pos, size, 0)
+    , cell_dims(cell_dims)
+    , board_renderer(this->board_transform, this->View, this->cell_dims) {
+    Camera        = make_unique<Camera2D>(200.0f, glm::vec2(0.4f, 2.5f));
+    UserInterface = make_unique<PageUI>();
     if (Uid == 0) { Uid = Util::generate_uid(); }
 }
 
 Page::~Page() {}
 
 Page::Page(Page &&other) noexcept
-    : Name(std::move(other.Name))
+    : Name(move(other.Name))
     , board_transform(other.board_transform)
-    , Camera(std::exchange(other.Camera, nullptr))
-    , UserInterface(std::exchange(other.UserInterface, nullptr))
-    , Uid(std::exchange(other.Uid, -1)) {
-    board_renderer = std::make_unique<BoardRenderer>(this->board_transform, this->View);
-}
+    , Camera(exchange(other.Camera, nullptr))
+    , UserInterface(exchange(other.UserInterface, nullptr))
+    , Uid(exchange(other.Uid, -1))
+    , cell_dims(other.cell_dims)
+    , board_renderer(this->board_transform, this->View, this->cell_dims) {}
 
 void
-Page::AddPiece(std::unique_ptr<GameObject> &&piece) {
+Page::AddPiece(unique_ptr<GameObject> &&piece) {
     GameObject &g   = *piece;
-    piece->renderer = std::make_unique<SpriteRenderer>(piece->transform, this->View, g.Sprite);
-    PiecesMap.insert(std::make_pair(piece->Uid, std::ref(*piece)));
-    Pieces.push_front(std::move(piece));
+    piece->renderer = make_unique<SpriteRenderer>(piece->transform, this->View, g.Sprite);
+    PiecesMap.insert(make_pair(piece->Uid, ref(*piece)));
+    Pieces.push_front(move(piece));
 }
 
 void
@@ -46,7 +48,7 @@ Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
     mouse_hold  = MouseHoldType::PLACING;
     initialSize = piece->transform.scale;
     initialPos  = piece->transform.position;
-    AddPiece(std::move(piece));
+    AddPiece(move(piece));
     CurrentSelection = Pieces.begin();
 }
 
@@ -58,11 +60,11 @@ Page::Update(glm::ivec2 mouse_pos) {
 
 void
 Page::Draw() {
-    board_renderer->Draw();
+    board_renderer.Draw();
     // Draw sprites back-to-front, so the "top" sprite is drawn above the others
     for (auto it = Pieces.rbegin(); it != Pieces.rend(); it++) {
         int border_pixel_width =
-          CurrentSelection != Pieces.end() && (*it) == (*CurrentSelection) ? BorderWidth : 0;
+            CurrentSelection != Pieces.end() && (*it) == (*CurrentSelection) ? BorderWidth : 0;
         (*it)->Draw(border_pixel_width);
     }
     // Draw user interface
@@ -83,10 +85,9 @@ Page::MouseHoverType
 Page::HoverType(glm::ivec2 mouse_pos, GameObject &object) {
     glm::ivec2 NW_corner_screen = WorldPosToScreenPos(object.transform.position);
     glm::ivec2 SE_corner_screen =
-      WorldPosToScreenPos(object.transform.position + object.transform.scale);
-    if (
-      mouse_pos.x < NW_corner_screen.x || mouse_pos.y < NW_corner_screen.y ||
-      mouse_pos.x > SE_corner_screen.x || mouse_pos.y > SE_corner_screen.y) {
+        WorldPosToScreenPos(object.transform.position + object.transform.scale);
+    if (mouse_pos.x < NW_corner_screen.x || mouse_pos.y < NW_corner_screen.y ||
+        mouse_pos.x > SE_corner_screen.x || mouse_pos.y > SE_corner_screen.y) {
         return MouseHoverType::NONE;
     }
     glm::ivec2 size_screen = SE_corner_screen - NW_corner_screen;
@@ -149,24 +150,20 @@ Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
                 mouse_hold = MouseHoldType::FOLLOWING;
             } else {
                 mouse_hold = MouseHoldType::SCALING;
-                if (
-                  hover == MouseHoverType::N || hover == MouseHoverType::NE ||
-                  hover == MouseHoverType::NW) {
+                if (hover == MouseHoverType::N || hover == MouseHoverType::NE ||
+                    hover == MouseHoverType::NW) {
                     ScaleEdges.second = -1;
                 }
-                if (
-                  hover == MouseHoverType::E || hover == MouseHoverType::NE ||
-                  hover == MouseHoverType::SE) {
+                if (hover == MouseHoverType::E || hover == MouseHoverType::NE ||
+                    hover == MouseHoverType::SE) {
                     ScaleEdges.first = 1;
                 }
-                if (
-                  hover == MouseHoverType::S || hover == MouseHoverType::SE ||
-                  hover == MouseHoverType::SW) {
+                if (hover == MouseHoverType::S || hover == MouseHoverType::SE ||
+                    hover == MouseHoverType::SW) {
                     ScaleEdges.second = 1;
                 }
-                if (
-                  hover == MouseHoverType::W || hover == MouseHoverType::SW ||
-                  hover == MouseHoverType::NW) {
+                if (hover == MouseHoverType::W || hover == MouseHoverType::SW ||
+                    hover == MouseHoverType::NW) {
                     ScaleEdges.first = -1;
                 }
             }
@@ -203,39 +200,39 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                 switch (ScaleEdges.first) {
                     case 1:
                         piece.transform.scale.x =
-                          fmax(initialSize.x + diff.x, TILE_DIMENSIONS / (float)inc);
+                            fmax(initialSize.x + diff.x, TILE_DIMENSIONS / (float)inc);
                         closest =
-                          floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
                         piece.transform.scale.x = closest * TILE_DIMENSIONS / (float)inc - 2;
                         break;
                     case -1:
                         piece.transform.scale.x = fmax(
-                          DragOrigin.x + initialSize.x - world_mouse.x,
-                          TILE_DIMENSIONS / (float)inc);
+                            DragOrigin.x + initialSize.x - world_mouse.x,
+                            TILE_DIMENSIONS / (float)inc);
                         closest =
-                          floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
                         piece.transform.scale.x = closest * TILE_DIMENSIONS / (float)inc - 2;
                         piece.transform.position.x =
-                          initialPos.x + initialSize.x - piece.transform.scale.x;
+                            initialPos.x + initialSize.x - piece.transform.scale.x;
                         break;
                 }
                 switch (ScaleEdges.second) {
                     case 1:
                         piece.transform.scale.y =
-                          fmax(initialSize.y + diff.y, TILE_DIMENSIONS / (float)inc);
+                            fmax(initialSize.y + diff.y, TILE_DIMENSIONS / (float)inc);
                         closest =
-                          floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
                         piece.transform.scale.y = closest * TILE_DIMENSIONS / (float)inc - 2;
                         break;
                     case -1:
                         piece.transform.scale.y = fmax(
-                          DragOrigin.y + initialSize.y - world_mouse.y,
-                          TILE_DIMENSIONS / (float)inc);
+                            DragOrigin.y + initialSize.y - world_mouse.y,
+                            TILE_DIMENSIONS / (float)inc);
                         closest =
-                          floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
                         piece.transform.scale.y = closest * TILE_DIMENSIONS / (float)inc - 2;
                         piece.transform.position.y =
-                          initialPos.y + initialSize.y - piece.transform.scale.y;
+                            initialPos.y + initialSize.y - piece.transform.scale.y;
                         break;
                 }
                 break;
@@ -248,15 +245,15 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
             static ClientServer &cs = ClientServer::GetInstance();
             if (piece.transform.position != prev_pos) {
                 cs.RegisterPageChange(
-                  "MOVE_PIECE",
-                  Uid,
-                  NetworkData(piece.transform.position, piece.Uid));
+                    "MOVE_PIECE",
+                    Uid,
+                    NetworkData(piece.transform.position, piece.Uid));
             }
             if (piece.transform.scale != prev_size) {
                 cs.RegisterPageChange(
-                  "RESIZE_PIECE",
-                  Uid,
-                  NetworkData(piece.transform.scale, piece.Uid));
+                    "RESIZE_PIECE",
+                    Uid,
+                    NetworkData(piece.transform.scale, piece.Uid));
             }
         }
     }
@@ -320,12 +317,12 @@ Page::HandleArrows(ArrowkeyType key) {
 void
 Page::SnapPieceToGrid(GameObject &piece, int increments) {
     float closest_x =
-      (float)floor(piece.transform.position.x / (TILE_DIMENSIONS / (float)increments) + 0.5);
+        (float)floor(piece.transform.position.x / (TILE_DIMENSIONS / (float)increments) + 0.5);
     float closest_y =
-      (float)floor(piece.transform.position.y / (TILE_DIMENSIONS / (float)increments) + 0.5);
+        (float)floor(piece.transform.position.y / (TILE_DIMENSIONS / (float)increments) + 0.5);
     piece.transform.position = glm::vec2(
-      closest_x * TILE_DIMENSIONS / (float)increments + 1,
-      closest_y * TILE_DIMENSIONS / (float)increments + 1);
+        closest_x * TILE_DIMENSIONS / (float)increments + 1,
+        closest_y * TILE_DIMENSIONS / (float)increments + 1);
 }
 
 glm::vec2
@@ -366,10 +363,9 @@ Page::Deselect() {
 
 void
 Page::DeletePiece(uint64_t uid) {
-    auto piece_it =
-      std::find_if(Pieces.begin(), Pieces.end(), [uid](std::unique_ptr<GameObject> &g) {
-          return g->Uid == uid;
-      });
+    auto piece_it = find_if(Pieces.begin(), Pieces.end(), [uid](unique_ptr<GameObject> &g) {
+        return g->Uid == uid;
+    });
     if (piece_it != Pieces.end()) { Pieces.erase(piece_it); }
     PiecesMap.erase(uid);
     CurrentSelection = Pieces.end();
@@ -381,9 +377,9 @@ Page::DeleteCurrentSelection() {
         if (mouse_hold != MouseHoldType::PLACING) {
             static ClientServer &cs = ClientServer::GetInstance();
             cs.RegisterPageChange(
-              "DELETE_PIECE",
-              Uid,
-              NetworkData(*CurrentSelection, (*CurrentSelection)->Uid));
+                "DELETE_PIECE",
+                Uid,
+                NetworkData(*CurrentSelection, (*CurrentSelection)->Uid));
             DeletePiece((*CurrentSelection)->Uid);
         } else {
             Deselect();
@@ -391,23 +387,44 @@ Page::DeleteCurrentSelection() {
     }
 }
 
-std::vector<std::byte>
+vector<byte>
 Page::Serialize() const {
-    using std::byte;
-    std::vector<std::vector<byte>> bytes;
+    vector<vector<byte>> bytes;
     bytes.push_back(Util::serialize_vec(Uid));
     bytes.push_back(Util::serialize_vec(board_transform));
+    bytes.push_back(Util::serialize_vec(cell_dims));
     bytes.push_back(Util::serialize_vec(Name));
     return Util::flatten(bytes);
 }
 
 Page
-Page::deserialize_impl(const std::vector<std::byte> &vec) {
-    using std::byte;
-    const byte *ptr = vec.data();
-    uint64_t    uid = Util::deserialize<uint64_t>(ptr);
-    Transform   t   = Util::deserialize<Transform>(ptr += sizeof(uid));
-    std::string name =
-      Util::deserialize<std::string>(std::vector(vec.begin() + sizeof(uid) + sizeof(t), vec.end()));
-    return Page(name, t.position, t.scale, uid);
+Page::deserialize_impl(const vector<byte> &vec) {
+    auto ptr       = vec.data();
+    auto end       = ptr + vec.size();
+    auto uid       = Util::deserialize<uint64_t>(ptr);
+    auto t         = Util::deserialize<Transform>(ptr += sizeof(uid));
+    auto cell_dims = Util::deserialize<glm::ivec2>(ptr += sizeof(t));
+    auto name      = Util::deserialize<string>(vector(ptr += sizeof(cell_dims), end));
+    return Page(name, t.position, t.scale, cell_dims, uid);
+}
+
+glm::ivec2
+Page::getCellDims() const {
+    return cell_dims;
+}
+
+void
+Page::setCellDims(glm::ivec2 cellDims) {
+    if (cellDims.x < 1) cellDims.x = 1;
+    if (cellDims.y < 1) cellDims.y = 1;
+    cell_dims             = cellDims;
+    board_transform.scale = glm::vec2(cell_dims) * TILE_DIMENSIONS;
+}
+void
+Page::CopySettingsFromPage(const Page &other) {
+    board_transform = other.board_transform;
+    cell_dims = other.cell_dims;
+    Name = other.Name;
+    board_renderer.CellDims = cell_dims;
+    board_renderer.setTransform(board_transform);
 }

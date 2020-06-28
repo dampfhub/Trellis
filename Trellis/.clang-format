@@ -1,5 +1,5 @@
 ﻿---
-AccessModifierOffset: '0'
+AccessModifierOffset: '-4'
 AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveMacros: 'true'
 AlignConsecutiveAssignments: 'true'
@@ -30,7 +30,7 @@ BreakStringLiterals: 'true'
 ColumnLimit: '100'
 CompactNamespaces: 'false'
 ConstructorInitializerAllOnOneLineOrOnePerLine: 'false'
-ContinuationIndentWidth: '2'
+ContinuationIndentWidth: '4'
 Cpp11BracedListStyle: 'true'
 DerivePointerAlignment: 'false'
 DisableFormat: 'false'

@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 
 class Transform {
-    public:
+public:
     glm::vec2 position;
     glm::vec2 scale;
     float     rotation;

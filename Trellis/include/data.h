@@ -5,7 +5,7 @@
 
 namespace Data {
 class ClientInfo : public Util::Serializable<ClientInfo> {
-    public:
+public:
     uint64_t    Uid{};
     std::string Name;
 
@@ -17,14 +17,14 @@ class ClientInfo : public Util::Serializable<ClientInfo> {
 
     std::vector<std::byte> Serialize() const override;
 
-    private:
+private:
     friend Serializable<ClientInfo>;
 
     static ClientInfo deserialize_impl(const std::vector<std::byte> &vec);
 };
 
 class ImageData : public Util::Serializable<ImageData> {
-    public:
+public:
     size_t                     Hash;
     bool                       Alpha;
     std::vector<unsigned char> Data;
@@ -45,14 +45,14 @@ class ImageData : public Util::Serializable<ImageData> {
 
     std::vector<std::byte> Serialize() const override;
 
-    private:
+private:
     friend Serializable<ImageData>;
 
     static ImageData deserialize_impl(const std::vector<std::byte> &vec);
 };
 
 class NetworkData : public Util::Serializable<NetworkData> {
-    public:
+public:
     std::vector<std::byte> Data;
     uint64_t               Uid;
     uint64_t               ClientUid;
@@ -77,7 +77,7 @@ class NetworkData : public Util::Serializable<NetworkData> {
 
     std::vector<std::byte> Serialize() const override;
 
-    private:
+private:
     friend Serializable<NetworkData>;
 
     static NetworkData deserialize_impl(const std::vector<std::byte> &vec);
