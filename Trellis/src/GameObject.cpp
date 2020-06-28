@@ -2,7 +2,7 @@
 #include "util.h"
 #include "sprite_renderer.h"
 
-using std::move, std::exchange, std::make_unique;
+using std::move, std::exchange, std::make_unique, std::vector, std::byte;
 
 GameObject::GameObject() : transform(),
         Color(1.0f),
@@ -52,6 +52,27 @@ void GameObject::swap(GameObject &other) {
     swap(Sprite, other.Sprite);
     swap(Clickable, other.Clickable);
     swap(renderer, other.renderer);
+}
+
+vector<byte> GameObject::Serialize() const {
+    std::vector<std::vector<byte>> bytes;
+    bytes.push_back(Util::serialize_vec(transform));
+    bytes.push_back(Util::serialize_vec(Color));
+    bytes.push_back(Util::serialize_vec(Uid));
+    bytes.push_back(Util::serialize_vec(Clickable));
+    bytes.push_back(Util::serialize_vec(Sprite.ImageUID));
+    return Util::flatten(bytes);
+}
+
+GameObject GameObject::deserialize_impl(const vector<byte> &vec) {
+    GameObject g;
+    const byte *ptr = vec.data();
+    g.transform = Util::deserialize<Transform>(ptr);
+    g.Color = Util::deserialize<glm::vec3>(ptr += sizeof(g.transform));
+    g.Uid = Util::deserialize<uint64_t>(ptr += sizeof(g.Color));
+    g.Clickable = Util::deserialize<bool>(ptr += sizeof(g.Uid));
+    g.Sprite.ImageUID = Util::deserialize<uint64_t>(ptr += sizeof(g.Clickable));
+    return g;
 }
 
 void swap(GameObject &a, GameObject &b) {

@@ -8,12 +8,23 @@
 #include <cmath>
 #include <iostream>
 
-#include "game_object.h"
-
 namespace Util {
+    template<class T>
+    class Serializable {
+    public:
+        virtual std::vector<std::byte> Serialize() const = 0;
+
+        static T Deserialize(const std::vector<std::byte> &vec) {
+            return T::deserialize_impl(vec);
+        }
+
+        virtual ~Serializable() {
+        }
+    };
+
     size_t hash_image(std::vector<unsigned char> const &vec);
 
-    class ClientInfo {
+    class ClientInfo: public Serializable<ClientInfo> {
     public:
         uint64_t Uid{ };
         std::string Name;
@@ -23,10 +34,13 @@ namespace Util {
         ClientInfo(uint64_t uid, std::string name) : Uid(uid),
                 Name(std::move(name)) {
         }
+        std::vector<std::byte> Serialize() const override;
+    private:
+        friend Serializable<ClientInfo>;
+        static ClientInfo deserialize_impl(const std::vector<std::byte> &vec);
     };
 
-
-    class ImageData {
+    class ImageData: public Serializable<ImageData> {
     public:
         size_t Hash;
         bool Alpha;
@@ -38,14 +52,19 @@ namespace Util {
                 Data(data) {
             Hash = hash_image(data);
         }
+
         ImageData(const ImageData &other) {
             Alpha = other.Alpha;
             Data = other.Data;
             Hash = hash_image(Data);
         }
+        std::vector<std::byte> Serialize() const override;
+    private:
+        friend Serializable<ImageData>;
+        static ImageData deserialize_impl(const std::vector<std::byte> &vec);
     };
 
-    class NetworkData {
+    class NetworkData: public Serializable<NetworkData> {
     public:
         std::vector<std::byte> Data;
         uint64_t Uid;
@@ -54,18 +73,31 @@ namespace Util {
         NetworkData() = default;
 
         template<class T>
-        NetworkData(const T &data, uint64_t uid, uint64_t client_uid = 0) : Data(Util::serialize_vec(data)),
-                Uid(uid), ClientUid(client_uid) {
+        NetworkData(
+                const T &data,
+                uint64_t uid,
+                uint64_t client_uid = 0) : Data(Util::serialize_vec(data)),
+                Uid(uid),
+                ClientUid(client_uid) {
         }
 
-        NetworkData(std::vector<std::byte> data, uint64_t uid, uint64_t client_uid = 0) : Data(data),
-                Uid(uid), ClientUid(client_uid) {
+        NetworkData(
+                std::vector<std::byte> data,
+                uint64_t uid,
+                uint64_t client_uid = 0) : Data(data),
+                Uid(uid),
+                ClientUid(client_uid) {
         }
 
         template<class T>
         T Parse() {
             return deserialize<T>(Data);
         }
+
+        std::vector<std::byte> Serialize() const override;
+    private:
+        friend Serializable<NetworkData>;
+        static NetworkData deserialize_impl(const std::vector<std::byte> &vec);
     };
 
     std::string PathBaseName(std::string const &path);
@@ -84,7 +116,29 @@ namespace Util {
     }
 
     template<class T>
-    std::vector<std::byte> serialize_vec(const T &object) {
+    typename std::enable_if<
+            std::is_base_of<Serializable<T>, T>::value,
+            std::vector<std::byte>
+    >::type
+    serialize_vec(const T &object) {
+        return object.Serialize();
+    }
+
+    template<class T>
+    typename std::enable_if<
+            std::is_base_of<Serializable<T>, T>::value,
+            T
+    >::type
+    deserialize(const std::vector<std::byte> &vec) {
+        return Serializable<T>::Deserialize(vec);
+    }
+
+    template<class T>
+    typename std::enable_if<
+            !std::is_base_of<Serializable<T>, T>::value,
+            std::vector<std::byte>
+    >::type
+    serialize_vec(const T &object) {
         using std::byte;
         std::vector<byte> bytes(sizeof(T));
         const byte
@@ -126,45 +180,25 @@ namespace Util {
     }
 
     template<class T>
-    T deserialize(const std::vector<std::byte> &bytes) {
+    typename std::enable_if<
+            !std::is_base_of<Serializable<T>, T>::value,
+            T
+    >::type
+    deserialize(const std::vector<std::byte> &bytes) {
         using std::byte;
         const T *ptr = reinterpret_cast<const T *>(bytes.data());
         return *ptr;
     }
 
     template<class T>
-    T deserialize(const std::byte * bytes) {
+    T deserialize(const std::byte *bytes) {
         using std::byte;
         const T *ptr = reinterpret_cast<const T *>(bytes);
         return *ptr;
     }
 
     template<>
-    NetworkData deserialize<NetworkData>(const std::vector<std::byte> &bytes);
-
-    template<>
-    ImageData deserialize<ImageData>(const std::vector<std::byte> &bytes);
-
-    template<>
     std::string deserialize<std::string>(const std::vector<std::byte> &bytes);
-
-    template<>
-    GameObject deserialize<GameObject>(const std::vector<std::byte> &bytes);
-
-    template<>
-    ClientInfo deserialize<ClientInfo>(const std::vector<std::byte> &bytes);
-
-    template<>
-    std::vector<std::byte> serialize_vec<NetworkData>(const NetworkData &object);
-
-    template<>
-    std::vector<std::byte> serialize_vec<GameObject>(const GameObject &object);
-
-    template<>
-    std::vector<std::byte> serialize_vec<ImageData>(const ImageData &object);
-
-    template<>
-    std::vector<std::byte> serialize_vec<ClientInfo>(const ClientInfo &object);
 
     template<>
     std::vector<std::byte> serialize_vec<std::string>(const std::string &object);
