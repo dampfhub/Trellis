@@ -1,6 +1,7 @@
 #ifndef GLFW_HANDLER_H
 #define GLFW_HANDLER_H
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <functional>
 
