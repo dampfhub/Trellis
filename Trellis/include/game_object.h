@@ -4,12 +4,13 @@
 #include "texture.h"
 #include "renderer.h"
 #include "transform.h"
+#include "util.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 
-class GameObject {
+class GameObject: public Util::Serializable<GameObject> {
 public:
     Transform transform;
     glm::vec3 Color;
@@ -37,6 +38,11 @@ public:
 
     void swap(GameObject &other);
     std::unique_ptr<Renderer> renderer;
+
+    std::vector<std::byte> Serialize() const override;
+private:
+    friend Serializable<GameObject>;
+    static GameObject deserialize(const std::vector<std::byte> &vec);
 private:
 };
 

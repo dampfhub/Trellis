@@ -45,19 +45,6 @@ Util::ImageData Util::deserialize<Util::ImageData>(const std::vector<std::byte> 
 }
 
 template<>
-GameObject Util::deserialize<GameObject>(const std::vector<std::byte> &bytes) {
-    using std::byte;
-    GameObject g;
-    const byte *ptr = bytes.data();
-    g.transform = Util::deserialize<Transform>(ptr);
-    g.Color = Util::deserialize<glm::vec3>(ptr += sizeof(g.transform));
-    g.Uid = Util::deserialize<uint64_t>(ptr += sizeof(g.Color));
-    g.Clickable = Util::deserialize<bool>(ptr += sizeof(g.Uid));
-    g.Sprite.ImageUID = Util::deserialize<uint64_t>(ptr += sizeof(g.Clickable));
-    return g;
-}
-
-template<>
 Util::ClientInfo Util::deserialize<Util::ClientInfo>(const std::vector<std::byte> &bytes) {
     using std::byte;
     Util::ClientInfo c;
@@ -77,18 +64,6 @@ std::vector<std::byte> Util::serialize_vec<Util::NetworkData>(const Util::Networ
     bytes.insert(bytes.end(), client_uid.begin(), client_uid.end());
     bytes.insert(bytes.end(), object.Data.begin(), object.Data.end());
     return bytes;
-}
-
-template<>
-std::vector<std::byte> Util::serialize_vec<GameObject>(const GameObject &object) {
-    using std::byte;
-    std::vector<std::vector<byte>> bytes;
-    bytes.push_back(Util::serialize_vec(object.transform));
-    bytes.push_back(Util::serialize_vec(object.Color));
-    bytes.push_back(Util::serialize_vec(object.Uid));
-    bytes.push_back(Util::serialize_vec(object.Clickable));
-    bytes.push_back(Util::serialize_vec(object.Sprite.ImageUID));
-    return Util::flatten(bytes);
 }
 
 template<>
