@@ -3,7 +3,7 @@
 #include "board_renderer.h"
 #include "client_server.h"
 #include "data.h"
-#include "game.h"
+#include "Board.h"
 #include "resource_manager.h"
 #include "sprite_renderer.h"
 
@@ -178,8 +178,7 @@ Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
 
 void
 Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
-    static Game &game = Game::GetInstance();
-    int          inc  = game.snapping ? 1 : 8;
+    int          inc  = Snapping ? 1 : 8;
     float        closest;
     glm::vec2    world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
@@ -340,9 +339,10 @@ Page::WorldPosToScreenPos(glm::ivec2 pos) {
 void
 Page::SendAllPieces(uint64_t target_uid) {
     if (ClientServer::Started()) {
-        for (auto &piece : Pieces) {
+        std::cout << Pieces.size() << std::endl;
+        for (auto piece = Pieces.rbegin(); piece != Pieces.rend(); ++piece) {
             ClientServer &cs = ClientServer::GetInstance();
-            cs.RegisterPageChange("ADD_PIECE", Uid, *piece, target_uid);
+            cs.RegisterPageChange("ADD_PIECE", Uid, **piece, target_uid);
         }
     }
 }

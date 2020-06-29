@@ -34,21 +34,39 @@ public:
 
     void RegisterKey(int key, const std::function<keyfunc> &callback);
 
+    void UnregisterKey(int key);
+
     void RegisterKeyPress(int key, const std::function<keyfunc> &callback);
+
+    void UnregisterKeyPress(int key);
 
     void RegisterKeyRelease(int key, const std::function<keyfunc> &callback);
 
+    void UnregisterKeyRelease(int key);
+
     void RegisterMouse(int button, const std::function<mousefunc> &callback);
+
+    void UnregisterMouse(int button);
 
     void RegisterMousePress(int button, const std::function<mousefunc> &callback);
 
+    void UnregisterMousePress(int button);
+
     void RegisterMouseRelease(int button, const std::function<mousefunc> &callback);
+
+    void UnregisterMouseRelease(int button);
 
     void RegisterScroll(const std::function<scrollfunc> &callback);
 
+    void UnregisterScroll();
+
     void RegisterMousePosCallback(const std::function<mouseposfunc> &callback);
 
+    void UnregisterMousePosCallback();
+
     void RegisterWindowSizeCallback(const std::function<windowsizefun> &callback);
+
+    void UnregisterWindowSizeCallback();
 
     static int GetScreenWidth();
 

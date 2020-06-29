@@ -208,3 +208,41 @@ int
 GLFW::GetScreenHeight() {
     return screen_height;
 }
+void
+GLFW::UnregisterKey(int key) {
+    key_press_callbacks[key]   = nullptr;
+    key_release_callbacks[key] = nullptr;
+}
+void
+GLFW::UnregisterKeyPress(int key) {
+    key_press_callbacks[key]   = nullptr;
+}
+void
+GLFW::UnregisterKeyRelease(int key) {
+    key_release_callbacks[key]   = nullptr;
+}
+void
+GLFW::UnregisterMouse(int button) {
+    mouse_press_callbacks[button] = nullptr;
+    mouse_release_callbacks[button] = nullptr;
+}
+void
+GLFW::UnregisterMousePress(int button) {
+    mouse_press_callbacks[button] = nullptr;
+}
+void
+GLFW::UnregisterMouseRelease(int button) {
+    mouse_release_callbacks[button] = nullptr;
+}
+void
+GLFW::UnregisterScroll() {
+    scroll_callback = nullptr;
+}
+void
+GLFW::UnregisterMousePosCallback() {
+    mouse_pos_callback = nullptr;
+}
+void
+GLFW::UnregisterWindowSizeCallback() {
+    window_size_callback = nullptr;
+}

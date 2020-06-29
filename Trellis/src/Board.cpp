@@ -1,4 +1,4 @@
-#include "game.h"
+#include "Board.h"
 
 #include "GUI.h"
 #include "client_server.h"
@@ -16,68 +16,61 @@ using std::unique_ptr, std::make_unique, std::move;
 
 using Data::ImageData, Data::NetworkData;
 
-Game &
-Game::GetInstance() {
-    static Game instance; // Guaranteed to be destroyed.
-    // Instantiated on first use.
-    return instance;
-}
-
 void
-Game::esc_handler() {
+Board::esc_handler() {
     if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) { return; }
     static GLFW &glfw = GLFW::GetInstance();
     glfw.SetWindowShouldClose(1);
 }
 
 void
-Game::window_size_callback(int width, int height) {
+Board::window_size_callback(int width, int height) {
     SetScreenDims(width, height);
 }
 
 void
-Game::mouse_pos_callback(double x, double y) {
+Board::mouse_pos_callback(double x, double y) {
     MousePos.x = x;
     MousePos.y = y;
 }
 
 void
-Game::left_click_press() {
-    LeftClick = Game::PRESS;
+Board::left_click_press() {
+    LeftClick = Board::PRESS;
 }
 
 void
-Game::left_click_release() {
-    LeftClick = Game::RELEASE;
+Board::left_click_release() {
+    LeftClick = Board::RELEASE;
 }
 
 void
-Game::right_click_press() {
-    RightClick = Game::PRESS;
+Board::right_click_press() {
+    RightClick = Board::PRESS;
 }
 
 void
-Game::right_click_release() {
-    RightClick = Game::RELEASE;
+Board::right_click_release() {
+    RightClick = Board::RELEASE;
 }
 
 void
-Game::middle_click_press() {
-    MiddleClick = Game::PRESS;
+Board::middle_click_press() {
+    MiddleClick = Board::PRESS;
 }
 
 void
-Game::middle_click_release() {
-    MiddleClick = Game::RELEASE;
+Board::middle_click_release() {
+    MiddleClick = Board::RELEASE;
 }
 
 void
-Game::scroll_callback(double yoffset) {
+Board::scroll_callback(double yoffset) {
     ScrollDirection = (int)yoffset;
 }
 
 void
-Game::arrow_press(int key) {
+Board::arrow_press(int key) {
     if (ActivePage != Pages.end()) {
         switch (key) {
             case GLFW_KEY_RIGHT: (*ActivePage)->HandleArrows(Page::ArrowkeyType::RIGHT); break;
@@ -89,24 +82,38 @@ Game::arrow_press(int key) {
 }
 
 void
-Game::delete_press() {
+Board::delete_press() {
     if (ActivePage != Pages.end()) { (*ActivePage)->DeleteCurrentSelection(); }
 }
 
 void
-Game::snap_callback(int action) {
-    if (action == GLFW_PRESS) {
-        snapping = false;
-    } else if (action == GLFW_RELEASE) {
-        snapping = true;
+Board::snap_callback(int action) {
+    if (ActivePage != Pages.end()) {
+        if (action == GLFW_PRESS) {
+            (*ActivePage)->Snapping = false;
+        } else if (action == GLFW_RELEASE) {
+            (*ActivePage)->Snapping = true;
+        }
     }
 }
 
-Game::Game() {
-    GLFW &glfw = GLFW::GetInstance();
+Board::Board()
+    : Uid(Util::generate_uid()) {
     init_shaders();
     init_objects();
+    // Set projection matrix
+    set_projection();
+    glm::mat4 view = glm::mat4(1.0f);
+    ResourceManager::SetGlobalMatrix4("view", view);
 
+    register_network_callbacks();
+}
+
+Board::~Board() {}
+
+void
+Board::RegisterKeyCallbacks() {
+    static GLFW &glfw = GLFW::GetInstance();
     glfw.RegisterWindowSizeCallback(
         [this](int width, int height) { this->window_size_callback(width, height); });
     glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, [this](int, int, int, int) { this->esc_handler(); });
@@ -143,20 +150,29 @@ Game::Game() {
     glfw.RegisterKey(GLFW_KEY_LEFT_ALT, [this](int, int, int action, int) {
         this->snap_callback(action);
     });
-    glfw.RegisterKeyPress(GLFW_KEY_A, [this](int, int, int, int) { this->start_server(); });
-    glfw.RegisterKeyPress(GLFW_KEY_S, [this](int, int, int, int) { this->start_client(); });
     glfw.RegisterKeyPress(GLFW_KEY_DELETE, [this](int, int, int, int) { this->delete_press(); });
-
-    // Set projection matrix
-    set_projection();
-    glm::mat4 view = glm::mat4(1.0f);
-    ResourceManager::SetGlobalMatrix4("view", view);
 }
 
-Game::~Game() {}
+void
+Board::UnregisterKeyCallbacks() {
+    static GLFW &glfw = GLFW::GetInstance();
+    glfw.UnregisterWindowSizeCallback();
+    glfw.UnregisterKeyPress(GLFW_KEY_ESCAPE);
+    glfw.UnregisterKeyPress(GLFW_KEY_RIGHT);
+    glfw.UnregisterKeyPress(GLFW_KEY_LEFT);
+    glfw.UnregisterKeyPress(GLFW_KEY_DOWN);
+    glfw.UnregisterKeyPress(GLFW_KEY_UP);
+    glfw.UnregisterMousePosCallback();
+    glfw.UnregisterScroll();
+    glfw.UnregisterMouse(GLFW_MOUSE_BUTTON_LEFT);
+    glfw.UnregisterMouse(GLFW_MOUSE_BUTTON_RIGHT);
+    glfw.UnregisterMouse(GLFW_MOUSE_BUTTON_MIDDLE);
+    glfw.UnregisterKey(GLFW_KEY_LEFT_ALT);
+    glfw.UnregisterKeyPress(GLFW_KEY_DELETE);
+}
 
 void
-Game::SetScreenDims(int width, int height) {
+Board::SetScreenDims(int width, int height) {
     (void)width;
     (void)height;
 
@@ -164,20 +180,20 @@ Game::SetScreenDims(int width, int height) {
 }
 
 void
-Game::init_shaders() {
+Board::init_shaders() {
     ResourceManager::LoadShader("shaders/sprite.vert", "shaders/sprite.frag", nullptr, "sprite");
     ResourceManager::LoadShader("shaders/board.vert", "shaders/board.frag", nullptr, "board");
     ResourceManager::SetGlobalInteger("image", 0);
 }
 
 void
-Game::init_objects() {
+Board::init_objects() {
     SendNewPage("Default");
     ActivePage = Pages.begin();
 }
 
 void
-Game::set_projection() {
+Board::set_projection() {
     static GLFW &glfw       = GLFW::GetInstance();
     glm::mat4    projection = glm::ortho(
         0.0f,
@@ -190,7 +206,7 @@ Game::set_projection() {
 }
 
 void
-Game::UpdateMouse() {
+Board::UpdateMouse() {
     static GUI &gui = GUI::GetInstance();
     if (ActivePage == Pages.end()) { return; }
     Page &pg = **ActivePage;
@@ -244,7 +260,7 @@ Game::UpdateMouse() {
 }
 
 void
-Game::Update(float dt) {
+Board::Update(float dt) {
     ProcessUIEvents();
     if (ActivePage != Pages.end()) {
         Page &pg = **ActivePage;
@@ -258,13 +274,13 @@ Game::Update(float dt) {
 }
 
 void
-Game::Render() {
+Board::Draw() {
     if (ActivePage != Pages.end()) { (**ActivePage).Draw(); }
     UserInterface.Draw(Pages, ActivePage);
 }
 
 void
-Game::ProcessUIEvents() {
+Board::ProcessUIEvents() {
     if (UserInterface.ActivePage == 0) {
         ActivePage = Pages.begin();
     } else {
@@ -294,13 +310,13 @@ Game::ProcessUIEvents() {
 }
 
 void
-Game::AddPage(std::unique_ptr<Page> &&pg) {
+Board::AddPage(std::unique_ptr<Page> &&pg) {
     PagesMap.insert(std::make_pair(pg->Uid, std::ref(*pg)));
     Pages.push_back(std::move(pg));
 }
 
 void
-Game::SendNewPage(std::string name) {
+Board::SendNewPage(std::string name) {
     auto pg = std::make_unique<Page>(name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
@@ -310,7 +326,7 @@ Game::SendNewPage(std::string name) {
 }
 
 void
-Game::SendUpdatedPage() {
+Board::SendUpdatedPage() {
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.RegisterPageChange("ADD_PAGE", (*ActivePage)->Uid, (*ActivePage)->Serialize());
@@ -318,30 +334,14 @@ Game::SendUpdatedPage() {
 }
 
 void
-Game::start_server() {
-    ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
-    cs.Start(5005);
-    register_network_callbacks();
-}
-
-void
-Game::start_client() {
-    Pages.clear();
-    PagesMap.clear();
-    ActivePage       = Pages.end();
-    ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
-    cs.Start(5005, "Test Client", "localhost");
-    register_network_callbacks();
-}
-
-void
-Game::handle_page_add_piece(NetworkData &&q) {
+Board::handle_page_add_piece(NetworkData &&q) {
     static ClientServer &cs = ClientServer::GetInstance();
     auto                 g  = std::make_unique<GameObject>(q.Parse<GameObject>());
     if (ResourceManager::Images.find(g->Sprite.ImageUID) == ResourceManager::Images.end()) {
         // Image isn't cached, need to request it
         cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, g->Sprite.ImageUID);
     } else {
+        // Image is cached, just grab it from the resource manager
         g->Sprite = ResourceManager::GetTexture(g->Sprite.ImageUID);
     }
     // See if page exists and place piece new in it if it does
@@ -355,7 +355,7 @@ Game::handle_page_add_piece(NetworkData &&q) {
 }
 
 void
-Game::handle_page_move_piece(NetworkData &&q) {
+Board::handle_page_move_piece(NetworkData &&q) {
     auto piece_data = q.Parse<NetworkData>();
     // Find the relevant page
     auto page_it = PagesMap.find(q.Uid);
@@ -371,7 +371,7 @@ Game::handle_page_move_piece(NetworkData &&q) {
 }
 
 void
-Game::handle_page_resize_piece(NetworkData &&q) {
+Board::handle_page_resize_piece(NetworkData &&q) {
     auto piece_data = q.Parse<NetworkData>();
     // Find the relevant page
     auto page_it = PagesMap.find(q.Uid);
@@ -387,7 +387,7 @@ Game::handle_page_resize_piece(NetworkData &&q) {
 }
 
 void
-Game::handle_new_image(NetworkData &&q) {
+Board::handle_new_image(NetworkData &&q) {
     ResourceManager::Images[q.Uid] = q.Parse<ImageData>();
     // Check which gameobjects need this texture and apply it.
     for (auto &pg : Pages) {
@@ -398,13 +398,13 @@ Game::handle_new_image(NetworkData &&q) {
 }
 
 void
-Game::handle_client_join(NetworkData &&q) {
+Board::handle_client_join(NetworkData &&q) {
     static ClientServer &cs = ClientServer::GetInstance();
     SendAllPages(q.Uid);
 }
 
 void
-Game::handle_page_delete_piece(NetworkData &&q) {
+Board::handle_page_delete_piece(NetworkData &&q) {
     auto piece_data = q.Parse<NetworkData>();
     // Find the relevant page
     auto page_it = PagesMap.find(q.Uid);
@@ -417,7 +417,7 @@ Game::handle_page_delete_piece(NetworkData &&q) {
 }
 
 void
-Game::handle_add_page(NetworkData &&q) {
+Board::handle_add_page(NetworkData &&q) {
     auto pg      = Page::Deserialize(q.Data);
     auto page_it = PagesMap.find(q.Uid);
     if (page_it == PagesMap.end()) {
@@ -428,12 +428,12 @@ Game::handle_add_page(NetworkData &&q) {
 }
 
 void
-Game::handle_change_player_view(NetworkData &&q) {
+Board::handle_change_player_view(NetworkData &&q) {
     UserInterface.ActivePage = q.Uid;
 }
 
 void
-Game::register_network_callbacks() {
+Board::register_network_callbacks() {
     ClientServer &cs = ClientServer::GetInstance();
     cs.RegisterCallback("MOVE_PIECE", [this](NetworkData &&d) {
         handle_page_move_piece(std::move(d));
@@ -456,7 +456,7 @@ Game::register_network_callbacks() {
 }
 
 void
-Game::SendAllPages(uint64_t client_uid) {
+Board::SendAllPages(uint64_t client_uid) {
     if (ClientServer::Started()) {
         for (auto &pg : Pages) {
             ClientServer &cs = ClientServer::GetInstance();

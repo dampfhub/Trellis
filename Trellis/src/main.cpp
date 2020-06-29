@@ -1,8 +1,7 @@
 #include "GUI.h"
-#include "game.h"
 #include "glfw_handler.h"
-#include "resource_manager.h"
 #include "stb_image.h"
+#include "state_manager.h"
 
 #include <iostream>
 
@@ -17,8 +16,7 @@ main() {
         return -1;
     }
 
-    GUI & gui = GUI::GetInstance();
-    Game &Dnd = Game::GetInstance();
+    GUI &gui = GUI::GetInstance();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -35,9 +33,7 @@ main() {
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    // start game within menu state
-    // ----------------------------
-    Dnd.State = GAME_MENU;
+    StateManager &sm = StateManager::GetInstance();
 
     while (!glfw.WindowShouldClose()) {
         // calculate delta time
@@ -52,11 +48,11 @@ main() {
 
         // update game state
         // -----------------
-        Dnd.Update(deltaTime);
+        sm.Update(deltaTime);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        Dnd.Render();
+        sm.Draw();
         gui.Render();
         glfw.SwapBuffers();
     }

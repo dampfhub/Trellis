@@ -5,6 +5,7 @@
 #include "data.h"
 #include "page.h"
 #include "ui.h"
+#include "game_state.h"
 
 #include <functional>
 #include <glm/glm.hpp>
@@ -12,21 +13,14 @@
 #include <unordered_map>
 #include <vector>
 
-// Represents the current state of the game
-enum GameState { GAME_ACTIVE, GAME_MENU };
-
-// Game holds all game-related state and functionality.
-// Combines all game-related data into a single class for
-// easy access to each of the components and manageability.
-class Game {
+class Board : public GameState {
 public:
-    Game(Game const &) = delete; // Disallow copying
-    void operator=(Game const &) = delete;
+    Board(Board const &) = delete; // Disallow copying
+    void operator=(Board const &) = delete;
 
-    static Game &GetInstance();
+    Board();
+    ~Board();
 
-    // game state
-    GameState State;
     enum { NONE, PRESS, HOLD, RELEASE } LeftClick, RightClick, MiddleClick;
     glm::ivec2 MousePos;
     int        ScrollDirection;
@@ -35,22 +29,22 @@ public:
     Page::page_list_it_t                                       ActivePage = Pages.end();
     std::unordered_map<uint64_t, std::reference_wrapper<Page>> PagesMap;
 
-    bool snapping = true;
+    uint64_t Uid;
 
     // setters
     void SetScreenDims(int width, int height);
 
     // game loop
-    void Update(float dt);
+    void Update(float dt) override;
 
-    void Render();
+    void Draw() override;
+
+    void RegisterKeyCallbacks() override;
+
+    void UnregisterKeyCallbacks() override;
 
 private:
     UI UserInterface;
-
-    Game();
-
-    ~Game();
 
     void init_shaders();
 
@@ -61,10 +55,6 @@ private:
     void ProcessUIEvents();
 
     void UpdateMouse();
-
-    void start_server();
-
-    void start_client();
 
     void register_network_callbacks();
 

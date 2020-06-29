@@ -42,8 +42,12 @@ NetworkManager::StartClient(
 NetworkManager::NetworkQueue::NetworkQueue()
     : should_clear(false) {}
 
-NetworkManager::NetworkQueue::~NetworkQueue() {}
-
+NetworkManager::NetworkQueue::~NetworkQueue() {
+    NetworkManager &nm = NetworkManager::GetInstance();
+    std::remove_if(nm.queues[channel_name].begin(), nm.queues[channel_name].end(), [this](std::weak_ptr<NetworkQueue> p) {
+        return p.expired() || p.lock().get() == this;
+    });
+}
 std::shared_ptr<NetworkManager::NetworkQueue>
 NetworkManager::NetworkQueue::Subscribe(std::string cname) {
     auto ptr          = std::shared_ptr<NetworkQueue>(new NetworkQueue());
@@ -124,6 +128,7 @@ NetworkManager::network_object::handle_read_body(
             });
     } else {
         std::cout << "Read Body Error: " << error.message() << std::endl;
+        handle_error(sock, buf, error);
     }
 }
 

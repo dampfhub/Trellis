@@ -16,6 +16,10 @@ public:
 
     void SetCursor(ImGuiMouseCursor_ cursor);
 
+    ImFont *DefaultFont;
+    ImFont *MediumFont;
+    ImFont *BigFont;
+
 private:
     // Declaration of io must appear above Want... members for correct
     // constructor initialization order.

@@ -38,7 +38,9 @@ GUI::GUI()
     ImGui_ImplGlfw_InitForOpenGL(glfw.GetWindow(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    io.Fonts->AddFontFromFileTTF("fonts/Roboto.TTF", 20.0f);
+    DefaultFont = io.Fonts->AddFontFromFileTTF("fonts/Roboto.TTF", 20.0f);
+    MediumFont = io.Fonts->AddFontFromFileTTF("fonts/Roboto.TTF", 40.0f);
+    BigFont = io.Fonts->AddFontFromFileTTF("fonts/Roboto.TTF", 80.0f);
 }
 
 GUI::~GUI() {
