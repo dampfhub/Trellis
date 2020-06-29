@@ -83,6 +83,8 @@ public:
     };
 
 private:
+    friend class NetworkQueue;
+
     asio::io_context context;
 
     NetworkManager() = default;

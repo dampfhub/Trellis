@@ -1,7 +1,11 @@
 #ifndef STATE_MANAGER_H
 #define STATE_MANAGER_H
 
-#include "game.h"
+#include "board.h"
+#include "game_state.h"
+
+#include <functional>
+#include <unordered_map>
 
 class StateManager {
 public:
@@ -10,8 +14,17 @@ public:
 
     static StateManager &GetInstance();
 
+    void Update(float dt);
+    void Draw();
+
+    void StartNewGame(bool is_client = false);
+
 private:
-    StateManager() = default;
+    std::unique_ptr<GameState>                           main_menu;
+    std::reference_wrapper<GameState>                    current_state;
+    std::unordered_map<uint64_t, std::unique_ptr<Board>> boards_map;
+
+    StateManager();
 };
 
 #endif

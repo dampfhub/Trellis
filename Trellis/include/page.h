@@ -27,6 +27,7 @@ public:
     std::string               Name;
     std::unique_ptr<Camera2D> Camera;
     std::unique_ptr<PageUI>   UserInterface;
+    bool                      Snapping = true;
 
     uint64_t Uid;
 
@@ -37,7 +38,6 @@ public:
         glm::vec2   pos       = glm::vec2(0.0f, 0.0f),
         glm::vec2   size      = glm::vec2(100.0f, 100.0f),
         glm::ivec2  cell_dims = glm::ivec2(20, 20),
-        // TODO: This should be 0 when we are sending pages correctly
         uint64_t uid = 0);
 
     Page(const Page &) = delete;
