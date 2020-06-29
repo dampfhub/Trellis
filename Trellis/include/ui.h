@@ -27,8 +27,8 @@ public:
     std::string PageName = "";
     int         PageX, PageY;
 
-    int ActivePage     = 0;
-    int PlayerPageView = 0;
+    uint64_t ActivePage     = 0;
+    int      PlayerPageView = 0;
 
     ~UI();
     UI();
@@ -39,8 +39,7 @@ public:
 
     void DrawClientList();
 
-    Page::page_list_it_t GetActivePage(Page::page_list_t &pages);
-    void                 ClearFlags();
+    void ClearFlags();
 
 private:
     char PageNameBuf[128] = "";

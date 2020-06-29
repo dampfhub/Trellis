@@ -123,11 +123,16 @@ UI::DrawPageSelect(Page::page_list_t &pages, Page::page_list_it_t &active_page) 
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5, 0.5, 0.5, 1));
         }
         if (ImGui::Button(page->Name.c_str(), ImVec2(ImGui::GetWindowSize().x * 0.5f, 0.0f))) {
-            ActivePage = i;
+            ActivePage = page->Uid;
         }
         if (page == *active_page) { ImGui::PopStyleColor(1); }
         ImGui::SameLine();
-        ImGui::RadioButton(("##" + std::to_string(i)).c_str(), &PlayerPageView, i);
+        if (ImGui::RadioButton(("##" + std::to_string(i)).c_str(), &PlayerPageView, i)) {
+            if (ClientServer::Started()) {
+                static ClientServer &cs = ClientServer::GetInstance();
+                cs.RegisterPageChange("PLAYER_VIEW", page->Uid, "");
+            }
+        }
         i++;
     }
     ImGui::End();
@@ -150,17 +155,10 @@ UI::DrawPageSettings(Page::page_list_it_t &active_page) {
     if (ImGui::Button("Done", ImVec2(120, 0.0f))) {
         PageSettingsOpen = false;
         pg.setCellDims(glm::ivec2(PageX, PageY));
-        pg.Name = PageNameBuf;
+        pg.Name      = PageNameBuf;
         SettingsPage = true;
     }
     ImGui::End();
-}
-
-Page::page_list_it_t
-UI::GetActivePage(Page::page_list_t &pages) {
-    auto it = pages.begin();
-    std::advance(it, ActivePage);
-    return it;
 }
 
 void
