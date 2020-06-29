@@ -265,7 +265,13 @@ Game::Render() {
 
 void
 Game::ProcessUIEvents() {
-    ActivePage = UserInterface.GetActivePage(Pages);
+    if (UserInterface.ActivePage == 0) {
+        ActivePage = Pages.begin();
+    } else {
+        ActivePage = std::find_if(Pages.begin(), Pages.end(), [this](unique_ptr<Page> &pg) {
+            return pg->Uid == UserInterface.ActivePage;
+        });
+    }
     if (UserInterface.FileDialog->HasSelected()) {
         std::string file_name =
             Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
@@ -422,6 +428,11 @@ Game::handle_add_page(NetworkData &&q) {
 }
 
 void
+Game::handle_change_player_view(NetworkData &&q) {
+    UserInterface.ActivePage = q.Uid;
+}
+
+void
 Game::register_network_callbacks() {
     ClientServer &cs = ClientServer::GetInstance();
     cs.RegisterCallback("MOVE_PIECE", [this](NetworkData &&d) {
@@ -439,6 +450,9 @@ Game::register_network_callbacks() {
     cs.RegisterCallback("NEW_IMAGE", [this](NetworkData &&d) { handle_new_image(std::move(d)); });
     cs.RegisterCallback("JOIN", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
     cs.RegisterCallback("ADD_PAGE", [this](NetworkData &&d) { handle_add_page(std::move(d)); });
+    cs.RegisterCallback("PLAYER_VIEW", [this](NetworkData &&d) {
+        handle_change_player_view(std::move(d));
+    });
 }
 
 void

@@ -83,6 +83,9 @@ private:
 
     void handle_add_page(Data::NetworkData &&q);
 
+    // Host only command
+    void handle_change_player_view(Data::NetworkData &&q);
+
     Page::MouseHoverType current_hover_type = Page::MouseHoverType::NONE;
 
     void AddPage(std::unique_ptr<Page> &&pg);
