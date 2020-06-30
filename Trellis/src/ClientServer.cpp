@@ -136,7 +136,9 @@ Server::handle_client_join(NetworkData d) {
 void
 Server::handle_forward_data(std::string channel, NetworkData d) {
     for (auto &client : ConnectedClients) {
-        if (client.Uid != d.ClientUid) { RegisterPageChange(channel, d.Uid, d.Data, client.Uid); }
+        if (client.Uid != 0 && client.Uid != d.ClientUid) {
+            RegisterPageChange(channel, d.Uid, d.Data, client.Uid);
+        }
     }
 }
 
