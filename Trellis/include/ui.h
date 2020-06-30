@@ -8,6 +8,7 @@
 #include "imfilebrowser.h"
 #include "imgui_stdlib.h"
 #include "page.h"
+#include "data.h"
 
 #include <string>
 #include <vector>
@@ -34,17 +35,28 @@ public:
     ~UI();
     UI();
     void Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page);
-    void DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page);
-    void DrawPageSelect(Page::page_list_t &pages, Page::page_list_it_t &active_page);
-    void DrawPageSettings(Page::page_list_it_t &active_page);
-
-    void DrawClientList();
 
     void ClearFlags();
 
 private:
-    std::string page_name_buf;
+    std::string                    page_name_buf;
+    std::string                    send_msg_buf;
+    std::vector<Data::ChatMessage> chat_messages;
+    bool                           main_menu_open    = true;
+    bool                           input_needs_focus = true;
+    bool                           scroll_to_bottom  = false;
+    bool                           chat_open         = false;
 
-    bool main_menu_open = true;
+    void draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page);
+    void draw_page_select(Page::page_list_t &pages, Page::page_list_it_t &active_page);
+    void draw_page_settings(Page::page_list_it_t &active_page);
+    void draw_chat();
+    void draw_client_list();
+
+    void send_msg();
+
+    void handle_chat_msg(Data::NetworkData &&q);
+
+    void handle_client_join(Data::NetworkData &&q);
 };
 #endif

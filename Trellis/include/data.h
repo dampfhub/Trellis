@@ -2,6 +2,8 @@
 #define DATA_H
 
 #include "util.h"
+#include <chrono>
+#include <ctime>
 
 namespace Data {
 class ClientInfo : public Util::Serializable<ClientInfo> {
@@ -82,5 +84,24 @@ private:
 
     static NetworkData deserialize_impl(const std::vector<std::byte> &vec);
 };
+
+class ChatMessage : public Util::Serializable<ChatMessage> {
+public:
+    std::time_t TimeStamp;
+    uint64_t Uid;
+    std::string SenderName;
+    std::string Msg;
+
+    ChatMessage() = default;
+    explicit ChatMessage(std::string sender_name, std::string msg);
+
+    std::vector<std::byte> Serialize() const override;
+
+private:
+    friend Serializable<ChatMessage>;
+
+    static ChatMessage deserialize_impl(const std::vector<std::byte> &vec);
+};
+
 } // namespace Data
 #endif
