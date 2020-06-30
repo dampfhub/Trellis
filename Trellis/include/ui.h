@@ -6,6 +6,7 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_internal.h"
 #include "imfilebrowser.h"
+#include "imgui_stdlib.h"
 #include "page.h"
 
 #include <string>
@@ -42,7 +43,7 @@ public:
     void ClearFlags();
 
 private:
-    char PageNameBuf[128] = "";
+    std::string page_name_buf;
 
     bool main_menu_open = true;
 };

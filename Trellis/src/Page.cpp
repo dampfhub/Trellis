@@ -339,7 +339,6 @@ Page::WorldPosToScreenPos(glm::ivec2 pos) {
 void
 Page::SendAllPieces(uint64_t target_uid) {
     if (ClientServer::Started()) {
-        std::cout << Pieces.size() << std::endl;
         for (auto piece = Pieces.rbegin(); piece != Pieces.rend(); ++piece) {
             ClientServer &cs = ClientServer::GetInstance();
             cs.RegisterPageChange("ADD_PIECE", Uid, **piece, target_uid);

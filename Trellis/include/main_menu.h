@@ -2,6 +2,8 @@
 #define MAIN_MENU_H
 #include "game_state.h"
 
+#include <string>
+
 class MainMenu : public GameState {
 public:
     MainMenu();
@@ -24,8 +26,8 @@ private:
 
     void clear_flags();
 
-    char buf[256]  = {0};
-    char hostname_buf[256] = {0};
+    std::string client_name_buf;
+    std::string host_name_buf;
     int  port_buf  = 5005;
 };
 
