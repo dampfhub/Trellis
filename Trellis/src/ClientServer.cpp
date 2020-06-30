@@ -43,7 +43,6 @@ ClientServer::RegisterCallback(std::string channel_name, ClientServer::queue_han
 
 void
 Client::Start(int port_num, std::string name, std::string hostname) {
-    name = name;
     // Uid will get filled in from db or generated new
     uid                = Util::generate_uid();
     NetworkManager &nm = NetworkManager::GetInstance();
