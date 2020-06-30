@@ -43,7 +43,6 @@ ClientServer::RegisterCallback(std::string channel_name, ClientServer::queue_han
 
 void
 Client::Start(int port_num, std::string name, std::string hostname) {
-    client_name = name;
     // Uid will get filled in from db or generated new
     uid                = Util::generate_uid();
     NetworkManager &nm = NetworkManager::GetInstance();
@@ -56,6 +55,7 @@ Client::Start(int port_num, std::string name, std::string hostname) {
     RegisterCallback("CLIENT_DELETE", [this](NetworkData &&d) {
         handle_client_delete(std::move(d));
     });
+    Name = name;
 }
 
 void
@@ -74,18 +74,18 @@ Client::handle_image_request(NetworkData &&q) {
 void
 Client::handle_client_add(NetworkData &&q) {
     auto client = q.Parse<ClientInfo>();
-    connected_clients.push_back(client);
-    std::sort(connected_clients.begin(), connected_clients.end(), [](ClientInfo c1, ClientInfo c2) {
+    ConnectedClients.push_back(client);
+    std::sort(ConnectedClients.begin(), ConnectedClients.end(), [](ClientInfo c1, ClientInfo c2) {
         return c1.Uid < c2.Uid;
     });
 }
 
 void
 Client::handle_client_delete(NetworkData &&q) {
-    auto it = std::find_if(connected_clients.begin(), connected_clients.end(), [q](ClientInfo &c) {
+    auto it = std::find_if(ConnectedClients.begin(), ConnectedClients.end(), [q](ClientInfo &c) {
         return c.Uid == q.Uid;
     });
-    if (it != connected_clients.end()) { connected_clients.erase(it); }
+    if (it != ConnectedClients.end()) { ConnectedClients.erase(it); }
 }
 
 void
@@ -94,7 +94,7 @@ Server::Start(int port, std::string name, std::string hostname) {
     NetworkManager &nm = NetworkManager::GetInstance();
     nm.StartServer(port);
     std::vector<std::string> forward_channels =
-        {"ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE", "ADD_PAGE"};
+        {"ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE", "ADD_PAGE", "CHAT_MSG"};
     for (auto &str : forward_channels) {
         RegisterCallback(str, [this, str](NetworkData &&d) {
             handle_forward_data(str, std::move(d));
@@ -110,7 +110,8 @@ Server::Start(int port, std::string name, std::string hostname) {
     });
     started = true;
     // TODO allow hosts to set their name aswell
-    connected_clients.emplace_back(0, "Host");
+    Name = "Host";
+    ConnectedClients.emplace_back(0, Name);
 }
 
 void
@@ -124,17 +125,17 @@ Server::handle_client_join(NetworkData d) {
     // Send new client out to all connected clients
     RegisterPageChange("CLIENT_ADD", uid, new_client);
     // Send all clients to the client that just connected
-    for (auto &c : connected_clients) { RegisterPageChange("CLIENT_ADD", uid, c, d.Uid); }
-    connected_clients.emplace_back(new_client);
+    for (auto &c : ConnectedClients) { RegisterPageChange("CLIENT_ADD", uid, c, d.Uid); }
+    ConnectedClients.emplace_back(new_client);
     std::sort(
-        connected_clients.begin(),
-        connected_clients.end(),
+        ConnectedClients.begin(),
+        ConnectedClients.end(),
         [](const ClientInfo &c1, const ClientInfo &c2) { return c1.Uid < c2.Uid; });
 }
 
 void
 Server::handle_forward_data(std::string channel, NetworkData d) {
-    for (auto &client : connected_clients) {
+    for (auto &client : ConnectedClients) {
         if (client.Uid != d.ClientUid) { RegisterPageChange(channel, d.Uid, d.Data, client.Uid); }
     }
 }
@@ -167,9 +168,9 @@ Server::handle_new_image(NetworkData &&q) {
 
 void
 Server::handle_client_disconnect(NetworkData &&q) {
-    auto it = std::find_if(connected_clients.begin(), connected_clients.end(), [q](ClientInfo &c) {
+    auto it = std::find_if(ConnectedClients.begin(), ConnectedClients.end(), [q](ClientInfo &c) {
         return c.Uid == q.Uid;
     });
-    if (it != connected_clients.end()) { connected_clients.erase(it); }
+    if (it != ConnectedClients.end()) { ConnectedClients.erase(it); }
     RegisterPageChange("CLIENT_DELETE", q.Uid, 0);
 }

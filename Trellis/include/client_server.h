@@ -39,9 +39,11 @@ public:
 
     virtual void handle_image_request(Data::NetworkData &&q) = 0;
 
-    std::vector<Data::ClientInfo> connected_clients;
+    std::vector<Data::ClientInfo> ConnectedClients;
 
     uint64_t uid;
+
+    std::string Name;
 
 protected:
     class NetworkQueueCallback {
@@ -93,7 +95,6 @@ private:
 
     void handle_client_delete(Data::NetworkData &&q);
 
-    std::string client_name;
 };
 
 class Server : public ClientServer {
