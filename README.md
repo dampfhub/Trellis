@@ -5,6 +5,7 @@
 * glad
 * glm
 * freetype
+* asio
 
 ## Quickstart Contribution Guide
 * Clone repo
