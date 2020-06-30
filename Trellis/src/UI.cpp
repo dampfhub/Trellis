@@ -61,20 +61,19 @@ UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
         ImGui::SameLine();
         if (ImGui::InputText(
                 "##edit",
-                PageNameBuf,
-                IM_ARRAYSIZE(PageNameBuf),
+                &page_name_buf,
                 ImGuiInputTextFlags_EnterReturnsTrue)) {
             ImGui::CloseCurrentPopup();
-            PageName = PageNameBuf;
-            strcpy(PageNameBuf, "");
+            PageName = page_name_buf;
+            page_name_buf = "";
             AddPage     = true;
             PageAddOpen = false;
         }
         ImGui::Separator();
         if (ImGui::Button("OK", ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
-            PageName = PageNameBuf;
-            strcpy(PageNameBuf, "");
+            PageName = page_name_buf;
+            page_name_buf = "";
             AddPage     = true;
             PageAddOpen = false;
         }
@@ -93,7 +92,7 @@ UI::DrawMenu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     }
     if (ImGui::Button("Page Settings")) {
         PageSettingsOpen = !PageSettingsOpen;
-        strcpy(PageNameBuf, (**active_page).Name.c_str());
+        page_name_buf = (**active_page).Name;
         auto pg_dims = (*active_page)->getCellDims();
         PageX        = pg_dims.x;
         PageY        = pg_dims.y;
@@ -147,7 +146,7 @@ UI::DrawPageSettings(Page::page_list_it_t &active_page) {
         &PageSettingsOpen,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("Page Name: ");
-    ImGui::InputText("##name", PageNameBuf, IM_ARRAYSIZE(PageNameBuf));
+    ImGui::InputText("##name", &page_name_buf);
 
     ImGui::Text("Board Dimensions: ");
     ImGui::InputInt("X", &PageX);
@@ -155,7 +154,7 @@ UI::DrawPageSettings(Page::page_list_it_t &active_page) {
     if (ImGui::Button("Done", ImVec2(120, 0.0f))) {
         PageSettingsOpen = false;
         pg.setCellDims(glm::ivec2(PageX, PageY));
-        pg.Name      = PageNameBuf;
+        pg.Name      = page_name_buf;
         SettingsPage = true;
     }
     ImGui::End();
