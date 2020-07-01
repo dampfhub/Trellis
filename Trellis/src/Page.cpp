@@ -134,7 +134,7 @@ Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
         GameObject &piece = **CurrentSelection;
         if (ClientServer::Started()) {
             ClientServer &ns = ClientServer::GetInstance();
-            ns.RegisterPageChange("ADD_PIECE", Uid, piece);
+            ns.RegisterPageChange("ADD_PIECE", Uid, (CoreGameObject)piece);
         }
         CurrentSelection = Pieces.end();
         return;

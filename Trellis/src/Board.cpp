@@ -336,21 +336,22 @@ Board::SendUpdatedPage() {
 void
 Board::handle_page_add_piece(NetworkData &&q) {
     static ClientServer &cs = ClientServer::GetInstance();
-    auto                 g  = std::make_unique<GameObject>(q.Parse<GameObject>());
-    if (ResourceManager::Images.find(g->Sprite.ImageUID) == ResourceManager::Images.end()) {
+    auto                 g  = q.Parse<CoreGameObject>();
+    auto obj = make_unique<GameObject>(g);
+    if (ResourceManager::Images.find(obj->SpriteUid) == ResourceManager::Images.end()) {
         // Image isn't cached, need to request it
-        cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, g->Sprite.ImageUID);
+        cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, obj->SpriteUid);
     } else {
         // Image is cached, just grab it from the resource manager
-        g->Sprite = ResourceManager::GetTexture(g->Sprite.ImageUID);
+        obj->Sprite = ResourceManager::GetTexture(obj->SpriteUid);
     }
     // See if page exists and place piece new in it if it does
     auto it = PagesMap.find(q.Uid);
     if (it != PagesMap.end()) {
         Page &pg       = (*it).second;
-        auto  piece_it = pg.PiecesMap.find(g->Uid);
+        auto  piece_it = pg.PiecesMap.find(obj->Uid);
         // Only add piece if it doesn't already exist
-        if (piece_it == pg.PiecesMap.end()) { pg.AddPiece(std::move(g)); }
+        if (piece_it == pg.PiecesMap.end()) { pg.AddPiece(std::move(obj)); }
     }
 }
 
@@ -392,7 +393,7 @@ Board::handle_new_image(NetworkData &&q) {
     // Check which gameobjects need this texture and apply it.
     for (auto &pg : Pages) {
         for (auto &go : pg->Pieces) {
-            if (go->Sprite.ImageUID == q.Uid) { go->Sprite = ResourceManager::GetTexture(q.Uid); }
+            if (go->SpriteUid == q.Uid) { go->Sprite = ResourceManager::GetTexture(q.Uid); }
         }
     }
 }
