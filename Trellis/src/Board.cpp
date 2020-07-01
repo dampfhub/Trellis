@@ -317,7 +317,7 @@ Board::AddPage(std::unique_ptr<Page> &&pg) {
 
 void
 Board::SendNewPage(std::string name) {
-    auto pg = std::make_unique<Page>(name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
+    auto pg = std::make_unique<Page>(name);
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.RegisterPageChange("ADD_PAGE", pg->Uid, pg->Serialize());
@@ -419,12 +419,12 @@ Board::handle_page_delete_piece(NetworkData &&q) {
 
 void
 Board::handle_add_page(NetworkData &&q) {
-    auto pg      = Page::Deserialize(q.Data);
+    auto pg      = CorePage::Deserialize(q.Data);
     auto page_it = PagesMap.find(q.Uid);
     if (page_it == PagesMap.end()) {
         AddPage(std::make_unique<Page>(std::move(pg)));
     } else {
-        page_it->second.get().CopySettingsFromPage(pg);
+        page_it->second.get() = pg;
     }
 }
 
@@ -461,7 +461,8 @@ Board::SendAllPages(uint64_t client_uid) {
     if (ClientServer::Started()) {
         for (auto &pg : Pages) {
             ClientServer &cs = ClientServer::GetInstance();
-            cs.RegisterPageChange("ADD_PAGE", pg->Uid, Util::serialize_vec(*pg), client_uid);
+            CorePage &core = *pg;
+            cs.RegisterPageChange("ADD_PAGE", core.Uid, Util::serialize_vec(core), client_uid);
             pg->SendAllPieces(client_uid);
         }
     }

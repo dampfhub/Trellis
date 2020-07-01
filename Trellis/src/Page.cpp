@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "page.h"
 
 #include "board_renderer.h"
@@ -12,27 +14,34 @@ using std::make_unique, std::move, std::string, std::exchange, std::unique_ptr, 
 
 using Data::NetworkData;
 
-Page::Page(string name, glm::vec2 pos, glm::vec2 size, glm::ivec2 cell_dims, uint64_t uid)
-    : Name(name)
-    , Uid(uid)
-    , board_transform(pos, size, 0)
-    , cell_dims(cell_dims)
+Page::Page(
+    const string &    name,
+    const Transform & boardTransform,
+    const glm::ivec2 &cell_dims,
+    uint64_t          uid)
+    : CorePage(name, boardTransform, cell_dims, uid)
     , board_renderer(this->board_transform, this->View, this->cell_dims) {
     Camera        = make_unique<Camera2D>(200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = make_unique<PageUI>();
     if (Uid == 0) { Uid = Util::generate_uid(); }
 }
 
-Page::~Page() {}
+Page::Page(const CorePage &other)
+    : board_renderer(this->board_transform, this->View, this->cell_dims) {
+    *this         = other;
+    Camera        = make_unique<Camera2D>(200.0f, glm::vec2(0.4f, 2.5f));
+    UserInterface = make_unique<PageUI>();
+    if (Uid == 0) { Uid = Util::generate_uid(); }
+}
 
-Page::Page(Page &&other) noexcept
-    : Name(move(other.Name))
-    , board_transform(other.board_transform)
-    , Camera(exchange(other.Camera, nullptr))
-    , UserInterface(exchange(other.UserInterface, nullptr))
-    , Uid(exchange(other.Uid, -1))
-    , cell_dims(other.cell_dims)
-    , board_renderer(this->board_transform, this->View, this->cell_dims) {}
+Page &
+Page::operator=(const CorePage &other) {
+    (CorePage &)*this     = other;
+    board_transform.scale = glm::vec2(cell_dims) * TILE_DIMENSIONS;
+    return *this;
+}
+
+Page::~Page() {}
 
 void
 Page::AddPiece(unique_ptr<GameObject> &&piece) {
@@ -178,9 +187,9 @@ Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
 
 void
 Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
-    int          inc  = Snapping ? 1 : 8;
-    float        closest;
-    glm::vec2    world_mouse = ScreenPosToWorldPos(mouse_pos);
+    int       inc = Snapping ? 1 : 8;
+    float     closest;
+    glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
         GameObject &piece     = **CurrentSelection;
         glm::vec2   prev_pos  = piece.transform.position;
@@ -387,7 +396,7 @@ Page::DeleteCurrentSelection() {
 }
 
 vector<byte>
-Page::Serialize() const {
+CorePage::Serialize() const {
     vector<vector<byte>> bytes;
     bytes.push_back(Util::serialize_vec(Uid));
     bytes.push_back(Util::serialize_vec(board_transform));
@@ -396,16 +405,25 @@ Page::Serialize() const {
     return Util::flatten(bytes);
 }
 
-Page
-Page::deserialize_impl(const vector<byte> &vec) {
+CorePage
+CorePage::deserialize_impl(const vector<byte> &vec) {
     auto ptr       = vec.data();
     auto end       = ptr + vec.size();
     auto uid       = Util::deserialize<uint64_t>(ptr);
     auto t         = Util::deserialize<Transform>(ptr += sizeof(uid));
     auto cell_dims = Util::deserialize<glm::ivec2>(ptr += sizeof(t));
     auto name      = Util::deserialize<string>(vector(ptr += sizeof(cell_dims), end));
-    return Page(name, t.position, t.scale, cell_dims, uid);
+    return CorePage(name, t, cell_dims, uid);
 }
+CorePage::CorePage(
+    std::string name,
+    const Transform &  boardTransform,
+    const glm::ivec2 & cellDims,
+    uint64_t           uid)
+    : Uid(uid)
+    , Name(std::move(name))
+    , board_transform(boardTransform)
+    , cell_dims(cellDims) {}
 
 glm::ivec2
 Page::getCellDims() const {
@@ -418,12 +436,4 @@ Page::setCellDims(glm::ivec2 cellDims) {
     if (cellDims.y < 1) cellDims.y = 1;
     cell_dims             = cellDims;
     board_transform.scale = glm::vec2(cell_dims) * TILE_DIMENSIONS;
-}
-void
-Page::CopySettingsFromPage(const Page &other) {
-    board_transform = other.board_transform;
-    cell_dims = other.cell_dims;
-    Name = other.Name;
-    board_renderer.CellDims = cell_dims;
-    board_renderer.setTransform(board_transform);
 }

@@ -13,37 +13,55 @@
 #include <string>
 #include <unordered_map>
 
-class Page : public Util::Serializable<Page> {
+class CorePage : public Util::Serializable<CorePage> {
+public:
+    uint64_t    Uid{0};
+    std::string Name;
+
+    CorePage() = default;
+    CorePage(
+        std::string name,
+        const Transform &  boardTransform = {glm::vec2(0), glm::vec2(2000), 0},
+        const glm::ivec2 & cellDims       = glm::ivec2(20, 20),
+        uint64_t           uid            = 0);
+    std::vector<std::byte> Serialize() const override;
+
+protected:
+    Transform  board_transform;
+    glm::ivec2 cell_dims = glm::ivec2(20);
+
+    friend Serializable<CorePage>;
+    static CorePage deserialize_impl(const std::vector<std::byte> &vec);
+};
+
+class Page : public CorePage {
 public:
     using page_list_t    = std::list<std::unique_ptr<Page>>;
     using page_list_it_t = std::list<std::unique_ptr<Page>>::iterator;
 
     enum class MouseHoverType { NONE, N, E, S, W, NE, SE, SW, NW, CENTER };
     enum class ArrowkeyType { RIGHT, LEFT, DOWN, UP };
+    enum class MouseHoldType { NONE, PLACING, FOLLOWING, SCALING };
 
     static constexpr float TILE_DIMENSIONS = 100.0f;
 
     glm::mat4                 View = glm::mat4(1.0f);
-    std::string               Name;
     std::unique_ptr<Camera2D> Camera;
     std::unique_ptr<PageUI>   UserInterface;
     bool                      Snapping = true;
 
-    uint64_t Uid;
+    Page(
+        const std::string &name,
+        const Transform &  boardTransform = {glm::vec2(0), glm::vec2(2000), 0},
+        const glm::ivec2 & cellDims       = glm::ivec2(20, 20),
+        uint64_t           uid            = 0);
+    Page(const CorePage &other);
+    Page &operator=(const CorePage &other);
 
     ~Page();
 
-    Page(
-        std::string name,
-        glm::vec2   pos       = glm::vec2(0.0f, 0.0f),
-        glm::vec2   size      = glm::vec2(100.0f, 100.0f),
-        glm::ivec2  cell_dims = glm::ivec2(20, 20),
-        uint64_t uid = 0);
-
     Page(const Page &) = delete;
     Page &operator=(const Page &) = delete;
-
-    Page(Page &&other) noexcept;
     Page &operator=(Page &&other) noexcept = delete;
 
     // Mouse event handlers
@@ -76,8 +94,6 @@ public:
 
     void Update(glm::ivec2 mouse_pos);
 
-    void CopySettingsFromPage(const Page &other);
-
     void Draw();
 
     MouseHoverType HoverType(glm::ivec2 mouse_pos, GameObject &object);
@@ -95,18 +111,14 @@ public:
     std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
     std::list<std::unique_ptr<GameObject>>::iterator CurrentSelection = Pieces.end();
 
-    std::vector<std::byte> Serialize() const override;
-
     glm::ivec2 getCellDims() const;
     void       setCellDims(glm::ivec2 cellDims);
 
 private:
-    Transform     board_transform;
-    BoardRenderer board_renderer;
-    glm::ivec2    cell_dims                                                   = glm::ivec2(20);
-    glm::ivec2    DragOrigin                                                  = glm::ivec2(0);
-    enum class MouseHoldType { NONE, PLACING, FOLLOWING, SCALING } mouse_hold = MouseHoldType::NONE;
-    std::pair<int, int> ScaleEdges                                            = {0, 0};
+    BoardRenderer       board_renderer;
+    glm::ivec2          DragOrigin = glm::ivec2(0);
+    MouseHoldType       mouse_hold = MouseHoldType::NONE;
+    std::pair<int, int> ScaleEdges = {0, 0};
     glm::vec2           initialSize;
     glm::vec2           initialPos;
     int                 BorderWidth = 5;
@@ -120,9 +132,6 @@ private:
     void MoveCurrentSelection(glm::vec2 mouse_pos);
 
     void HandleUIEvents();
-
-    friend Serializable<Page>;
-    static Page deserialize_impl(const std::vector<std::byte> &vec);
 };
 
 #endif
