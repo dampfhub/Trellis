@@ -251,9 +251,11 @@ UI::draw_chat() {
                 "##send_msg",
                 &send_msg_buf,
                 ImVec2(win_size.x, win_size.y * 0.15),
-                ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine) &&
-            !send_msg_buf.empty()) {
-            send_msg();
+                ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine)) {
+            input_needs_focus = true;
+            if (!send_msg_buf.empty()) {
+                send_msg();
+            }
         }
         if (Button("Send", ImVec2(win_size.x, 0)) && !send_msg_buf.empty()) { send_msg(); }
     }
@@ -262,7 +264,6 @@ UI::draw_chat() {
 
 void
 UI::send_msg() {
-    input_needs_focus       = true;
     scroll_to_bottom        = true;
     static ClientServer &cs = ClientServer::GetInstance();
     ChatMessage          m(cs.Name, send_msg_buf);
