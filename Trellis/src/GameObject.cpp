@@ -31,13 +31,13 @@ CoreGameObject::Serialize() const {
 
 CoreGameObject
 CoreGameObject::deserialize_impl(const vector<byte> &vec) {
-    CoreGameObject      g;
-    const byte *        ptr = vec.data();
-    g.transform             = Util::deserialize<Transform>(ptr);
-    g.Color                 = Util::deserialize<glm::vec3>(ptr += sizeof(g.transform));
-    g.Uid                   = Util::deserialize<uint64_t>(ptr += sizeof(g.Color));
-    g.Clickable             = Util::deserialize<bool>(ptr += sizeof(g.Uid));
-    g.SpriteUid             = Util::deserialize<uint64_t>(ptr += sizeof(g.Clickable));
+    CoreGameObject g;
+    const byte *   ptr = vec.data();
+    g.transform        = Util::deserialize<Transform>(ptr);
+    g.Color            = Util::deserialize<glm::vec3>(ptr += sizeof(g.transform));
+    g.Uid              = Util::deserialize<uint64_t>(ptr += sizeof(g.Color));
+    g.Clickable        = Util::deserialize<bool>(ptr += sizeof(g.Uid));
+    g.SpriteUid        = Util::deserialize<uint64_t>(ptr += sizeof(g.Clickable));
     return g;
 }
 
@@ -54,10 +54,10 @@ GameObject::GameObject(const CoreGameObject &other) {
     }
 }
 
-GameObject::GameObject(const CoreGameObject &other, glm::mat4 &View): GameObject(other) {
+GameObject::GameObject(const CoreGameObject &other, glm::mat4 &View)
+    : GameObject(other) {
     renderer = make_unique<SpriteRenderer>(transform, View, Sprite);
 }
-
 
 GameObject &
 GameObject::operator=(const CoreGameObject &other) {

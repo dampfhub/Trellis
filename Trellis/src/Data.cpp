@@ -87,8 +87,7 @@ Data::ChatMessage::deserialize_impl(const vector<std::byte> &vec) {
     m.Uid             = Util::deserialize<uint64_t>(ptr += sizeof(m.TimeStamp));
     size_t sender_len = Util::deserialize<size_t>(ptr += sizeof(m.Uid));
     ptr += sizeof(sender_len);
-    m.SenderName =
-        Util::deserialize<std::string>(std::vector(ptr, ptr + sender_len));
+    m.SenderName   = Util::deserialize<std::string>(std::vector(ptr, ptr + sender_len));
     size_t msg_len = Util::deserialize<size_t>(ptr += sender_len);
     ptr += sizeof(msg_len);
     m.Msg = Util::deserialize<std::string>(std::vector(ptr, ptr + msg_len));

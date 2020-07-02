@@ -110,8 +110,6 @@ public:
     void       setCellDims(glm::ivec2 cellDims);
 
 private:
-    Page();
-
     BoardRenderer       board_renderer;
     glm::ivec2          DragOrigin = glm::ivec2(0);
     MouseHoldType       mouse_hold = MouseHoldType::NONE;

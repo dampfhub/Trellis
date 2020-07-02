@@ -25,7 +25,7 @@ UI::UI() {
 
 void
 UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
-    //ShowDemoWindow();
+    // ShowDemoWindow();
     // Display file dialog if it's open
     FileDialog->Display();
     draw_menu(pages, active_page);

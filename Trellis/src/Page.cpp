@@ -30,7 +30,7 @@ Page::~Page() {}
 
 GameObject &
 Page::AddPiece(const CoreGameObject &core_piece) {
-    auto obj        = make_unique<GameObject>(core_piece, View);
+    auto obj = make_unique<GameObject>(core_piece, View);
     PiecesMap.insert(make_pair(obj->Uid, ref(*obj)));
     Pieces.push_front(move(obj));
     return *Pieces.front();
@@ -38,11 +38,11 @@ Page::AddPiece(const CoreGameObject &core_piece) {
 
 void
 Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
-    auto core = CoreGameObject(transform, sprite.ImageUID, 0, true, glm::vec3(1));
-    auto &piece = AddPiece(core);
-    mouse_hold  = MouseHoldType::PLACING;
-    initialSize = piece.transform.scale;
-    initialPos  = piece.transform.position;
+    auto  core       = CoreGameObject(transform, sprite.ImageUID, 0, true, glm::vec3(1));
+    auto &piece      = AddPiece(core);
+    mouse_hold       = MouseHoldType::PLACING;
+    initialSize      = piece.transform.scale;
+    initialPos       = piece.transform.position;
     CurrentSelection = Pieces.begin();
 }
 
@@ -334,7 +334,7 @@ void
 Page::SendAllPieces(uint64_t target_uid) {
     if (ClientServer::Started()) {
         for (auto piece = Pieces.rbegin(); piece != Pieces.rend(); ++piece) {
-            ClientServer &cs = ClientServer::GetInstance();
+            ClientServer &  cs   = ClientServer::GetInstance();
             CoreGameObject &core = **piece;
             cs.RegisterPageChange("ADD_PIECE", Uid, core, target_uid);
         }
