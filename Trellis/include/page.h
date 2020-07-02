@@ -20,10 +20,10 @@ public:
 
     CorePage() = default;
     CorePage(
-        std::string name,
-        const Transform &  boardTransform = {glm::vec2(0), glm::vec2(2000), 0},
-        const glm::ivec2 & cellDims       = glm::ivec2(20, 20),
-        uint64_t           uid            = 0);
+        std::string       name,
+        const Transform & boardTransform = {glm::vec2(0), glm::vec2(2000), 0},
+        const glm::ivec2 &cellDims       = glm::ivec2(20, 20),
+        uint64_t          uid            = 0);
     std::vector<std::byte> Serialize() const override;
 
 protected:
@@ -50,11 +50,6 @@ public:
     std::unique_ptr<PageUI>   UserInterface;
     bool                      Snapping = true;
 
-    Page(
-        const std::string &name,
-        const Transform &  boardTransform = {glm::vec2(0), glm::vec2(2000), 0},
-        const glm::ivec2 & cellDims       = glm::ivec2(20, 20),
-        uint64_t           uid            = 0);
     Page(const CorePage &other);
     Page &operator=(const CorePage &other);
 
@@ -83,7 +78,7 @@ public:
     void HandleArrows(ArrowkeyType key);
 
     // Adds a piece to the pieces list and the map
-    void AddPiece(std::unique_ptr<GameObject> &&piece);
+    GameObject &AddPiece(const CoreGameObject &core_piece);
 
     void DeletePiece(uint64_t);
 
@@ -115,6 +110,8 @@ public:
     void       setCellDims(glm::ivec2 cellDims);
 
 private:
+    Page();
+
     BoardRenderer       board_renderer;
     glm::ivec2          DragOrigin = glm::ivec2(0);
     MouseHoldType       mouse_hold = MouseHoldType::NONE;

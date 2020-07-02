@@ -2,33 +2,18 @@
 
 #include "page.h"
 
-#include "board_renderer.h"
 #include "client_server.h"
 #include "data.h"
-#include "Board.h"
 #include "resource_manager.h"
-#include "sprite_renderer.h"
 
 using std::make_unique, std::move, std::string, std::exchange, std::unique_ptr, std::make_pair,
     std::ref, std::find_if, std::vector, std::byte;
 
 using Data::NetworkData;
 
-Page::Page(
-    const string &    name,
-    const Transform & boardTransform,
-    const glm::ivec2 &cell_dims,
-    uint64_t          uid)
-    : CorePage(name, boardTransform, cell_dims, uid)
-    , board_renderer(this->board_transform, this->View, this->cell_dims) {
-    Camera        = make_unique<Camera2D>(200.0f, glm::vec2(0.4f, 2.5f));
-    UserInterface = make_unique<PageUI>();
-    if (Uid == 0) { Uid = Util::generate_uid(); }
-}
-
 Page::Page(const CorePage &other)
-    : board_renderer(this->board_transform, this->View, this->cell_dims) {
-    *this         = other;
+    : CorePage(other)
+    , board_renderer(this->board_transform, this->View, this->cell_dims) {
     Camera        = make_unique<Camera2D>(200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = make_unique<PageUI>();
     if (Uid == 0) { Uid = Util::generate_uid(); }
@@ -43,21 +28,21 @@ Page::operator=(const CorePage &other) {
 
 Page::~Page() {}
 
-void
-Page::AddPiece(unique_ptr<GameObject> &&piece) {
-    GameObject &g   = *piece;
-    piece->renderer = make_unique<SpriteRenderer>(piece->transform, this->View, g.Sprite);
-    PiecesMap.insert(make_pair(piece->Uid, ref(*piece)));
-    Pieces.push_front(move(piece));
+GameObject &
+Page::AddPiece(const CoreGameObject &core_piece) {
+    auto obj        = make_unique<GameObject>(core_piece, View);
+    PiecesMap.insert(make_pair(obj->Uid, ref(*obj)));
+    Pieces.push_front(move(obj));
+    return *Pieces.front();
 }
 
 void
 Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
-    auto piece  = make_unique<GameObject>(transform, sprite);
+    auto core = CoreGameObject(transform, sprite.ImageUID, 0, true, glm::vec3(1));
+    auto &piece = AddPiece(core);
     mouse_hold  = MouseHoldType::PLACING;
-    initialSize = piece->transform.scale;
-    initialPos  = piece->transform.position;
-    AddPiece(move(piece));
+    initialSize = piece.transform.scale;
+    initialPos  = piece.transform.position;
     CurrentSelection = Pieces.begin();
 }
 
@@ -350,7 +335,8 @@ Page::SendAllPieces(uint64_t target_uid) {
     if (ClientServer::Started()) {
         for (auto piece = Pieces.rbegin(); piece != Pieces.rend(); ++piece) {
             ClientServer &cs = ClientServer::GetInstance();
-            cs.RegisterPageChange("ADD_PIECE", Uid, **piece, target_uid);
+            CoreGameObject &core = **piece;
+            cs.RegisterPageChange("ADD_PIECE", Uid, core, target_uid);
         }
     }
 }
@@ -416,10 +402,10 @@ CorePage::deserialize_impl(const vector<byte> &vec) {
     return CorePage(name, t, cell_dims, uid);
 }
 CorePage::CorePage(
-    std::string name,
-    const Transform &  boardTransform,
-    const glm::ivec2 & cellDims,
-    uint64_t           uid)
+    std::string       name,
+    const Transform & boardTransform,
+    const glm::ivec2 &cellDims,
+    uint64_t          uid)
     : Uid(uid)
     , Name(std::move(name))
     , board_transform(boardTransform)

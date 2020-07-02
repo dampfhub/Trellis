@@ -28,7 +28,7 @@ private:
 
     std::string client_name_buf;
     std::string host_name_buf;
-    int  port_buf  = 5005;
+    int         port_buf = 5005;
 };
 
 #endif

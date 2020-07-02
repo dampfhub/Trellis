@@ -1,3 +1,5 @@
+#include "client_server.h"
+#include "resource_manager.h"
 #include "game_object.h"
 #include "sprite_renderer.h"
 #include "util.h"
@@ -39,29 +41,28 @@ CoreGameObject::deserialize_impl(const vector<byte> &vec) {
     return g;
 }
 
+GameObject::GameObject(const CoreGameObject &other) {
+    static ClientServer &cs = ClientServer::GetInstance();
+    (CoreGameObject &)*this = other;
+    if (Uid == 0) Uid = Util::generate_uid();
+    if (ResourceManager::Images.find(SpriteUid) == ResourceManager::Images.end()) {
+        // Image isn't cached, need to request it
+        cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, SpriteUid);
+    } else {
+        // Image is cached, just grab it from the resource manager
+        Sprite = ResourceManager::GetTexture(SpriteUid);
+    }
+}
+
+GameObject::GameObject(const CoreGameObject &other, glm::mat4 &View): GameObject(other) {
+    renderer = make_unique<SpriteRenderer>(transform, View, Sprite);
+}
+
+
 GameObject &
-GameObject::operator=(const CoreGameObject other) {
+GameObject::operator=(const CoreGameObject &other) {
     (CoreGameObject &)*this = other;
     return *this;
-}
-
-GameObject::GameObject(CoreGameObject other) {
-    (CoreGameObject &)*this = other;
-}
-
-GameObject::GameObject() {
-    Uid = Util::generate_uid();
-}
-
-GameObject::GameObject(
-    const Transform &transform,
-    Texture2D        sprite,
-    uint64_t         uid,
-    bool             clickable,
-    glm::vec3        color)
-    : Sprite(sprite)
-    , CoreGameObject(transform, sprite.ImageUID, uid, clickable, color) {
-    Uid = uid == 0 ? Uid = Util::generate_uid() : uid;
 }
 
 void

@@ -94,7 +94,6 @@ private:
     void handle_client_add(Data::NetworkData &&q);
 
     void handle_client_delete(Data::NetworkData &&q);
-
 };
 
 class Server : public ClientServer {

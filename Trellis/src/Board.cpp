@@ -335,23 +335,14 @@ Board::SendUpdatedPage() {
 
 void
 Board::handle_page_add_piece(NetworkData &&q) {
-    static ClientServer &cs = ClientServer::GetInstance();
-    auto                 g  = q.Parse<CoreGameObject>();
-    auto obj = make_unique<GameObject>(g);
-    if (ResourceManager::Images.find(obj->SpriteUid) == ResourceManager::Images.end()) {
-        // Image isn't cached, need to request it
-        cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, obj->SpriteUid);
-    } else {
-        // Image is cached, just grab it from the resource manager
-        obj->Sprite = ResourceManager::GetTexture(obj->SpriteUid);
-    }
+    auto g = q.Parse<CoreGameObject>();
     // See if page exists and place piece new in it if it does
     auto it = PagesMap.find(q.Uid);
     if (it != PagesMap.end()) {
         Page &pg       = (*it).second;
-        auto  piece_it = pg.PiecesMap.find(obj->Uid);
+        auto  piece_it = pg.PiecesMap.find(g.Uid);
         // Only add piece if it doesn't already exist
-        if (piece_it == pg.PiecesMap.end()) { pg.AddPiece(std::move(obj)); }
+        if (piece_it == pg.PiecesMap.end()) { pg.AddPiece(g); }
     }
 }
 
@@ -460,8 +451,8 @@ void
 Board::SendAllPages(uint64_t client_uid) {
     if (ClientServer::Started()) {
         for (auto &pg : Pages) {
-            ClientServer &cs = ClientServer::GetInstance();
-            CorePage &core = *pg;
+            ClientServer &cs   = ClientServer::GetInstance();
+            CorePage &    core = *pg;
             cs.RegisterPageChange("ADD_PAGE", core.Uid, Util::serialize_vec(core), client_uid);
             pg->SendAllPieces(client_uid);
         }

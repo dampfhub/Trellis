@@ -37,27 +37,22 @@ class GameObject : public CoreGameObject {
 public:
     Texture2D Sprite;
 
-    GameObject();
-    GameObject(
-        const Transform &transform,
-        Texture2D        sprite,
-        uint64_t         uid       = 0,
-        bool             clickable = true,
-        glm::vec3        color     = glm::vec3(1.0f));
-    GameObject(const CoreGameObject other);
-
+    GameObject(const CoreGameObject &other, glm::mat4 &View);
     GameObject(const GameObject &) = delete;
     GameObject &operator=(const GameObject &) = delete;
 
     GameObject(GameObject &&other) noexcept;
     GameObject &operator=(GameObject &&other) noexcept;
 
-    GameObject &operator=(const CoreGameObject other);
+    GameObject &operator=(const CoreGameObject &other);
 
     void Draw(int border_pixel_width);
     void swap(GameObject &other);
 
     std::unique_ptr<Renderer> renderer;
+
+private:
+    GameObject(const CoreGameObject &other);
 };
 
 void swap(GameObject &a, GameObject &b);
