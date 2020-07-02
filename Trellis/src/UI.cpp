@@ -253,9 +253,7 @@ UI::draw_chat() {
                 ImVec2(win_size.x, win_size.y * 0.15),
                 ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine)) {
             input_needs_focus = true;
-            if (!send_msg_buf.empty()) {
-                send_msg();
-            }
+            if (!send_msg_buf.empty()) { send_msg(); }
         }
         if (Button("Send", ImVec2(win_size.x, 0)) && !send_msg_buf.empty()) { send_msg(); }
     }
