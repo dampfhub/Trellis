@@ -33,11 +33,11 @@ CoreGameObject
 CoreGameObject::deserialize_impl(const vector<byte> &vec) {
     CoreGameObject g;
     const byte *   ptr = vec.data();
-    g.transform = Util::deserialize<Transform>(ptr);
-    g.Color = Util::deserialize<glm::vec3>(ptr += sizeof(g.transform));
-    g.Uid = Util::deserialize<uint64_t>(ptr += sizeof(g.Color));
-    g.Clickable = Util::deserialize<bool>(ptr += sizeof(g.Uid));
-    g.SpriteUid = Util::deserialize<uint64_t>(ptr += sizeof(g.Clickable));
+    g.transform        = Util::deserialize<Transform>(ptr);
+    g.Color            = Util::deserialize<glm::vec3>(ptr += sizeof(g.transform));
+    g.Uid              = Util::deserialize<uint64_t>(ptr += sizeof(g.Color));
+    g.Clickable        = Util::deserialize<bool>(ptr += sizeof(g.Uid));
+    g.SpriteUid        = Util::deserialize<uint64_t>(ptr += sizeof(g.Clickable));
     return g;
 }
 
