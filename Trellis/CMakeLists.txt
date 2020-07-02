@@ -3,7 +3,7 @@ project(Trellis)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(include)
+include_directories(include include/imgui include/stb_image)
 
 find_package(asio REQUIRED)
 find_package(glm REQUIRED)
