@@ -215,15 +215,15 @@ GLFW::UnregisterKey(int key) {
 }
 void
 GLFW::UnregisterKeyPress(int key) {
-    key_press_callbacks[key]   = nullptr;
+    key_press_callbacks[key] = nullptr;
 }
 void
 GLFW::UnregisterKeyRelease(int key) {
-    key_release_callbacks[key]   = nullptr;
+    key_release_callbacks[key] = nullptr;
 }
 void
 GLFW::UnregisterMouse(int button) {
-    mouse_press_callbacks[button] = nullptr;
+    mouse_press_callbacks[button]   = nullptr;
     mouse_release_callbacks[button] = nullptr;
 }
 void

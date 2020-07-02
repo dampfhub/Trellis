@@ -88,7 +88,7 @@ private:
 class ChatMessage : public Util::Serializable<ChatMessage> {
 public:
     std::time_t TimeStamp;
-    uint64_t Uid;
+    uint64_t    Uid;
     std::string SenderName;
     std::string Msg;
 

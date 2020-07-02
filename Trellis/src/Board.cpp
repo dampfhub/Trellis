@@ -317,7 +317,7 @@ Board::AddPage(std::unique_ptr<Page> &&pg) {
 
 void
 Board::SendNewPage(std::string name) {
-    auto pg = std::make_unique<Page>(name, glm::vec2(0.0f, 0.0f), glm::vec2(2000.0f, 2000.0f));
+    auto pg = std::make_unique<Page>(name);
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.RegisterPageChange("ADD_PAGE", pg->Uid, pg->Serialize());
@@ -335,22 +335,14 @@ Board::SendUpdatedPage() {
 
 void
 Board::handle_page_add_piece(NetworkData &&q) {
-    static ClientServer &cs = ClientServer::GetInstance();
-    auto                 g  = std::make_unique<GameObject>(q.Parse<GameObject>());
-    if (ResourceManager::Images.find(g->Sprite.ImageUID) == ResourceManager::Images.end()) {
-        // Image isn't cached, need to request it
-        cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, g->Sprite.ImageUID);
-    } else {
-        // Image is cached, just grab it from the resource manager
-        g->Sprite = ResourceManager::GetTexture(g->Sprite.ImageUID);
-    }
+    auto g = q.Parse<CoreGameObject>();
     // See if page exists and place piece new in it if it does
     auto it = PagesMap.find(q.Uid);
     if (it != PagesMap.end()) {
         Page &pg       = (*it).second;
-        auto  piece_it = pg.PiecesMap.find(g->Uid);
+        auto  piece_it = pg.PiecesMap.find(g.Uid);
         // Only add piece if it doesn't already exist
-        if (piece_it == pg.PiecesMap.end()) { pg.AddPiece(std::move(g)); }
+        if (piece_it == pg.PiecesMap.end()) { pg.AddPiece(g); }
     }
 }
 
@@ -392,7 +384,7 @@ Board::handle_new_image(NetworkData &&q) {
     // Check which gameobjects need this texture and apply it.
     for (auto &pg : Pages) {
         for (auto &go : pg->Pieces) {
-            if (go->Sprite.ImageUID == q.Uid) { go->Sprite = ResourceManager::GetTexture(q.Uid); }
+            if (go->SpriteUid == q.Uid) { go->Sprite = ResourceManager::GetTexture(q.Uid); }
         }
     }
 }
@@ -418,12 +410,12 @@ Board::handle_page_delete_piece(NetworkData &&q) {
 
 void
 Board::handle_add_page(NetworkData &&q) {
-    auto pg      = Page::Deserialize(q.Data);
+    auto pg      = CorePage::Deserialize(q.Data);
     auto page_it = PagesMap.find(q.Uid);
     if (page_it == PagesMap.end()) {
         AddPage(std::make_unique<Page>(std::move(pg)));
     } else {
-        page_it->second.get().CopySettingsFromPage(pg);
+        page_it->second.get() = pg;
     }
 }
 
@@ -459,8 +451,9 @@ void
 Board::SendAllPages(uint64_t client_uid) {
     if (ClientServer::Started()) {
         for (auto &pg : Pages) {
-            ClientServer &cs = ClientServer::GetInstance();
-            cs.RegisterPageChange("ADD_PAGE", pg->Uid, Util::serialize_vec(*pg), client_uid);
+            ClientServer &cs   = ClientServer::GetInstance();
+            CorePage &    core = *pg;
+            cs.RegisterPageChange("ADD_PAGE", core.Uid, Util::serialize_vec(core), client_uid);
             pg->SendAllPieces(client_uid);
         }
     }

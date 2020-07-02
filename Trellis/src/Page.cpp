@@ -1,54 +1,48 @@
+#include <utility>
+
 #include "page.h"
 
-#include "board_renderer.h"
 #include "client_server.h"
 #include "data.h"
-#include "Board.h"
 #include "resource_manager.h"
-#include "sprite_renderer.h"
 
 using std::make_unique, std::move, std::string, std::exchange, std::unique_ptr, std::make_pair,
     std::ref, std::find_if, std::vector, std::byte;
 
 using Data::NetworkData;
 
-Page::Page(string name, glm::vec2 pos, glm::vec2 size, glm::ivec2 cell_dims, uint64_t uid)
-    : Name(name)
-    , Uid(uid)
-    , board_transform(pos, size, 0)
-    , cell_dims(cell_dims)
+Page::Page(const CorePage &other)
+    : CorePage(other)
     , board_renderer(this->board_transform, this->View, this->cell_dims) {
     Camera        = make_unique<Camera2D>(200.0f, glm::vec2(0.4f, 2.5f));
     UserInterface = make_unique<PageUI>();
     if (Uid == 0) { Uid = Util::generate_uid(); }
 }
 
+Page &
+Page::operator=(const CorePage &other) {
+    (CorePage &)*this     = other;
+    board_transform.scale = glm::vec2(cell_dims) * TILE_DIMENSIONS;
+    return *this;
+}
+
 Page::~Page() {}
 
-Page::Page(Page &&other) noexcept
-    : Name(move(other.Name))
-    , board_transform(other.board_transform)
-    , Camera(exchange(other.Camera, nullptr))
-    , UserInterface(exchange(other.UserInterface, nullptr))
-    , Uid(exchange(other.Uid, -1))
-    , cell_dims(other.cell_dims)
-    , board_renderer(this->board_transform, this->View, this->cell_dims) {}
-
-void
-Page::AddPiece(unique_ptr<GameObject> &&piece) {
-    GameObject &g   = *piece;
-    piece->renderer = make_unique<SpriteRenderer>(piece->transform, this->View, g.Sprite);
-    PiecesMap.insert(make_pair(piece->Uid, ref(*piece)));
-    Pieces.push_front(move(piece));
+GameObject &
+Page::AddPiece(const CoreGameObject &core_piece) {
+    auto obj = make_unique<GameObject>(core_piece, View);
+    PiecesMap.insert(make_pair(obj->Uid, ref(*obj)));
+    Pieces.push_front(move(obj));
+    return *Pieces.front();
 }
 
 void
 Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
-    auto piece  = make_unique<GameObject>(transform, sprite);
-    mouse_hold  = MouseHoldType::PLACING;
-    initialSize = piece->transform.scale;
-    initialPos  = piece->transform.position;
-    AddPiece(move(piece));
+    auto  core       = CoreGameObject(transform, sprite.ImageUID, 0, true, glm::vec3(1));
+    auto &piece      = AddPiece(core);
+    mouse_hold       = MouseHoldType::PLACING;
+    initialSize      = piece.transform.scale;
+    initialPos       = piece.transform.position;
     CurrentSelection = Pieces.begin();
 }
 
@@ -134,7 +128,7 @@ Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
         GameObject &piece = **CurrentSelection;
         if (ClientServer::Started()) {
             ClientServer &ns = ClientServer::GetInstance();
-            ns.RegisterPageChange("ADD_PIECE", Uid, piece);
+            ns.RegisterPageChange("ADD_PIECE", Uid, (CoreGameObject)piece);
         }
         CurrentSelection = Pieces.end();
         return;
@@ -178,9 +172,9 @@ Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
 
 void
 Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
-    int          inc  = Snapping ? 1 : 8;
-    float        closest;
-    glm::vec2    world_mouse = ScreenPosToWorldPos(mouse_pos);
+    int       inc = Snapping ? 1 : 8;
+    float     closest;
+    glm::vec2 world_mouse = ScreenPosToWorldPos(mouse_pos);
     if (CurrentSelection != Pieces.end()) {
         GameObject &piece     = **CurrentSelection;
         glm::vec2   prev_pos  = piece.transform.position;
@@ -340,8 +334,9 @@ void
 Page::SendAllPieces(uint64_t target_uid) {
     if (ClientServer::Started()) {
         for (auto piece = Pieces.rbegin(); piece != Pieces.rend(); ++piece) {
-            ClientServer &cs = ClientServer::GetInstance();
-            cs.RegisterPageChange("ADD_PIECE", Uid, **piece, target_uid);
+            ClientServer &  cs   = ClientServer::GetInstance();
+            CoreGameObject &core = **piece;
+            cs.RegisterPageChange("ADD_PIECE", Uid, core, target_uid);
         }
     }
 }
@@ -387,7 +382,7 @@ Page::DeleteCurrentSelection() {
 }
 
 vector<byte>
-Page::Serialize() const {
+CorePage::Serialize() const {
     vector<vector<byte>> bytes;
     bytes.push_back(Util::serialize_vec(Uid));
     bytes.push_back(Util::serialize_vec(board_transform));
@@ -396,16 +391,25 @@ Page::Serialize() const {
     return Util::flatten(bytes);
 }
 
-Page
-Page::deserialize_impl(const vector<byte> &vec) {
+CorePage
+CorePage::deserialize_impl(const vector<byte> &vec) {
     auto ptr       = vec.data();
     auto end       = ptr + vec.size();
     auto uid       = Util::deserialize<uint64_t>(ptr);
     auto t         = Util::deserialize<Transform>(ptr += sizeof(uid));
     auto cell_dims = Util::deserialize<glm::ivec2>(ptr += sizeof(t));
     auto name      = Util::deserialize<string>(vector(ptr += sizeof(cell_dims), end));
-    return Page(name, t.position, t.scale, cell_dims, uid);
+    return CorePage(name, t, cell_dims, uid);
 }
+CorePage::CorePage(
+    std::string       name,
+    const Transform & boardTransform,
+    const glm::ivec2 &cellDims,
+    uint64_t          uid)
+    : Uid(uid)
+    , Name(std::move(name))
+    , board_transform(boardTransform)
+    , cell_dims(cellDims) {}
 
 glm::ivec2
 Page::getCellDims() const {
@@ -418,12 +422,4 @@ Page::setCellDims(glm::ivec2 cellDims) {
     if (cellDims.y < 1) cellDims.y = 1;
     cell_dims             = cellDims;
     board_transform.scale = glm::vec2(cell_dims) * TILE_DIMENSIONS;
-}
-void
-Page::CopySettingsFromPage(const Page &other) {
-    board_transform = other.board_transform;
-    cell_dims = other.cell_dims;
-    Name = other.Name;
-    board_renderer.CellDims = cell_dims;
-    board_renderer.setTransform(board_transform);
 }

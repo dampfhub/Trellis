@@ -17,10 +17,7 @@ protected:
 public:
     std::shared_ptr<Shader> shader;
 
-    Renderer(
-            std::shared_ptr<Shader> shader,
-            const Transform &transform,
-            const glm::mat4 &view);
+    Renderer(std::shared_ptr<Shader> shader, const Transform &transform, const glm::mat4 &view);
 
     virtual ~Renderer();
 

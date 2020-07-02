@@ -44,9 +44,10 @@ NetworkManager::NetworkQueue::NetworkQueue()
 
 NetworkManager::NetworkQueue::~NetworkQueue() {
     NetworkManager &nm = NetworkManager::GetInstance();
-    std::remove_if(nm.queues[channel_name].begin(), nm.queues[channel_name].end(), [this](std::weak_ptr<NetworkQueue> p) {
-        return p.expired() || p.lock().get() == this;
-    });
+    std::remove_if(
+        nm.queues[channel_name].begin(),
+        nm.queues[channel_name].end(),
+        [this](std::weak_ptr<NetworkQueue> p) { return p.expired() || p.lock().get() == this; });
 }
 std::shared_ptr<NetworkManager::NetworkQueue>
 NetworkManager::NetworkQueue::Subscribe(std::string cname) {
