@@ -19,7 +19,7 @@ public:
     void operator=(Board const &) = delete;
 
     Board();
-    ~Board();
+    ~Board() override;
 
     enum { NONE, PRESS, HOLD, RELEASE } LeftClick, RightClick, MiddleClick;
     glm::ivec2 MousePos;
@@ -43,8 +43,11 @@ public:
 
     void UnregisterKeyCallbacks() override;
 
+    void WriteToDB(const SQLite::Database &db) const override;
+
 private:
-    UI UserInterface;
+    UI          UserInterface;
+    std::string Name;
 
     void init_shaders();
 

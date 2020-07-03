@@ -4,7 +4,7 @@
 #include "sprite_renderer.h"
 #include "util.h"
 
-using std::move, std::exchange, std::make_unique, std::vector, std::byte;
+using std::move, std::exchange, std::make_unique, std::vector, std::byte, std::to_string;
 
 CoreGameObject::CoreGameObject(
     const Transform &transform,
@@ -96,6 +96,24 @@ GameObject::swap(GameObject &other) {
     swap(Sprite, other.Sprite);
     swap(Clickable, other.Clickable);
     swap(renderer, other.renderer);
+}
+void
+GameObject::WriteToDB(const SQLite::Database &db, uint64_t page_id) const {
+    int64_t     sgn_uid    = *reinterpret_cast<const int64_t *>(&Uid);
+    int64_t     sgn_page   = *reinterpret_cast<const int64_t *>(&page_id);
+    int64_t     sgn_sprite = *reinterpret_cast<const int64_t *>(&SpriteUid);
+    std::string err;
+    int result = db.Exec(
+        "INSERT OR REPLACE INTO GameObjects VALUES(" + to_string(sgn_uid) + "," +
+            to_string(Clickable) + "," + to_string(sgn_sprite) + "," + to_string(sgn_page) + "," +
+            to_string(transform.position.x) + "," + to_string(transform.position.y) + "," +
+            to_string(transform.scale.x) + "," + to_string(transform.scale.y) + "," +
+            to_string(transform.rotation) + "," + to_string(Color.x) + "," + to_string(Color.y) +
+            "," + to_string(Color.z) + ");",
+        err);
+    if (result) {
+        std::cerr << err << std::endl;
+    }
 }
 
 void

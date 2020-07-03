@@ -20,7 +20,8 @@ StateManager::StateManager()
     string error;
     int    result = database.Exec(
         "CREATE TABLE IF NOT EXISTS Games("
-        "    id  INTEGER  UNIQUE PRIMARY KEY"
+        "    id    INTEGER  UNIQUE PRIMARY KEY,"
+        "    name  STRING   NOT NULL"
         ");"
         "CREATE TABLE IF NOT EXISTS Pages("
         "    id       INTEGER  UNIQUE PRIMARY KEY,"
@@ -28,34 +29,20 @@ StateManager::StateManager()
         "    game_id  INTEGER  NOT NULL,"
         "    FOREIGN KEY(game_id) REFERENCES Games(id)"
         ");"
-        "CREATE TABLE IF NOT EXISTS Vec2s("
-        "    id  INTEGER  UNIQUE PRIMARY KEY,"
-        "    x   REAL     NOT NULL,"
-        "    y   REAL     NOT NULL"
-        ");"
-        "CREATE TABLE IF NOT EXISTS Vec3s("
-        "    id  INTEGER  UNIQUE PRIMARY KEY,"
-        "    x   REAL     NOT NULL,"
-        "    y   REAL     NOT NULL,"
-        "    z   REAL     NOT NULL"
-        ");"
-        "CREATE TABLE IF NOT EXISTS Transforms("
-        "    id           INTEGER  UNIQUE PRIMARY KEY,"
-        "    position_id  INTEGER  NOT NULL,"
-        "    scale_id     INTEGER  NOT NULL,"
-        "    FOREIGN KEY(position_id) REFERENCES Vec2s(id),"
-        "    FOREIGN KEY(scale_id)    REFERENCES Vec2s(id)"
-        ");"
         "CREATE TABLE IF NOT EXISTS GameObjects("
         "    id            INTEGER  UNIQUE PRIMARY KEY,"
         "    clickable     INTEGER  NOT NULL,"
         "    sprite        INTEGER  NOT NULL,"
         "    page_id       INTEGER  NOT NULL,"
-        "    transform_id  INTEGER  NOT NULL,"
-        "    color_id      INTEGER  NOT NULL,"
-        "    FOREIGN KEY(page_id)      REFERENCES Pages(id),"
-        "    FOREIGN KEY(transform_id) REFERENCES Transforms(id),"
-        "    FOREIGN KEY(color_id)     REFERENCES Vec3s(id)"
+        "    t_pos_x       REAL     NOT NULL,"
+        "    t_pos_y       REAL     NOT NULL,"
+        "    t_scale_x     REAL     NOT NULL,"
+        "    t_scale_y     REAL     NOT NULL,"
+        "    t_rotation    REAL     NOT NULL,"
+        "    color_x       REAL     NOT NULL,"
+        "    color_y       REAL     NOT NULL,"
+        "    color_z       REAL     NOT NULL,"
+        "    FOREIGN KEY(page_id)      REFERENCES Pages(id)"
         ");",
         error);
     if (result) { throw runtime_error(error); }
@@ -64,6 +51,7 @@ StateManager::StateManager()
 void
 StateManager::Update(float dt) {
     current_state.get().Update(dt);
+    current_state.get().WriteToDB(database);
 }
 
 void

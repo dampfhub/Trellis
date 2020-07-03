@@ -1,13 +1,12 @@
 #include <utility>
 
 #include "page.h"
-
 #include "client_server.h"
 #include "data.h"
 #include "resource_manager.h"
 
 using std::make_unique, std::move, std::string, std::exchange, std::unique_ptr, std::make_pair,
-    std::ref, std::find_if, std::vector, std::byte;
+    std::ref, std::find_if, std::vector, std::byte, std::to_string;
 
 using Data::NetworkData;
 
@@ -422,4 +421,16 @@ Page::setCellDims(glm::ivec2 cellDims) {
     if (cellDims.y < 1) cellDims.y = 1;
     cell_dims             = cellDims;
     board_transform.scale = glm::vec2(cell_dims) * TILE_DIMENSIONS;
+}
+
+void
+Page::WriteToDB(const SQLite::Database &db, uint64_t game_id) const {
+    string  error;
+    int64_t sgn_uid  = *reinterpret_cast<const int64_t *>(&Uid);
+    int64_t sgn_game = *reinterpret_cast<const int64_t *>(&game_id);
+    db.Exec(
+        "INSERT OR REPLACE INTO Pages VALUES(" + to_string(sgn_uid) + ",\"" + Name + "\"," +
+            to_string(sgn_game) + ");",
+        error);
+    for (auto &piece : Pieces) { piece->WriteToDB(db, Uid); }
 }

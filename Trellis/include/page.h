@@ -6,6 +6,7 @@
 #include "page_ui.h"
 #include "util.h"
 #include "board_renderer.h"
+#include "sqlite_handler.h"
 
 #include <functional>
 #include <list>
@@ -108,6 +109,8 @@ public:
 
     glm::ivec2 getCellDims() const;
     void       setCellDims(glm::ivec2 cellDims);
+
+    void WriteToDB(const SQLite::Database &db, uint64_t game_id) const;
 
 private:
     BoardRenderer       board_renderer;

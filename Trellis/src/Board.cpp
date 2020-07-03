@@ -12,7 +12,8 @@
 #include <functional>
 #include <iostream>
 
-using std::unique_ptr, std::make_unique, std::move;
+using std::unique_ptr, std::make_unique, std::make_pair, std::ref, std::move, std::string,
+    std::to_string;
 
 using Data::ImageData, Data::NetworkData;
 
@@ -289,8 +290,7 @@ Board::ProcessUIEvents() {
         });
     }
     if (UserInterface.FileDialog->HasSelected()) {
-        std::string file_name =
-            Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
+        string file_name = Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
         ResourceManager::LoadTexture(
             UserInterface.FileDialog->GetSelected().string().c_str(),
             Util::IsPng(file_name),
@@ -310,19 +310,19 @@ Board::ProcessUIEvents() {
 }
 
 void
-Board::AddPage(std::unique_ptr<Page> &&pg) {
-    PagesMap.insert(std::make_pair(pg->Uid, std::ref(*pg)));
-    Pages.push_back(std::move(pg));
+Board::AddPage(unique_ptr<Page> &&pg) {
+    PagesMap.insert(make_pair(pg->Uid, ref(*pg)));
+    Pages.push_back(move(pg));
 }
 
 void
-Board::SendNewPage(std::string name) {
-    auto pg = std::make_unique<Page>(name);
+Board::SendNewPage(string name) {
+    auto pg = make_unique<Page>(name);
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.RegisterPageChange("ADD_PAGE", pg->Uid, pg->Serialize());
     }
-    AddPage(std::move(pg));
+    AddPage(move(pg));
 }
 
 void
@@ -457,4 +457,14 @@ Board::SendAllPages(uint64_t client_uid) {
             pg->SendAllPieces(client_uid);
         }
     }
+}
+
+void
+Board::WriteToDB(const SQLite::Database &db) const {
+    string  error;
+    int64_t sgn_uid = *reinterpret_cast<const int64_t *>(&Uid);
+    db.Exec(
+        "INSERT OR REPLACE INTO Games VALUES(" + to_string(sgn_uid) + ",\"" + Name + "\");",
+        error);
+    for (auto &page : Pages) { page->WriteToDB(db, Uid); }
 }

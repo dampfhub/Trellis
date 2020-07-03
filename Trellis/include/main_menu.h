@@ -7,12 +7,13 @@
 class MainMenu : public GameState {
 public:
     MainMenu();
-    ~MainMenu() = default;
+    ~MainMenu() override = default;
 
-    void Update(float dt);
-    void Draw();
-    void RegisterKeyCallbacks();
-    void UnregisterKeyCallbacks();
+    void Update(float dt) override;
+    void Draw() override;
+    void RegisterKeyCallbacks() override;
+    void UnregisterKeyCallbacks() override;
+    void WriteToDB(const SQLite::Database &db) const override;
 
 private:
     bool starting_new_game = false;

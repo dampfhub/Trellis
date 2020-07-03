@@ -154,3 +154,8 @@ MainMenu::clear_flags() {
     // TODO only for testing purposes so don't have to retype
     host_name_buf = "localhost";
 }
+void
+MainMenu::WriteToDB(const SQLite::Database &db) const {
+    // No Main Menu state needs to be written to the database
+    return;
+}
