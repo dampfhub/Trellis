@@ -4,7 +4,8 @@
 
 using namespace SQLite;
 
-using std::string, std::runtime_error, std::exchange, std::move, std::swap;
+using std::string, std::runtime_error, std::exchange, std::move, std::swap, std::to_string,
+    std::stoll;
 
 Database::Database(const string &filename) {
     if (sqlite3_open(filename.c_str(), &db)) {
@@ -27,7 +28,8 @@ Database::operator=(Database &&other) noexcept {
 }
 
 int
-Database::Exec(const string &SQL, std::string &err, Database::callback_t callback, void *udp) const {
+Database::Exec(const string &SQL, std::string &err, Database::callback_t callback, void *udp)
+    const {
     char *errmsg;
     int   result = sqlite3_exec(db, SQL.c_str(), callback, udp, &errmsg);
     if (result) {
@@ -35,4 +37,16 @@ Database::Exec(const string &SQL, std::string &err, Database::callback_t callbac
         sqlite3_free(errmsg);
     }
     return result;
+}
+
+string
+SQLite::from_uint64_t(uint64_t val) {
+    int64_t signed_val = *reinterpret_cast<const int64_t *>(&val);
+    return to_string(signed_val);
+}
+
+uint64_t
+SQLite::to_uint64_t(string str) {
+    int64_t signed_val = stoll(str);
+    return *reinterpret_cast<const uint64_t *>(&signed_val);
 }

@@ -28,6 +28,8 @@ public:
     std::vector<std::byte> Serialize() const override;
 
 protected:
+    CorePage(const SQLite::Database &db, uint64_t uid);
+
     Transform  board_transform;
     glm::ivec2 cell_dims = glm::ivec2(20);
 
@@ -52,6 +54,7 @@ public:
     bool                      Snapping = true;
 
     Page(const CorePage &other);
+    Page(const SQLite::Database &db, uint64_t uid);
     Page &operator=(const CorePage &other);
 
     ~Page();

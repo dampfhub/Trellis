@@ -26,6 +26,7 @@ public:
         uint64_t         uid,
         bool             clickable,
         glm::vec3        color);
+    CoreGameObject(const SQLite::Database &db, uint64_t uid);
 
     std::vector<std::byte> Serialize() const override;
 

@@ -27,6 +27,9 @@ private:
     sqlite3 *db;
 };
 
+std::string from_uint64_t(uint64_t val);
+uint64_t to_uint64_t(std::string str);
+
 } // namespace SQLite
 
 #endif // TRELLIS_SQLITE_HANDLER_H

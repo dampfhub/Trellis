@@ -4,7 +4,10 @@
 #include "sprite_renderer.h"
 #include "util.h"
 
-using std::move, std::exchange, std::make_unique, std::vector, std::byte, std::to_string;
+#include <string>
+
+using std::move, std::exchange, std::make_unique, std::vector, std::byte, std::to_string, std::stoi,
+    std::stod, std::stof;
 
 CoreGameObject::CoreGameObject(
     const Transform &transform,
@@ -99,18 +102,70 @@ GameObject::swap(GameObject &other) {
 }
 void
 GameObject::WriteToDB(const SQLite::Database &db, uint64_t page_id) const {
-    int64_t     sgn_uid    = *reinterpret_cast<const int64_t *>(&Uid);
-    int64_t     sgn_page   = *reinterpret_cast<const int64_t *>(&page_id);
-    int64_t     sgn_sprite = *reinterpret_cast<const int64_t *>(&SpriteUid);
+    using SQLite::from_uint64_t;
     std::string err;
+
     int result = db.Exec(
-        "INSERT OR REPLACE INTO GameObjects VALUES(" + to_string(sgn_uid) + "," +
-            to_string(Clickable) + "," + to_string(sgn_sprite) + "," + to_string(sgn_page) + "," +
-            to_string(transform.position.x) + "," + to_string(transform.position.y) + "," +
+        "INSERT OR REPLACE INTO GameObjects VALUES(" + from_uint64_t(Uid) + "," +
+            to_string(Clickable) + "," + from_uint64_t(SpriteUid) + "," + from_uint64_t(page_id) +
+            "," + to_string(transform.position.x) + "," + to_string(transform.position.y) + "," +
             to_string(transform.scale.x) + "," + to_string(transform.scale.y) + "," +
             to_string(transform.rotation) + "," + to_string(Color.x) + "," + to_string(Color.y) +
             "," + to_string(Color.z) + ");",
         err);
+    if (result) { std::cerr << err << std::endl; }
+    assert(!result);
+}
+
+CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
+    int64_t sgn_uid  = *reinterpret_cast<const int64_t *>(&uid);
+    auto    callback = [](void *udp, int count, char **values, char **names) -> int {
+        using SQLite::to_uint64_t;
+
+        auto core = static_cast<CoreGameObject *>(udp);
+
+        assert(!strcmp(names[0], "id"));
+        core->Uid = to_uint64_t(values[0]);
+
+        assert(!strcmp(names[1], "clickable"));
+        core->Clickable = stoi(values[1]);
+
+        assert(!strcmp(names[2], "sprite"));
+        core->SpriteUid = to_uint64_t(values[2]);
+
+        //[3] = "page_id"
+
+        assert(!strcmp(names[4], "t_pos_x"));
+        core->transform.position.x = stod(values[4]);
+
+        assert(!strcmp(names[5], "t_pos_y"));
+        core->transform.position.y = stod(values[5]);
+
+        assert(!strcmp(names[6], "t_scale_x"));
+        core->transform.scale.x = stod(values[6]);
+
+        assert(!strcmp(names[7], "t_scale_y"));
+        core->transform.scale.y = stod(values[7]);
+
+        assert(!strcmp(names[8], "t_rotation"));
+        core->transform.rotation = stof(values[8]);
+
+        assert(!strcmp(names[9], "color_x"));
+        core->Color.x = stod(values[9]);
+
+        assert(!strcmp(names[10], "color_y"));
+        core->Color.y = stod(values[10]);
+
+        assert(!strcmp(names[11], "color_z"));
+        core->Color.z = stod(values[11]);
+        return 0;
+    };
+    std::string    err;
+    int            result = db.Exec(
+        "SELECT * FROM GameObjects where id = " + to_string(sgn_uid),
+        err,
+        +callback,
+        this);
     if (result) {
         std::cerr << err << std::endl;
     }

@@ -425,12 +425,65 @@ Page::setCellDims(glm::ivec2 cellDims) {
 
 void
 Page::WriteToDB(const SQLite::Database &db, uint64_t game_id) const {
-    string  error;
-    int64_t sgn_uid  = *reinterpret_cast<const int64_t *>(&Uid);
-    int64_t sgn_game = *reinterpret_cast<const int64_t *>(&game_id);
-    db.Exec(
-        "INSERT OR REPLACE INTO Pages VALUES(" + to_string(sgn_uid) + ",\"" + Name + "\"," +
-            to_string(sgn_game) + ");",
-        error);
+    using SQLite::from_uint64_t;
+    string err;
+    int    result = db.Exec(
+        "INSERT OR REPLACE INTO Pages VALUES(" + from_uint64_t(Uid) + ",\"" + Name + "\"," +
+            from_uint64_t(game_id) + ");",
+        err);
+    if (result) { std::cerr << err << std::endl; }
+    assert(!result);
     for (auto &piece : Pieces) { piece->WriteToDB(db, Uid); }
+
+    Page pg(db, Uid);
+}
+
+CorePage::CorePage(const SQLite::Database &db, uint64_t uid) {
+    using SQLite::from_uint64_t, SQLite::to_uint64_t;
+
+    auto page_callback = [](void *udp, int count, char **values, char **names) -> int {
+        auto core = static_cast<CorePage *>(udp);
+
+        assert(!strcmp(names[0], "id"));
+        core->Uid = to_uint64_t(values[0]);
+
+        assert(!strcmp(names[1], "name"));
+        core->Name = values[1];
+
+        //[2] = "game_id"
+
+        return 0;
+    };
+    std::string err;
+    int         result =
+        db.Exec("SELECT * FROM Pages where id = " + from_uint64_t(uid), err, +page_callback, this);
+    if (result) { std::cerr << err << std::endl; }
+    assert(!result);
+}
+
+Page::Page(const SQLite::Database &db, uint64_t uid)
+    : CorePage(db, uid)
+    , board_renderer(this->board_transform, this->View, this->cell_dims) {
+    using SQLite::to_uint64_t;
+    using SQLite::from_uint64_t;
+
+    auto piece_callback = [](void *udp, int count, char **values, char **names) -> int {
+        auto piece_uids = static_cast<std::list<uint64_t> *>(udp);
+
+        assert(!strcmp(names[0], "id"));
+        piece_uids->push_back(to_uint64_t(values[0]));
+        return 0;
+    };
+    std::list<uint64_t> piece_uids;
+    std::string         err;
+    int                 result = db.Exec(
+        "SELECT id FROM GameObjects where page_id = " + from_uint64_t(Uid),
+        err,
+        +piece_callback,
+        &piece_uids);
+    if (result) { std::cerr << err << std::endl; }
+    assert(!result);
+    for (auto piece_uid : piece_uids) {
+        AddPiece(CoreGameObject(db, piece_uid));
+    }
 }
