@@ -20,8 +20,8 @@ private:
     bool loading_game      = false;
     bool joining_game      = false;
 
-    void new_game();
-    void load_game();
+    void new_game(const std::string &name);
+    void load_game(uint64_t id, const std::string &name);
     void join_game();
     void exit();
 

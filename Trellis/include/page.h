@@ -28,7 +28,7 @@ public:
     std::vector<std::byte> Serialize() const override;
 
 protected:
-    CorePage(const SQLite::Database &db, uint64_t uid);
+    CorePage(const SQLite::Database &db, uint64_t page_id);
 
     Transform  board_transform;
     glm::ivec2 cell_dims = glm::ivec2(20);

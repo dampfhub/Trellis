@@ -18,7 +18,8 @@ public:
     Board(Board const &) = delete; // Disallow copying
     void operator=(Board const &) = delete;
 
-    Board();
+    Board(std::string name, uint64_t uid = 0);
+    Board(const SQLite::Database &db, uint64_t uid, const std::string &name);
     ~Board() override;
 
     enum { NONE, PRESS, HOLD, RELEASE } LeftClick, RightClick, MiddleClick;
@@ -43,7 +44,7 @@ public:
 
     void UnregisterKeyCallbacks() override;
 
-    void WriteToDB(const SQLite::Database &db) const override;
+    void WriteToDB(const SQLite::Database &db) const final override;
 
 private:
     UI          UserInterface;
@@ -83,11 +84,13 @@ private:
 
     void AddPage(std::unique_ptr<Page> &&pg);
 
-    void SendNewPage(std::string name);
+    void AddPage(const CorePage &core_page);
 
-    void SendUpdatedPage();
+    void SendNewPage(const std::string &name);
 
-    void SendAllPages(uint64_t client_uid);
+    void SendUpdatedPage() const;
+
+    void SendAllPages(uint64_t client_uid) const;
 
     void esc_handler();
 

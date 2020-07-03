@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 
-using std::make_unique, std::make_pair, std::string, std::runtime_error;
+using std::make_unique, std::make_pair, std::string, std::runtime_error, std::unique_ptr;
 
 StateManager &
 StateManager::GetInstance() {
@@ -24,9 +24,16 @@ StateManager::StateManager()
         "    name  STRING   NOT NULL"
         ");"
         "CREATE TABLE IF NOT EXISTS Pages("
-        "    id       INTEGER  UNIQUE PRIMARY KEY,"
-        "    name     STRING   NOT NULL,"
-        "    game_id  INTEGER  NOT NULL,"
+        "    id          INTEGER  UNIQUE PRIMARY KEY,"
+        "    name        STRING   NOT NULL,"
+        "    game_id     INTEGER  NOT NULL,"
+        "    t_pos_x     REAL     NOT NULL,"
+        "    t_pos_y     REAL     NOT NULL,"
+        "    t_scale_x   REAL     NOT NULL,"
+        "    t_scale_y   REAL     NOT NULL,"
+        "    t_rotation  REAL     NOT NULL,"
+        "    cell_x      INTEGER  NOT NULL,"
+        "    cell_y      INTEGER  NOT NULL,"
         "    FOREIGN KEY(game_id) REFERENCES Games(id)"
         ");"
         "CREATE TABLE IF NOT EXISTS GameObjects("
@@ -42,16 +49,23 @@ StateManager::StateManager()
         "    color_x       REAL     NOT NULL,"
         "    color_y       REAL     NOT NULL,"
         "    color_z       REAL     NOT NULL,"
-        "    FOREIGN KEY(page_id)      REFERENCES Pages(id)"
+        "    FOREIGN KEY(page_id)   REFERENCES Pages(id)"
+        ");"
+        "CREATE TABLE IF NOT EXISTS Images("
+        "    id  INTEGER  UNIQUE PRIMARY KEY,"
+        " "
         ");",
         error);
     if (result) { throw runtime_error(error); }
 }
 
+void StateManager::WriteToDB(const SQLite::Database &db, const std::string &name) const {
+    current_state.get().WriteToDB(db);
+}
+
 void
 StateManager::Update(float dt) {
     current_state.get().Update(dt);
-    current_state.get().WriteToDB(database);
 }
 
 void
@@ -60,8 +74,13 @@ StateManager::Draw() {
 }
 
 void
-StateManager::StartNewGame(bool is_client) {
-    auto b = make_unique<Board>();
+StateManager::StartNewGame(const std::string &name, bool is_client, uint64_t uid) {
+    unique_ptr<Board> b;
+    if (uid) {
+        b = make_unique<Board>(database, uid, name);
+    } else {
+        b = make_unique<Board>(name);
+    }
     if (is_client) {
         b->Pages.clear();
         b->PagesMap.clear();
@@ -70,4 +89,9 @@ StateManager::StartNewGame(bool is_client) {
     current_state = *b;
     current_state.get().RegisterKeyCallbacks();
     boards_map.insert(make_pair(b->Uid, std::move(b)));
+}
+
+const SQLite::Database &
+StateManager::getDatabase() const {
+    return database;
 }

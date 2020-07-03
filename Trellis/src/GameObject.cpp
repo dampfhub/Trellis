@@ -118,7 +118,7 @@ GameObject::WriteToDB(const SQLite::Database &db, uint64_t page_id) const {
 }
 
 CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
-    int64_t sgn_uid  = *reinterpret_cast<const int64_t *>(&uid);
+    using SQLite::from_uint64_t;
     auto    callback = [](void *udp, int count, char **values, char **names) -> int {
         using SQLite::to_uint64_t;
 
@@ -162,7 +162,7 @@ CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
     };
     std::string    err;
     int            result = db.Exec(
-        "SELECT * FROM GameObjects where id = " + to_string(sgn_uid),
+        "SELECT * FROM GameObjects where id = " + from_uint64_t(uid),
         err,
         +callback,
         this);
