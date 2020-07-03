@@ -8,6 +8,7 @@ namespace SQLite {
 
 class Database {
 public:
+    typedef int (*callback_t)(void *udp, int count, char **values, char **names);
     explicit Database(const std::string &filename);
     Database(Database &&other) noexcept;
     Database &operator=(Database &&other) noexcept;
@@ -15,6 +16,12 @@ public:
 
     Database(const Database &other) = delete;
     Database &operator=(const Database &other) = delete;
+
+    int Exec(
+        const std::string &SQL,
+        std::string &      err,
+        callback_t         callback = nullptr,
+        void *             udp      = nullptr) const;
 
 private:
     sqlite3 *db;

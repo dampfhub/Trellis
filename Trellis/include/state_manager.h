@@ -3,6 +3,7 @@
 
 #include "board.h"
 #include "game_state.h"
+#include "sqlite_handler.h"
 
 #include <functional>
 #include <unordered_map>
@@ -23,6 +24,7 @@ private:
     std::unique_ptr<GameState>                           main_menu;
     std::reference_wrapper<GameState>                    current_state;
     std::unordered_map<uint64_t, std::unique_ptr<Board>> boards_map;
+    SQLite::Database                                     database;
 
     StateManager();
 };
