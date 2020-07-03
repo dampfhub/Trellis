@@ -21,7 +21,7 @@ target_link_libraries(Trellis glm)
 target_link_libraries(Trellis glfw)
 target_link_libraries(Trellis freetype)
 target_link_libraries(Trellis asio)
-target_link_libraries(Trellis ${SQLITE3_LIBRARIES})
+target_link_libraries(Trellis sqlite3)
 
 if (MINGW)
     target_link_libraries(Trellis ws2_32)
