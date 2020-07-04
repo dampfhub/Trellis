@@ -1,13 +1,12 @@
 #include <utility>
 
 #include "page.h"
-
 #include "client_server.h"
 #include "data.h"
 #include "resource_manager.h"
 
 using std::make_unique, std::move, std::string, std::exchange, std::unique_ptr, std::make_pair,
-    std::ref, std::find_if, std::vector, std::byte;
+    std::ref, std::find_if, std::vector, std::byte, std::to_string, std::stod, std::stof, std::stoi;
 
 using Data::NetworkData;
 
@@ -422,4 +421,97 @@ Page::setCellDims(glm::ivec2 cellDims) {
     if (cellDims.y < 1) cellDims.y = 1;
     cell_dims             = cellDims;
     board_transform.scale = glm::vec2(cell_dims) * TILE_DIMENSIONS;
+}
+
+void
+Page::WriteToDB(const SQLite::Database &db, uint64_t game_id) const {
+    auto stmt = db.Prepare("INSERT OR REPLACE INTO Pages VALUES(?,?,?,?,?,?,?,?,?,?);");
+    stmt.Bind(1, Uid);
+    stmt.Bind(2, Name);
+    stmt.Bind(3, game_id);
+    stmt.Bind(4, board_transform.position.x);
+    stmt.Bind(5, board_transform.position.y);
+    stmt.Bind(6, board_transform.scale.x);
+    stmt.Bind(7, board_transform.scale.y);
+    stmt.Bind(8, board_transform.rotation);
+    stmt.Bind(9, cell_dims.x);
+    stmt.Bind(10, cell_dims.y);
+    stmt.Step();
+    for (auto &piece : Pieces) { piece->WriteToDB(db, Uid); }
+}
+
+CorePage::CorePage(const SQLite::Database &db, uint64_t page_id)
+    : Uid(page_id) {
+    using SQLite::from_uint64_t, SQLite::to_uint64_t;
+
+    auto page_callback = [](void *udp, int count, char **values, char **names) -> int {
+        auto core = static_cast<CorePage *>(udp);
+
+        assert(!strcmp(names[0], "id"));
+        core->Uid = to_uint64_t(values[0]);
+
+        assert(!strcmp(names[1], "name"));
+        core->Name = values[1];
+
+        //[2] = "game_id"
+
+        assert(!strcmp(names[3], "t_pos_x"));
+        core->board_transform.position.x = stod(values[3]);
+
+        assert(!strcmp(names[4], "t_pos_y"));
+        core->board_transform.position.y = stod(values[4]);
+
+        assert(!strcmp(names[5], "t_scale_x"));
+        core->board_transform.scale.x = stod(values[5]);
+
+        assert(!strcmp(names[6], "t_scale_y"));
+        core->board_transform.scale.y = stod(values[6]);
+
+        assert(!strcmp(names[7], "t_rotation"));
+        core->board_transform.rotation = stof(values[7]);
+
+        assert(!strcmp(names[8], "cell_x"));
+        core->cell_dims.x = stoi(values[8]);
+
+        assert(!strcmp(names[9], "cell_y"));
+        core->cell_dims.y = stoi(values[9]);
+
+        return 0;
+    };
+    std::string err;
+    int         result = db.Exec(
+        "SELECT * FROM Pages WHERE id = " + from_uint64_t(page_id),
+        err,
+        +page_callback,
+        this);
+    if (result) { std::cerr << err << std::endl; }
+    assert(!result);
+}
+
+Page::Page(const SQLite::Database &db, uint64_t uid)
+    : CorePage(db, uid)
+    , board_renderer(this->board_transform, this->View, this->cell_dims) {
+    using SQLite::from_uint64_t;
+    using SQLite::to_uint64_t;
+
+    Camera        = make_unique<Camera2D>(200.0f, glm::vec2(0.4f, 2.5f));
+    UserInterface = make_unique<PageUI>();
+
+    auto piece_callback = [](void *udp, int count, char **values, char **names) -> int {
+        auto piece_uids = static_cast<std::list<uint64_t> *>(udp);
+
+        assert(!strcmp(names[0], "id"));
+        piece_uids->push_back(to_uint64_t(values[0]));
+        return 0;
+    };
+    std::list<uint64_t> piece_uids;
+    std::string         err;
+    int                 result = db.Exec(
+        "SELECT id FROM GameObjects WHERE page_id = " + from_uint64_t(Uid),
+        err,
+        +piece_callback,
+        &piece_uids);
+    if (result) { std::cerr << err << std::endl; }
+    assert(!result);
+    for (auto piece_uid : piece_uids) { AddPiece(CoreGameObject(db, piece_uid)); }
 }

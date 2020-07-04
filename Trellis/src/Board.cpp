@@ -8,18 +8,27 @@
 #include "page.h"
 #include "resource_manager.h"
 #include "util.h"
+#include "state_manager.h"
 
 #include <functional>
 #include <iostream>
+#include <utility>
 
-using std::unique_ptr, std::make_unique, std::move;
+using std::unique_ptr, std::make_unique, std::make_pair, std::ref, std::move, std::string,
+    std::to_string, std::find_if;
 
 using Data::ImageData, Data::NetworkData;
 
 void
 Board::esc_handler() {
+    static StateManager &sm   = StateManager::GetInstance();
+    static GLFW &        glfw = GLFW::GetInstance();
     if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) { return; }
-    static GLFW &glfw = GLFW::GetInstance();
+    // TODO: Check if this is a client or server, only save on server
+    // TOOD: Also, move save initiation to a better location
+    WriteToDB(sm.getDatabase());
+    ResourceManager::WriteToDB(sm.getDatabase());
+
     glfw.SetWindowShouldClose(1);
 }
 
@@ -97,8 +106,9 @@ Board::snap_callback(int action) {
     }
 }
 
-Board::Board()
-    : Uid(Util::generate_uid()) {
+Board::Board(string name, uint64_t uid)
+    : Name(std::move(name))
+    , Uid(uid ? uid : Util::generate_uid()) {
     init_shaders();
     init_objects();
     // Set projection matrix
@@ -107,6 +117,39 @@ Board::Board()
     ResourceManager::SetGlobalMatrix4("view", view);
 
     register_network_callbacks();
+}
+
+Board::Board(const SQLite::Database &db, uint64_t uid, const std::string &name)
+    : Board(name, uid) {
+    using SQLite::from_uint64_t;
+    using SQLite::to_uint64_t;
+
+    auto page_callback = [](void *udp, int count, char **values, char **names) -> int {
+        auto page_uids = static_cast<std::list<uint64_t> *>(udp);
+
+        assert(!strcmp(names[0], "id"));
+        page_uids->push_back(to_uint64_t(values[0]));
+        return 0;
+    };
+    std::list<uint64_t> page_uids;
+    std::string         err;
+    int                 result = db.Exec(
+        "SELECT id FROM Pages WHERE game_id = " + from_uint64_t(uid) + ";",
+        err,
+        +page_callback,
+        &page_uids);
+    if (result) { std::cerr << err << std::endl; }
+    assert(!result);
+    for (auto page_uid : page_uids) {
+        auto page = make_unique<Page>(db, page_uid);
+        AddPage(move(page));
+    }
+    auto stmt = db.Prepare("SELECT active_page FROM Games WHERE id = ?;");
+    stmt.Bind(1, uid);
+    stmt.Step();
+    uint64_t active;
+    stmt.Column(0, active);
+    UserInterface.ActivePage = active;
 }
 
 Board::~Board() {}
@@ -188,7 +231,6 @@ Board::init_shaders() {
 
 void
 Board::init_objects() {
-    SendNewPage("Default");
     ActivePage = Pages.begin();
 }
 
@@ -289,8 +331,7 @@ Board::ProcessUIEvents() {
         });
     }
     if (UserInterface.FileDialog->HasSelected()) {
-        std::string file_name =
-            Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
+        string file_name = Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
         ResourceManager::LoadTexture(
             UserInterface.FileDialog->GetSelected().string().c_str(),
             Util::IsPng(file_name),
@@ -310,23 +351,30 @@ Board::ProcessUIEvents() {
 }
 
 void
-Board::AddPage(std::unique_ptr<Page> &&pg) {
-    PagesMap.insert(std::make_pair(pg->Uid, std::ref(*pg)));
-    Pages.push_back(std::move(pg));
+Board::AddPage(unique_ptr<Page> &&pg) {
+    PagesMap.insert(make_pair(pg->Uid, ref(*pg)));
+    Pages.push_back(move(pg));
 }
 
 void
-Board::SendNewPage(std::string name) {
-    auto pg = std::make_unique<Page>(name);
+Board::AddPage(const CorePage &core_page) {
+    auto page = make_unique<Page>(core_page);
+    PagesMap.insert(make_pair(core_page.Uid, ref(*page)));
+    Pages.push_back(move(page));
+}
+
+void
+Board::SendNewPage(const string &name) {
+    auto pg = make_unique<Page>(name);
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.RegisterPageChange("ADD_PAGE", pg->Uid, pg->Serialize());
     }
-    AddPage(std::move(pg));
+    AddPage(move(pg));
 }
 
 void
-Board::SendUpdatedPage() {
+Board::SendUpdatedPage() const {
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.RegisterPageChange("ADD_PAGE", (*ActivePage)->Uid, (*ActivePage)->Serialize());
@@ -448,7 +496,7 @@ Board::register_network_callbacks() {
 }
 
 void
-Board::SendAllPages(uint64_t client_uid) {
+Board::SendAllPages(uint64_t client_uid) const {
     if (ClientServer::Started()) {
         for (auto &pg : Pages) {
             ClientServer &cs   = ClientServer::GetInstance();
@@ -457,4 +505,18 @@ Board::SendAllPages(uint64_t client_uid) {
             pg->SendAllPieces(client_uid);
         }
     }
+}
+
+void
+Board::WriteToDB(const SQLite::Database &db) const {
+    auto stmt = db.Prepare("INSERT OR REPLACE INTO Games VALUES(?,?,?);");
+    stmt.Bind(1, Uid);
+    stmt.Bind(2, Name);
+    if (ActivePage == Pages.end()) {
+        stmt.Bind(3);
+    } else {
+        stmt.Bind(3, ActivePage->get()->Uid);
+    }
+    stmt.Step();
+    for (auto &page : Pages) { page->WriteToDB(db, Uid); }
 }

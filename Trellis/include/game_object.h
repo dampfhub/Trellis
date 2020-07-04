@@ -5,6 +5,7 @@
 #include "texture.h"
 #include "transform.h"
 #include "util.h"
+#include "sqlite_handler.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -25,6 +26,7 @@ public:
         uint64_t         uid,
         bool             clickable,
         glm::vec3        color);
+    CoreGameObject(const SQLite::Database &db, uint64_t uid);
 
     std::vector<std::byte> Serialize() const override;
 
@@ -48,6 +50,7 @@ public:
 
     void Draw(int border_pixel_width);
     void swap(GameObject &other);
+    void WriteToDB(const SQLite::Database &db, uint64_t page_id) const;
 
     std::unique_ptr<Renderer> renderer;
 

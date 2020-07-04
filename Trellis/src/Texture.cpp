@@ -48,3 +48,6 @@ void
 Texture2D::Bind() const {
     glBindTexture(GL_TEXTURE_2D, ID);
 }
+
+void
+Texture2D::WriteToDB(const SQLite::Database &db) const {}

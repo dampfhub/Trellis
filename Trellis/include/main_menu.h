@@ -7,20 +7,21 @@
 class MainMenu : public GameState {
 public:
     MainMenu();
-    ~MainMenu() = default;
+    ~MainMenu() override = default;
 
-    void Update(float dt);
-    void Draw();
-    void RegisterKeyCallbacks();
-    void UnregisterKeyCallbacks();
+    void Update(float dt) override;
+    void Draw() override;
+    void RegisterKeyCallbacks() override;
+    void UnregisterKeyCallbacks() override;
+    void WriteToDB(const SQLite::Database &db) const override;
 
 private:
     bool starting_new_game = false;
     bool loading_game      = false;
     bool joining_game      = false;
 
-    void new_game();
-    void load_game();
+    void new_game(const std::string &name);
+    void load_game(uint64_t id, const std::string &name);
     void join_game();
     void exit();
 

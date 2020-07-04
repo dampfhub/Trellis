@@ -49,6 +49,9 @@ public:
     static void SetGlobalVector4f(const char *name, const glm::vec4 &value);
     static void SetGlobalMatrix4(const char *name, const glm::mat4 &value);
 
+    static void WriteToDB(const SQLite::Database &db);
+    static void ReadFromDB(const SQLite::Database &db, uint64_t ImageUID);
+
 private:
     // private constructor, that is we do not want any actual resource manager objects. Its members
     // and functions should be publicly available (static).
