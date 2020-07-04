@@ -20,7 +20,7 @@ public:
 
     void StartNewGame(const std::string &name, bool is_client, uint64_t uid = 0);
 
-    void WriteToDB(const SQLite::Database &db, const std::string &name) const;
+    void                    WriteToDB(const SQLite::Database &db, const std::string &name) const;
     const SQLite::Database &getDatabase() const;
 
 private:

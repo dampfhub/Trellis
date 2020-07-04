@@ -62,7 +62,8 @@ StateManager::StateManager()
     if (result) { throw runtime_error(error); }
 }
 
-void StateManager::WriteToDB(const SQLite::Database &db, const std::string &name) const {
+void
+StateManager::WriteToDB(const SQLite::Database &db, const std::string &name) const {
     current_state.get().WriteToDB(db);
 }
 

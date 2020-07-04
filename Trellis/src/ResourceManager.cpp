@@ -134,8 +134,8 @@ ResourceManager::loadTextureFromFile(const char *file, bool alpha) {
 
 Texture2D
 ResourceManager::loadTextureFromUID(uint64_t uid) {
-    Texture2D texture;
-    ImageData d = Images[uid];
+    Texture2D      texture;
+    ImageData      d = Images[uid];
     int            width, height, nrChannels;
     unsigned char *data =
         stbi_load_from_memory(d.Data.data(), d.Data.size(), &width, &height, &nrChannels, 0);
@@ -201,6 +201,6 @@ ResourceManager::ReadFromDB(const SQLite::Database &db, uint64_t ImageUID) {
     auto *bytes = static_cast<const unsigned char *>(data);
     int   size  = stmt.ColumnSize(1);
     auto  vec   = std::vector<unsigned char>(bytes, bytes + size);
-    auto image = ImageData(true, vec);
+    auto  image = ImageData(true, vec);
     Images.insert(make_pair(ImageUID, image));
 }

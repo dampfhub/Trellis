@@ -141,7 +141,7 @@ Database::Statement::ColumnSize(int index) {
 int
 Database::Statement::Column(int index, uint64_t &value) {
     if (!row) { throw runtime_error("SQLite3 Statement does not have an available row"); }
-    int num = sqlite3_column_count(stmt);
+    int     num     = sqlite3_column_count(stmt);
     int64_t sgn_val = sqlite3_column_int64(stmt, index);
     value           = *reinterpret_cast<uint64_t *>(&sgn_val);
     return 0;

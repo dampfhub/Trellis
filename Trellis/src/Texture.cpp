@@ -50,5 +50,4 @@ Texture2D::Bind() const {
 }
 
 void
-Texture2D::WriteToDB(const SQLite::Database &db) const {
-}
+Texture2D::WriteToDB(const SQLite::Database &db) const {}

@@ -51,6 +51,7 @@ public:
 
     static void WriteToDB(const SQLite::Database &db);
     static void ReadFromDB(const SQLite::Database &db, uint64_t ImageUID);
+
 private:
     // private constructor, that is we do not want any actual resource manager objects. Its members
     // and functions should be publicly available (static).
