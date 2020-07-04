@@ -15,17 +15,20 @@
 #include <utility>
 
 using std::unique_ptr, std::make_unique, std::make_pair, std::ref, std::move, std::string,
-    std::to_string;
+    std::to_string, std::find_if;
 
 using Data::ImageData, Data::NetworkData;
 
 void
 Board::esc_handler() {
-    static StateManager &sm = StateManager::GetInstance();
+    static StateManager &sm   = StateManager::GetInstance();
+    static GLFW &        glfw = GLFW::GetInstance();
     if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) { return; }
     // TODO: Check if this is a client or server, only save on server
+    // TOOD: Also, move save initiation to a better location
     WriteToDB(sm.getDatabase());
-    static GLFW &glfw = GLFW::GetInstance();
+    ResourceManager::WriteToDB(sm.getDatabase());
+
     glfw.SetWindowShouldClose(1);
 }
 
@@ -107,7 +110,6 @@ Board::Board(string name, uint64_t uid)
     : Name(std::move(name))
     , Uid(uid ? uid : Util::generate_uid()) {
     init_shaders();
-    SendNewPage("Default");
     init_objects();
     // Set projection matrix
     set_projection();
@@ -118,17 +120,7 @@ Board::Board(string name, uint64_t uid)
 }
 
 Board::Board(const SQLite::Database &db, uint64_t uid, const std::string &name)
-    : Name(name)
-    , Uid(uid) {
-    init_shaders();
-    init_objects();
-    // Set projection matrix
-    set_projection();
-    glm::mat4 view = glm::mat4(1.0f);
-    ResourceManager::SetGlobalMatrix4("view", view);
-
-    register_network_callbacks();
-
+    : Board(name, uid) {
     using SQLite::from_uint64_t;
     using SQLite::to_uint64_t;
 
@@ -142,7 +134,7 @@ Board::Board(const SQLite::Database &db, uint64_t uid, const std::string &name)
     std::list<uint64_t> page_uids;
     std::string         err;
     int                 result = db.Exec(
-        "SELECT id FROM Pages where game_id = " + from_uint64_t(uid),
+        "SELECT id FROM Pages WHERE game_id = " + from_uint64_t(uid) + ";",
         err,
         +page_callback,
         &page_uids);
@@ -152,6 +144,12 @@ Board::Board(const SQLite::Database &db, uint64_t uid, const std::string &name)
         auto page = make_unique<Page>(db, page_uid);
         AddPage(move(page));
     }
+    auto stmt = db.Prepare("SELECT active_page FROM Games WHERE id = ?;");
+    stmt.Bind(1, uid);
+    stmt.Step();
+    uint64_t active;
+    stmt.Column(0, active);
+    UserInterface.ActivePage = active;
 }
 
 Board::~Board() {}
@@ -511,10 +509,14 @@ Board::SendAllPages(uint64_t client_uid) const {
 
 void
 Board::WriteToDB(const SQLite::Database &db) const {
-    using SQLite::from_uint64_t;
-    string error;
-    db.Exec(
-        "INSERT OR REPLACE INTO Games VALUES(" + from_uint64_t(Uid) + ",\"" + Name + "\");",
-        error);
+    auto stmt = db.Prepare("INSERT OR REPLACE INTO Games VALUES(?,?,?);");
+    stmt.Bind(1, Uid);
+    stmt.Bind(2, Name);
+    if (ActivePage == Pages.end()) {
+        stmt.Bind(3);
+    } else {
+        stmt.Bind(3, ActivePage->get()->Uid);
+    }
+    stmt.Step();
     for (auto &page : Pages) { page->WriteToDB(db, Uid); }
 }

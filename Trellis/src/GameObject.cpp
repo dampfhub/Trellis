@@ -102,24 +102,25 @@ GameObject::swap(GameObject &other) {
 }
 void
 GameObject::WriteToDB(const SQLite::Database &db, uint64_t page_id) const {
-    using SQLite::from_uint64_t;
-    std::string err;
-
-    int result = db.Exec(
-        "INSERT OR REPLACE INTO GameObjects VALUES(" + from_uint64_t(Uid) + "," +
-            to_string(Clickable) + "," + from_uint64_t(SpriteUid) + "," + from_uint64_t(page_id) +
-            "," + to_string(transform.position.x) + "," + to_string(transform.position.y) + "," +
-            to_string(transform.scale.x) + "," + to_string(transform.scale.y) + "," +
-            to_string(transform.rotation) + "," + to_string(Color.x) + "," + to_string(Color.y) +
-            "," + to_string(Color.z) + ");",
-        err);
-    if (result) { std::cerr << err << std::endl; }
-    assert(!result);
+    auto stmt = db.Prepare("INSERT OR REPLACE INTO GameObjects VALUES(?,?,?,?,?,?,?,?,?,?,?,?);");
+    stmt.Bind(1, Uid);
+    stmt.Bind(2, Clickable);
+    stmt.Bind(3, SpriteUid);
+    stmt.Bind(4, page_id);
+    stmt.Bind(5, transform.position.x);
+    stmt.Bind(6, transform.position.y);
+    stmt.Bind(7, transform.scale.x);
+    stmt.Bind(8, transform.scale.y);
+    stmt.Bind(9, transform.rotation);
+    stmt.Bind(10, Color.x);
+    stmt.Bind(11, Color.y);
+    stmt.Bind(12, Color.z);
+    stmt.Step();
 }
 
 CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
     using SQLite::from_uint64_t;
-    auto    callback = [](void *udp, int count, char **values, char **names) -> int {
+    auto callback = [](void *udp, int count, char **values, char **names) -> int {
         using SQLite::to_uint64_t;
 
         auto core = static_cast<CoreGameObject *>(udp);
@@ -160,15 +161,11 @@ CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
         core->Color.z = stod(values[11]);
         return 0;
     };
-    std::string    err;
-    int            result = db.Exec(
-        "SELECT * FROM GameObjects where id = " + from_uint64_t(uid),
-        err,
-        +callback,
-        this);
-    if (result) {
-        std::cerr << err << std::endl;
-    }
+    std::string err;
+    int         result =
+        db.Exec("SELECT * FROM GameObjects WHERE id = " + from_uint64_t(uid), err, +callback, this);
+    if (result) { std::cerr << err << std::endl; }
+    ResourceManager::ReadFromDB(db, SpriteUid);
 }
 
 void

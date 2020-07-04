@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <glad/glad.h>
 
+#include "sqlite_handler.h"
+
 // Texture2D is able to store and configure a texture in OpenGL.
 // It also hosts utility functions for easy management.
 class Texture2D {
@@ -25,12 +27,14 @@ public:
     unsigned int Filter_Max; // filtering mode if texture pixels > screen pixels
     // constructor (sets default texture modes)
     Texture2D();
+    Texture2D(const SQLite::Database &db, uint64_t uid);
 
     // generates texture from image data
     void Generate(unsigned int width, unsigned int height, unsigned char *data, uint64_t ImageUid);
 
     // binds the texture as the current active GL_TEXTURE_2D texture object
     void Bind() const;
+    void WriteToDB(const SQLite::Database &db) const;
 };
 
 #endif

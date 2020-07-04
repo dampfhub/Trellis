@@ -136,13 +136,13 @@ Texture2D
 ResourceManager::loadTextureFromUID(uint64_t uid) {
     Texture2D texture;
     ImageData d = Images[uid];
-    if (d.Alpha) {
-        texture.Internal_Format = GL_RGBA;
-        texture.Image_Format    = GL_RGBA;
-    }
     int            width, height, nrChannels;
     unsigned char *data =
         stbi_load_from_memory(d.Data.data(), d.Data.size(), &width, &height, &nrChannels, 0);
+    if (nrChannels == 4) {
+        texture.Internal_Format = GL_RGBA;
+        texture.Image_Format    = GL_RGBA;
+    }
     texture.Generate(width, height, data, uid);
     stbi_image_free(data);
     return texture;
@@ -176,4 +176,31 @@ ResourceManager::SetGlobalVector4f(const char *name, const glm::vec4 &value) {
 void
 ResourceManager::SetGlobalMatrix4(const char *name, const glm::mat4 &value) {
     for (auto &[key, shader] : Shaders) { shader->SetMatrix4(name, value); }
+}
+
+void
+ResourceManager::WriteToDB(const SQLite::Database &db) {
+    for (auto &[key, tex] : Images) {
+        auto stmt = db.Prepare("INSERT OR IGNORE INTO Images VALUES(?,?);");
+        stmt.Bind(1, key);
+        stmt.Bind(2, tex.Data.data(), tex.Data.size());
+        stmt.Step();
+    }
+}
+
+void
+ResourceManager::ReadFromDB(const SQLite::Database &db, uint64_t ImageUID) {
+    using SQLite::from_uint64_t;
+
+    if (Images.find(ImageUID) != Images.end()) { return; }
+    auto stmt = db.Prepare("SELECT * FROM Images WHERE id = ?;");
+    stmt.Bind(1, ImageUID);
+    stmt.Step();
+    const void *data;
+    stmt.Column(1, data);
+    auto *bytes = static_cast<const unsigned char *>(data);
+    int   size  = stmt.ColumnSize(1);
+    auto  vec   = std::vector<unsigned char>(bytes, bytes + size);
+    auto image = ImageData(true, vec);
+    Images.insert(make_pair(ImageUID, image));
 }

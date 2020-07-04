@@ -20,8 +20,10 @@ StateManager::StateManager()
     string error;
     int    result = database.Exec(
         "CREATE TABLE IF NOT EXISTS Games("
-        "    id    INTEGER  UNIQUE PRIMARY KEY,"
-        "    name  STRING   NOT NULL"
+        "    id           INTEGER  UNIQUE PRIMARY KEY,"
+        "    name         STRING   NOT NULL,"
+        "    active_page  INTEGER,"
+        "    FOREIGN KEY(active_page) REFERENCES Pages(id)"
         ");"
         "CREATE TABLE IF NOT EXISTS Pages("
         "    id          INTEGER  UNIQUE PRIMARY KEY,"
@@ -49,11 +51,12 @@ StateManager::StateManager()
         "    color_x       REAL     NOT NULL,"
         "    color_y       REAL     NOT NULL,"
         "    color_z       REAL     NOT NULL,"
-        "    FOREIGN KEY(page_id)   REFERENCES Pages(id)"
+        "    FOREIGN KEY(page_id) REFERENCES Pages(id),"
+        "    FOREIGN KEY(sprite)  REFERENCES Images(id)"
         ");"
         "CREATE TABLE IF NOT EXISTS Images("
-        "    id  INTEGER  UNIQUE PRIMARY KEY,"
-        " "
+        "    id    INTEGER  UNIQUE PRIMARY KEY,"
+        "    data  BLOB     NOT NULL"
         ");",
         error);
     if (result) { throw runtime_error(error); }

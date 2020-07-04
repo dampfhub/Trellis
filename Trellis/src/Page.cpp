@@ -425,17 +425,18 @@ Page::setCellDims(glm::ivec2 cellDims) {
 
 void
 Page::WriteToDB(const SQLite::Database &db, uint64_t game_id) const {
-    using SQLite::from_uint64_t;
-    string err;
-    int    result = db.Exec(
-        "INSERT OR REPLACE INTO Pages VALUES(" + from_uint64_t(Uid) + ",\"" + Name + "\"," +
-            from_uint64_t(game_id) + "," + to_string(board_transform.position.x) + "," +
-            to_string(board_transform.position.y) + "," + to_string(board_transform.scale.x) + "," +
-            to_string(board_transform.scale.y) + "," + to_string(board_transform.rotation) + "," +
-            to_string(cell_dims.x) + "," + to_string(cell_dims.y) + ");",
-        err);
-    if (result) { std::cerr << err << std::endl; }
-    assert(!result);
+    auto stmt = db.Prepare("INSERT OR REPLACE INTO Pages VALUES(?,?,?,?,?,?,?,?,?,?);");
+    stmt.Bind(1, Uid);
+    stmt.Bind(2, Name);
+    stmt.Bind(3, game_id);
+    stmt.Bind(4, board_transform.position.x);
+    stmt.Bind(5, board_transform.position.y);
+    stmt.Bind(6, board_transform.scale.x);
+    stmt.Bind(7, board_transform.scale.y);
+    stmt.Bind(8, board_transform.rotation);
+    stmt.Bind(9, cell_dims.x);
+    stmt.Bind(10, cell_dims.y);
+    stmt.Step();
     for (auto &piece : Pieces) { piece->WriteToDB(db, Uid); }
 }
 
@@ -479,7 +480,7 @@ CorePage::CorePage(const SQLite::Database &db, uint64_t page_id)
     };
     std::string err;
     int         result = db.Exec(
-        "SELECT * FROM Pages where id = " + from_uint64_t(page_id),
+        "SELECT * FROM Pages WHERE id = " + from_uint64_t(page_id),
         err,
         +page_callback,
         this);
@@ -506,7 +507,7 @@ Page::Page(const SQLite::Database &db, uint64_t uid)
     std::list<uint64_t> piece_uids;
     std::string         err;
     int                 result = db.Exec(
-        "SELECT id FROM GameObjects where page_id = " + from_uint64_t(Uid),
+        "SELECT id FROM GameObjects WHERE page_id = " + from_uint64_t(Uid),
         err,
         +piece_callback,
         &piece_uids);
