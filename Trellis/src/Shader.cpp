@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+using std::make_shared, std::shared_ptr;
+
 Shader &
 Shader::Use() {
     glUseProgram(ID);
@@ -125,4 +127,9 @@ Shader::checkCompileErrors(unsigned int object, std::string type) {
 
 Shader::~Shader() {
     glDeleteProgram(ID);
+}
+
+shared_ptr<Shader>
+Shader::Create(const char *vertexSource, const char *fragmentSource, const char *geometrySource) {
+    return shared_ptr<Shader>(new Shader(vertexSource, fragmentSource, geometrySource));
 }

@@ -90,7 +90,7 @@ public:
     void DeleteCurrentSelection();
 
     // Begin placing a piece on board, this locks it to the mouse and doesn't place until clicked.
-    void BeginPlacePiece(const Transform &transform, Texture2D sprite);
+    void BeginPlacePiece(const Transform &transform, const std::shared_ptr<Texture2D>& sprite);
 
     void Update(glm::ivec2 mouse_pos);
 
@@ -108,6 +108,8 @@ public:
     void       setCellDims(glm::ivec2 cellDims);
 
     void WriteToDB(const SQLite::Database &db, uint64_t game_id) const;
+    // Network related functions
+    void SendAllPieces(uint64_t target_uid = 0);
 
 private:
     BoardRenderer             board_renderer;
@@ -130,8 +132,6 @@ private:
     void MoveCurrentSelection(glm::vec2 mouse_pos);
 
     void HandleUIEvents();
-    // Network related functions
-    void SendAllPieces(uint64_t target_uid = 0);
 };
 
 #endif

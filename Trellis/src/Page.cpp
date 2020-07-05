@@ -6,7 +6,8 @@
 #include "resource_manager.h"
 
 using std::make_unique, std::move, std::string, std::exchange, std::unique_ptr, std::make_pair,
-    std::ref, std::find_if, std::vector, std::byte, std::to_string, std::stof, std::stoi;
+    std::ref, std::find_if, std::vector, std::byte, std::to_string, std::stof, std::stoi,
+    std::shared_ptr;
 
 using Data::NetworkData;
 
@@ -36,8 +37,8 @@ Page::AddPiece(const CoreGameObject &core_piece) {
 }
 
 void
-Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
-    auto  core       = CoreGameObject(transform, sprite.ImageUID, 0, true, glm::vec3(1));
+Page::BeginPlacePiece(const Transform &transform, const shared_ptr<Texture2D> &sprite) {
+    auto  core       = CoreGameObject(transform, sprite->ImageUID, 0, true, glm::vec3(1));
     auto &piece      = AddPiece(core);
     mouse_hold       = MouseHoldType::PLACING;
     initialSize      = piece.transform.scale;

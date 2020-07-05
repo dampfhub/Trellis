@@ -10,7 +10,7 @@
 #include <vector>
 
 using Data::ImageData;
-using std::make_pair, std::make_shared, std::shared_ptr;
+using std::make_pair, std::make_shared, std::shared_ptr, std::string;
 
 ResourceManager &
 ResourceManager::GetInstance() {
@@ -19,41 +19,34 @@ ResourceManager::GetInstance() {
     return instance;
 }
 
-std::shared_ptr<Shader>
+shared_ptr<Shader>
 ResourceManager::LoadShader(
-    const char *       vShaderFile,
-    const char *       fShaderFile,
-    const char *       gShaderFile,
-    const std::string &name) {
+    const char *  vShaderFile,
+    const char *  fShaderFile,
+    const char *  gShaderFile,
+    const string &name) {
     Shaders.insert(make_pair(name, loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile)));
     return Shaders.at(name);
 }
 
-std::shared_ptr<Shader>
+shared_ptr<Shader>
 ResourceManager::GetShader(const std::string &name) {
     return Shaders.at(name);
 }
 
-Texture2D
-ResourceManager::LoadTexture(const char *file, const std::string &name) {
-    Textures[name] = loadTextureFromFile(file);
-    return Textures[name];
+shared_ptr<Texture2D>
+ResourceManager::LoadTexture(const char *file) {
+    auto tex = loadTextureFromFile(file);
+    Textures[tex->ImageUID] = tex;
+    return tex;
 }
 
-Texture2D
-ResourceManager::GetTexture(const std::string &name) {
-    return Textures[name];
-}
-
-Texture2D
+shared_ptr<Texture2D>
 ResourceManager::GetTexture(uint64_t uid) {
     return loadTextureFromUID(uid);
 }
 
-ResourceManager::~ResourceManager() {
-    // (properly) delete all textures
-    for (const auto &iter : Textures) { glDeleteTextures(1, &iter.second.ID); }
-}
+ResourceManager::~ResourceManager() {}
 
 std::shared_ptr<Shader>
 ResourceManager::loadShaderFromFile(
@@ -93,16 +86,12 @@ ResourceManager::loadShaderFromFile(
     const char *fShaderCode = fragmentCode.c_str();
     const char *gShaderCode = geometryCode.c_str();
     // 2. now create sprite_shader object from source code
-    return make_shared<Shader>(
-        vShaderCode,
-        fShaderCode,
-        gShaderFile != nullptr ? gShaderCode : nullptr);
+    return Shader::Create(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
 }
 
-Texture2D
+shared_ptr<Texture2D>
 ResourceManager::loadTextureFromFile(const char *file) {
     // create texture object
-    Texture2D texture;
     // load image
     int width, height, nrChannels;
     // unsigned char *data = stbi_load(file, &width, &height, &nrChannels, 0);
@@ -110,35 +99,43 @@ ResourceManager::loadTextureFromFile(const char *file) {
     std::vector<unsigned char> buffer(
         (std::istreambuf_iterator<char>(infile)),
         (std::istreambuf_iterator<char>()));
+    std::cout << "Loading texture from " << file << std::endl;
     for (auto &i : Images) {
-        if (i.second.Hash == Util::hash_image(buffer)) { return loadTextureFromUID(i.first); }
+        if (i.second.Hash == Util::hash_image(buffer)) {
+            std::cout << "Found existing hash" << std::endl;
+            return loadTextureFromUID(i.first);
+        }
     }
     unsigned char *data =
         stbi_load_from_memory(buffer.data(), buffer.size(), &width, &height, &nrChannels, 0);
-    uint64_t uid = Util::generate_uid();
+    uint64_t              uid = Util::generate_uid();
+    shared_ptr<Texture2D> texture;
     if (nrChannels == 4) {
-        texture.Internal_Format = GL_RGBA;
-        texture.Image_Format    = GL_RGBA;
+        texture = Texture2D::Create(width, height, data, uid, GL_RGBA, GL_RGBA);
+    } else {
+        texture = Texture2D::Create(width, height, data, uid);
     }
-    // now generate texture
-    texture.Generate(width, height, data, uid);
     Images[uid] = ImageData(buffer);
     stbi_image_free(data);
     return texture;
 }
 
-Texture2D
+shared_ptr<Texture2D>
 ResourceManager::loadTextureFromUID(uint64_t uid) {
-    Texture2D      texture;
+    if (Textures.find(uid) != Textures.end()) {
+        return Textures[uid];
+    }
     ImageData      d = Images[uid];
     int            width, height, nrChannels;
     unsigned char *data =
         stbi_load_from_memory(d.Data.data(), d.Data.size(), &width, &height, &nrChannels, 0);
+    shared_ptr<Texture2D> texture;
+    std::cout << "Loading texture from " << uid << std::endl;
     if (nrChannels == 4) {
-        texture.Internal_Format = GL_RGBA;
-        texture.Image_Format    = GL_RGBA;
+        texture = Texture2D::Create(width, height, data, uid, GL_RGBA, GL_RGBA);
+    } else {
+        texture = Texture2D::Create(width, height, data, uid);
     }
-    texture.Generate(width, height, data, uid);
     stbi_image_free(data);
     return texture;
 }

@@ -56,8 +56,8 @@ public:
 private:
     explicit GameObject(const CoreGameObject &other);
 
-    Texture2D                 Sprite;
-    std::unique_ptr<Renderer> renderer;
+    std::shared_ptr<Texture2D> Sprite;
+    std::unique_ptr<Renderer>  renderer;
 };
 
 void swap(GameObject &a, GameObject &b);

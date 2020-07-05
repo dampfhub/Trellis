@@ -116,7 +116,6 @@ Board::Board(string name, uint64_t uid)
     , RightClick{}
     , MiddleClick{}
     , CurrentHoverType{} {
-    std::cout << "Starting \"" << Name << "\" with UID " << Uid << std::endl;
     init_shaders();
     init_objects();
     // Set projection matrix
@@ -340,12 +339,9 @@ Board::ProcessUIEvents() {
     }
     if (UserInterface.FileDialog->HasSelected()) {
         if (ActivePage != Pages.end()) {
-            string file_name = Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
-            rm.LoadTexture(UserInterface.FileDialog->GetSelected().string().c_str(), file_name);
+            auto   tex = rm.LoadTexture(UserInterface.FileDialog->GetSelected().string().c_str());
             (**ActivePage)
-                .BeginPlacePiece(
-                    Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
-                    rm.GetTexture(file_name));
+                .BeginPlacePiece(Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0), tex);
             UserInterface.FileDialog->ClearSelected();
         }
     }
@@ -457,7 +453,7 @@ Board::handle_page_delete_piece(NetworkData &&q) {
 
 void
 Board::handle_add_page(NetworkData &&q) {
-    auto pg      = CorePage::Deserialize(q.Data);
+    auto pg = CorePage::Deserialize(q.Data);
     auto page_it = PagesMap.find(q.Uid);
     if (page_it == PagesMap.end()) {
         AddPage(std::make_unique<Page>(std::move(pg)));
@@ -489,6 +485,8 @@ Board::register_network_callbacks() {
     cs.RegisterCallback("NEW_IMAGE", [this](NetworkData &&d) { handle_new_image(std::move(d)); });
     cs.RegisterCallback("JOIN", [this, &cs](NetworkData &&d) {
         cs.RegisterPageChange("JOIN_ACCEPT", this->Uid, this->Name, d.Uid);
+    });
+    cs.RegisterCallback("JOIN_DONE", [this, &cs](NetworkData &&d) {
         handle_client_join(std::move(d));
     });
     cs.RegisterCallback("ADD_PAGE", [this](NetworkData &&d) { handle_add_page(std::move(d)); });

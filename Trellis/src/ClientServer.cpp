@@ -70,7 +70,9 @@ Client::Start(int port_num, std::string name, std::string hostname) {
     });
     RegisterCallback("JOIN_ACCEPT", [this](NetworkData &&d) {
         StateManager &sm = StateManager::GetInstance();
+        ClientServer &cs = ClientServer::GetInstance();
         sm.StartNewGame(Util::deserialize<std::string>(d.Data), true, d.Uid);
+        cs.RegisterPageChange("JOIN_DONE", this->uid, "", d.Uid);
     });
     Name = name;
 }
@@ -114,11 +116,15 @@ Server::Start(int port, std::string name, std::string hostname) {
     std::vector<std::string> forward_channels =
         {"ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE", "ADD_PAGE", "CHAT_MSG"};
     for (auto &str : forward_channels) {
-        RegisterCallback(str, [this, str](NetworkData &&d) {
-            handle_forward_data(str, std::move(d));
-        });
+        RegisterCallback(str, [this, str](NetworkData &&d) { handle_forward_data(str, d); });
     }
-    RegisterCallback("JOIN", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
+    RegisterCallback("JOIN", [this](NetworkData &&d) {
+        std::cout << "Client is joining..." << std::endl;
+    });
+    RegisterCallback("JOIN_DONE", [this](NetworkData &&d) {
+        std::cout << "Client has joined." << std::endl;
+        handle_client_join(std::move(d));
+    });
     RegisterCallback("IMAGE_REQUEST", [this](NetworkData &&d) {
         handle_image_request(std::move(d));
     });
@@ -142,7 +148,6 @@ Server::handle_client_join(NetworkData d) {
     auto new_client = ClientInfo(d.Uid, d.Parse<std::string>());
     // Send new client out to all connected clients
     RegisterPageChange("CLIENT_ADD", uid, new_client);
-    RegisterPageChange("JOIN_ACCEPT", uid, "asdf", d.Uid);
     // Send all clients to the client that just connected
     for (auto &c : ConnectedClients) { RegisterPageChange("CLIENT_ADD", uid, c, d.Uid); }
     ConnectedClients.emplace_back(new_client);
