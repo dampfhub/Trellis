@@ -7,8 +7,8 @@
 using std::shared_ptr;
 
 SpriteRenderer::SpriteRenderer(
-    const Transform &     transform,
-    const glm::mat4 &     view,
+    const Transform &      transform,
+    const glm::mat4 &      view,
     shared_ptr<Texture2D> &sprite)
     : Renderer(ResourceManager::GetInstance().GetShader("sprite"), transform, view)
     , Sprite(sprite) {

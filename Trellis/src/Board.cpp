@@ -339,7 +339,7 @@ Board::ProcessUIEvents() {
     }
     if (UserInterface.FileDialog->HasSelected()) {
         if (ActivePage != Pages.end()) {
-            auto   tex = rm.LoadTexture(UserInterface.FileDialog->GetSelected().string().c_str());
+            auto tex = rm.LoadTexture(UserInterface.FileDialog->GetSelected().string().c_str());
             (**ActivePage)
                 .BeginPlacePiece(Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0), tex);
             UserInterface.FileDialog->ClearSelected();
@@ -453,7 +453,7 @@ Board::handle_page_delete_piece(NetworkData &&q) {
 
 void
 Board::handle_add_page(NetworkData &&q) {
-    auto pg = CorePage::Deserialize(q.Data);
+    auto pg      = CorePage::Deserialize(q.Data);
     auto page_it = PagesMap.find(q.Uid);
     if (page_it == PagesMap.end()) {
         AddPage(std::make_unique<Page>(std::move(pg)));

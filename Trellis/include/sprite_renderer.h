@@ -10,8 +10,8 @@ private:
 
 public:
     SpriteRenderer(
-        const Transform &                 transform,
-        const glm::mat4 &                 view,
+        const Transform &           transform,
+        const glm::mat4 &           view,
         std::shared_ptr<Texture2D> &sprite);
 
     ~SpriteRenderer() override;

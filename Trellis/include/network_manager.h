@@ -41,7 +41,7 @@ public:
 
         template<class T>
         void Publish(const T &data, uint64_t uid = 0) {
-            auto                   v  = Util::serialize_vec<T>(data);
+            auto v = Util::serialize_vec<T>(data);
             nm.net_obj->Write(Message(v, uid, channel_name));
         }
 

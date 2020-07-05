@@ -90,7 +90,7 @@ public:
     void DeleteCurrentSelection();
 
     // Begin placing a piece on board, this locks it to the mouse and doesn't place until clicked.
-    void BeginPlacePiece(const Transform &transform, const std::shared_ptr<Texture2D>& sprite);
+    void BeginPlacePiece(const Transform &transform, const std::shared_ptr<Texture2D> &sprite);
 
     void Update(glm::ivec2 mouse_pos);
 

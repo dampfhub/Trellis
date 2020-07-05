@@ -36,7 +36,7 @@ ResourceManager::GetShader(const std::string &name) {
 
 shared_ptr<Texture2D>
 ResourceManager::LoadTexture(const char *file) {
-    auto tex = loadTextureFromFile(file);
+    auto tex                = loadTextureFromFile(file);
     Textures[tex->ImageUID] = tex;
     return tex;
 }
@@ -122,9 +122,7 @@ ResourceManager::loadTextureFromFile(const char *file) {
 
 shared_ptr<Texture2D>
 ResourceManager::loadTextureFromUID(uint64_t uid) {
-    if (Textures.find(uid) != Textures.end()) {
-        return Textures[uid];
-    }
+    if (Textures.find(uid) != Textures.end()) { return Textures[uid]; }
     ImageData      d = Images[uid];
     int            width, height, nrChannels;
     unsigned char *data =

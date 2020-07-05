@@ -95,9 +95,10 @@ void
 Client::handle_client_add(NetworkData &&q) {
     auto client = q.Parse<ClientInfo>();
     ConnectedClients.push_back(client);
-    std::sort(ConnectedClients.begin(), ConnectedClients.end(), [](ClientInfo c1, ClientInfo c2) {
-        return c1.Uid < c2.Uid;
-    });
+    std::sort(
+        ConnectedClients.begin(),
+        ConnectedClients.end(),
+        [](const ClientInfo &c1, const ClientInfo &c2) { return c1.Uid < c2.Uid; });
 }
 
 void
