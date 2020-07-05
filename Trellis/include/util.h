@@ -78,8 +78,8 @@ deserialize(const std::vector<std::byte> &vec) {
     auto sz = deserialize<std::vector::size_type>(vec);
     auto v1 = std::vector(vec.begin() + sizeof(sz), vec.begin() + sizeof(sz) + sz);
     auto v2 = std::vector(vec.begin() + sizeof(sz) + sz, vec.end());
-    A a = deserialize<A>(v1);
-    B b = deserialize<B>(v2);
+    A    a  = deserialize<A>(v1);
+    B    b  = deserialize<B>(v2);
     return std::make_pair(a, b);
 }
 
