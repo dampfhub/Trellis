@@ -262,8 +262,8 @@ Board::UpdateMouse() {
     switch (LeftClick) {
         case PRESS:
             pg.HandleLeftClickPress(MousePos);
-            CurrentHoverType   = pg.CurrentHoverType(MousePos);
-            LeftClick          = HOLD;
+            CurrentHoverType = pg.CurrentHoverType(MousePos);
+            LeftClick        = HOLD;
             break;
         case HOLD: pg.HandleLeftClickHold(MousePos); break;
         case RELEASE:
@@ -337,7 +337,6 @@ Board::ProcessUIEvents() {
         string file_name = Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
         ResourceManager::LoadTexture(
             UserInterface.FileDialog->GetSelected().string().c_str(),
-            Util::IsPng(file_name),
             file_name);
         (**ActivePage)
             .BeginPlacePiece(

@@ -1,6 +1,19 @@
+#include <utility>
+
 #include "data.h"
 
 using std::make_unique, std::vector, std::byte, std::string;
+
+template<class T>
+Data::NetworkData::NetworkData(const T &data, uint64_t uid, uint64_t client_uid)
+    : Data(Util::serialize_vec(data))
+    , Uid(uid)
+    , ClientUid(client_uid) {}
+
+Data::NetworkData::NetworkData(std::vector<std::byte> data, uint64_t uid, uint64_t client_uid)
+    : Data(std::move(data))
+    , Uid(uid)
+    , ClientUid(client_uid) {}
 
 vector<byte>
 Data::NetworkData::Serialize() const {
@@ -22,6 +35,16 @@ Data::NetworkData::deserialize_impl(const vector<byte> &vec) {
     return d;
 }
 
+template<class T>
+T
+Data::NetworkData::Parse() {
+    return Util::deserialize<T>(Data);
+}
+
+Data::ClientInfo::ClientInfo(uint64_t uid, std::string name)
+    : Uid(uid)
+    , Name(std::move(name)) {}
+
 std::vector<std::byte>
 Data::ClientInfo::Serialize() const {
     vector<byte> bytes;
@@ -40,28 +63,34 @@ Data::ClientInfo::deserialize_impl(const vector<std::byte> &vec) {
     return c;
 }
 
+Data::ImageData::ImageData(const vector<unsigned char> &data)
+    : Data(data)
+    , Hash(Util::hash_image(data)) {}
+
+Data::ImageData::ImageData(const Data::ImageData &other)
+    : Data(other.Data)
+    , Hash(Util::hash_image(Data)) {}
+
 std::vector<std::byte>
 Data::ImageData::Serialize() const {
-    vector<byte> bytes = Util::serialize_vec(Alpha);
-    const byte * begin = reinterpret_cast<const byte *>(Data.data());
-    const byte * end   = begin + Data.size();
-    bytes.insert(bytes.end(), begin, end);
+    const byte *begin = reinterpret_cast<const byte *>(Data.data());
+    const byte *end   = begin + Data.size();
+    auto        bytes = vector<byte>(begin, end);
     return bytes;
 }
 
 Data::ImageData
 Data::ImageData::deserialize_impl(const vector<std::byte> &vec) {
     ImageData d;
-    d.Alpha                    = *reinterpret_cast<const bool *>(vec.data());
-    const unsigned char *begin = reinterpret_cast<const unsigned char *>(vec.data());
-    const unsigned char *end   = begin + vec.size();
-    d.Data                     = vector<unsigned char>(begin + sizeof(bool), end);
+    auto *    begin = reinterpret_cast<const unsigned char *>(vec.data());
+    auto *    end   = begin + vec.size();
+    d.Data          = vector<unsigned char>(begin, end);
     return d;
 }
 
 Data::ChatMessage::ChatMessage(std::string sender_name, std::string msg)
-    : SenderName(sender_name)
-    , Msg(msg)
+    : SenderName(std::move(sender_name))
+    , Msg(std::move(msg))
     , Uid(Util::generate_uid()) {
     auto t    = std::chrono::system_clock::now();
     TimeStamp = std::chrono::system_clock::to_time_t(t);

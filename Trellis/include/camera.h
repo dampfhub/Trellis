@@ -10,8 +10,8 @@ class Camera2D {
 public:
     Camera2D(float bounds, glm::vec2 zoom_bounds);
 
-    void Move(glm::vec2 delta_mv);
-    void Zoom(glm::ivec2 mouse_pos, int direction);
+    void      Move(glm::vec2 delta_mv);
+    void      Zoom(glm::ivec2 mouse_pos, int direction);
     glm::mat4 CalculateView(glm::vec2 board_dims);
 
 private:

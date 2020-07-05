@@ -26,27 +26,27 @@ ResourceManager::GetInstance() {
 
 std::shared_ptr<Shader>
 ResourceManager::LoadShader(
-    const char *vShaderFile,
-    const char *fShaderFile,
-    const char *gShaderFile,
-    std::string name) {
+    const char *       vShaderFile,
+    const char *       fShaderFile,
+    const char *       gShaderFile,
+    const std::string &name) {
     Shaders.insert(make_pair(name, loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile)));
     return Shaders.at(name);
 }
 
 std::shared_ptr<Shader>
-ResourceManager::GetShader(std::string name) {
+ResourceManager::GetShader(const std::string &name) {
     return Shaders.at(name);
 }
 
 Texture2D
-ResourceManager::LoadTexture(const char *file, bool alpha, std::string name) {
-    Textures[name] = loadTextureFromFile(file, alpha);
+ResourceManager::LoadTexture(const char *file, const std::string &name) {
+    Textures[name] = loadTextureFromFile(file);
     return Textures[name];
 }
 
 Texture2D
-ResourceManager::GetTexture(std::string name) {
+ResourceManager::GetTexture(const std::string &name) {
     return Textures[name];
 }
 
@@ -57,7 +57,7 @@ ResourceManager::GetTexture(uint64_t uid) {
 
 ResourceManager::~ResourceManager() {
     // (properly) delete all textures
-    for (auto iter : Textures) { glDeleteTextures(1, &iter.second.ID); }
+    for (const auto &iter : Textures) { glDeleteTextures(1, &iter.second.ID); }
 }
 
 std::shared_ptr<Shader>
@@ -105,13 +105,9 @@ ResourceManager::loadShaderFromFile(
 }
 
 Texture2D
-ResourceManager::loadTextureFromFile(const char *file, bool alpha) {
+ResourceManager::loadTextureFromFile(const char *file) {
     // create texture object
     Texture2D texture;
-    if (alpha) {
-        texture.Internal_Format = GL_RGBA;
-        texture.Image_Format    = GL_RGBA;
-    }
     // load image
     int width, height, nrChannels;
     // unsigned char *data = stbi_load(file, &width, &height, &nrChannels, 0);
@@ -125,9 +121,13 @@ ResourceManager::loadTextureFromFile(const char *file, bool alpha) {
     unsigned char *data =
         stbi_load_from_memory(buffer.data(), buffer.size(), &width, &height, &nrChannels, 0);
     uint64_t uid = Util::generate_uid();
+    if (nrChannels == 4) {
+        texture.Internal_Format = GL_RGBA;
+        texture.Image_Format    = GL_RGBA;
+    }
     // now generate texture
     texture.Generate(width, height, data, uid);
-    Images[uid] = ImageData(alpha, buffer);
+    Images[uid] = ImageData(buffer);
     stbi_image_free(data);
     return texture;
 }
@@ -201,6 +201,6 @@ ResourceManager::ReadFromDB(const SQLite::Database &db, uint64_t ImageUID) {
     auto *bytes = static_cast<const unsigned char *>(data);
     int   size  = stmt.ColumnSize(1);
     auto  vec   = std::vector<unsigned char>(bytes, bytes + size);
-    auto  image = ImageData(true, vec);
+    auto  image = ImageData(vec);
     Images.insert(make_pair(ImageUID, image));
 }

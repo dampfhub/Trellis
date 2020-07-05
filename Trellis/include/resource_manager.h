@@ -27,19 +27,19 @@ public:
     // geometry) sprite_shader's source code. If gShaderFile is not nullptr, it also loads a
     // geometry sprite_shader
     static std::shared_ptr<Shader> LoadShader(
-        const char *vShaderFile,
-        const char *fShaderFile,
-        const char *gShaderFile,
-        std::string name);
+        const char *       vShaderFile,
+        const char *       fShaderFile,
+        const char *       gShaderFile,
+        const std::string &name);
 
     // retrieves a stored sader
-    static std::shared_ptr<Shader> GetShader(std::string name);
+    static std::shared_ptr<Shader> GetShader(const std::string &name);
 
     // loads (and generates) a texture from file
-    static Texture2D LoadTexture(const char *file, bool alpha, std::string name);
+    static Texture2D LoadTexture(const char *file, const std::string &name);
 
     // retrieves a stored texture
-    static Texture2D GetTexture(std::string name);
+    static Texture2D GetTexture(const std::string &name);
     static Texture2D GetTexture(uint64_t uid);
 
     static void SetGlobalFloat(const char *name, float value);
@@ -66,7 +66,7 @@ private:
         const char *gShaderFile = nullptr);
 
     // loads a single texture from file
-    static Texture2D loadTextureFromFile(const char *file, bool alpha);
+    static Texture2D loadTextureFromFile(const char *file);
 
     // loads a single texture from a cached texture uid
     static Texture2D loadTextureFromUID(uint64_t uid);
