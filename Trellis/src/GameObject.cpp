@@ -122,7 +122,7 @@ void
 GameObject::UpdateSprite(uint64_t sprite_uid) {
     if (SpriteUid == sprite_uid) {
         static ResourceManager &rm = ResourceManager::GetInstance();
-        Sprite = ResourceManager::GetTexture(sprite_uid);
+        Sprite                     = rm.GetTexture(sprite_uid);
     }
 }
 

@@ -51,9 +51,10 @@ public:
 
     void UpdateSprite(uint64_t sprite_uid);
 
+    void swap(GameObject &other);
+
 private:
     explicit GameObject(const CoreGameObject &other);
-    void swap(GameObject &other);
 
     Texture2D                 Sprite;
     std::unique_ptr<Renderer> renderer;
