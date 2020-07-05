@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <queue>
+#include <utility>
 #include <vector>
 
 class ClientServer {
@@ -14,13 +15,10 @@ public:
     using queue_handler_f = std::function<void(Data::NetworkData &&)>;
 
     virtual ~ClientServer() = default;
-
     static ClientServer &GetInstance(NetworkObject type = CLIENT);
 
-    static bool Started();
-
+    static bool  Started();
     virtual void Update();
-
     virtual void Start(int port_num, std::string name = "", std::string hostname = "") = 0;
 
     template<class T>
@@ -33,13 +31,12 @@ public:
         changes.push(std::make_pair(name, std::make_pair(nd, target_uid)));
     }
 
-    void PublishPageChanges();
-
-    void RegisterCallback(std::string channel_name, queue_handler_f cb);
+    void RegisterCallback(const std::string &channel_name, queue_handler_f cb);
 
     virtual void handle_image_request(Data::NetworkData &&q) = 0;
 
-    std::vector<Data::ClientInfo> ConnectedClients;
+    int                                  ClientCount() const;
+    const std::vector<Data::ClientInfo> &getConnectedClients() const;
 
     uint64_t uid;
 
@@ -48,11 +45,7 @@ public:
 protected:
     class NetworkQueueCallback {
     public:
-        std::shared_ptr<NetworkManager::NetworkQueue> queue;
-
-        NetworkQueueCallback(std::string channel_name, queue_handler_f cb)
-            : queue(NetworkManager::NetworkQueue::Subscribe(channel_name))
-            , callback(cb){};
+        NetworkQueueCallback(std::string channel_name, queue_handler_f cb);
 
         void operator()() {
             auto q = queue->Query<Data::NetworkData>();
@@ -64,13 +57,18 @@ protected:
         }
 
     private:
-        queue_handler_f callback;
+        std::shared_ptr<NetworkManager::NetworkQueue> queue;
+        queue_handler_f                               callback;
     };
 
+    std::vector<Data::ClientInfo>                                              ConnectedClients;
     std::map<std::string, std::vector<NetworkQueueCallback>>                   sub_queues;
     std::map<std::string, std::shared_ptr<NetworkManager::NetworkQueue>>       pub_queues;
     std::queue<std::pair<std::string, std::pair<Data::NetworkData, uint64_t>>> changes;
     static bool                                                                started;
+
+private:
+    void PublishPageChanges();
 };
 
 class Client : public ClientServer {
@@ -116,7 +114,7 @@ private:
 
     void handle_client_disconnect(Data::NetworkData &&q);
 
-    void handle_forward_data(std::string channel, Data::NetworkData d);
+    void handle_forward_data(const std::string &channel, const Data::NetworkData &d);
 
     void handle_image_request(Data::NetworkData &&q) override;
 

@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "state_manager.h"
 #include "client_server.h"
 #include "resource_manager.h"
@@ -38,8 +40,18 @@ ClientServer::PublishPageChanges() {
 }
 
 void
-ClientServer::RegisterCallback(std::string channel_name, ClientServer::queue_handler_f cb) {
-    sub_queues[channel_name].push_back(NetworkQueueCallback(channel_name, cb));
+ClientServer::RegisterCallback(const std::string &channel_name, ClientServer::queue_handler_f cb) {
+    sub_queues[channel_name].push_back(NetworkQueueCallback(channel_name, std::move(cb)));
+}
+
+const std::vector<Data::ClientInfo> &
+ClientServer::getConnectedClients() const {
+    return ConnectedClients;
+}
+
+int
+ClientServer::ClientCount() const {
+    return ConnectedClients.size();
 }
 
 void
@@ -139,7 +151,7 @@ Server::handle_client_join(NetworkData d) {
 }
 
 void
-Server::handle_forward_data(std::string channel, NetworkData d) {
+Server::handle_forward_data(const std::string &channel, const NetworkData &d) {
     for (auto &client : ConnectedClients) {
         if (client.Uid != 0 && client.Uid != d.ClientUid) {
             RegisterPageChange(channel, d.Uid, d.Data, client.Uid);
@@ -181,3 +193,9 @@ Server::handle_client_disconnect(NetworkData &&q) {
     if (it != ConnectedClients.end()) { ConnectedClients.erase(it); }
     RegisterPageChange("CLIENT_DELETE", q.Uid, 0);
 }
+
+ClientServer::NetworkQueueCallback::NetworkQueueCallback(
+    std::string                   channel_name,
+    ClientServer::queue_handler_f cb)
+    : queue(NetworkManager::NetworkQueue::Subscribe(std::move(channel_name)))
+    , callback(std::move(cb)) {}

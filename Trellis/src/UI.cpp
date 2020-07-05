@@ -181,17 +181,17 @@ UI::draw_client_list() {
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         if (main_menu_open) {
-            if (cs.ConnectedClients.size() > 0) {
+            if (cs.ClientCount() > 0) {
                 SetNextWindowSizeConstraints(ImVec2(0, 50), ImVec2(FLT_MAX, 50)); // Horizontal only
                 Begin(
                     "Clients",
                     nullptr,
                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
                         ImGuiWindowFlags_NoMove);
-                SetWindowPos(ImVec2(150.0f, (float)glfw.GetScreenHeight() - 50));
-                SetWindowSize(ImVec2(100 * cs.ConnectedClients.size(), 50.0f));
-                BeginColumns("Columns", cs.ConnectedClients.size(), ImGuiColumnsFlags_NoResize);
-                for (ClientInfo &inf : cs.ConnectedClients) {
+                SetWindowPos(ImVec2(150.0f, (float)GLFW::GetScreenHeight() - 50));
+                SetWindowSize(ImVec2(100.0f * cs.ClientCount(), 50.0f));
+                BeginColumns("Columns", cs.ClientCount(), ImGuiColumnsFlags_NoResize);
+                for (auto &inf : cs.getConnectedClients()) {
                     Text("%s", inf.Name.c_str());
                     NextColumn();
                 }
