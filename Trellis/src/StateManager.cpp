@@ -70,6 +70,10 @@ StateManager::WriteToDB(const SQLite::Database &db, const std::string &name) con
 void
 StateManager::Update(float dt) {
     current_state.get().Update(dt);
+    if (ClientServer::Started()) {
+        static ClientServer &cs = ClientServer::GetInstance();
+        cs.Update();
+    }
 }
 
 void
@@ -78,12 +82,12 @@ StateManager::Draw() {
 }
 
 void
-StateManager::StartNewGame(const std::string &name, bool is_client, uint64_t uid) {
+StateManager::StartNewGame(const std::string &name, bool is_client, uint64_t uid, bool from_db) {
     unique_ptr<Board> b;
-    if (uid) {
+    if (from_db) {
         b = make_unique<Board>(database, uid, name);
     } else {
-        b = make_unique<Board>(name);
+        b = make_unique<Board>(name, uid);
     }
     if (is_client) {
         b->Pages.clear();

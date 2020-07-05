@@ -61,6 +61,28 @@ serialize_vec(const T &object) {
     return bytes;
 }
 
+template<class A, class B>
+std::vector<std::byte>
+serialize_vec(const std::pair<A, B> &object) {
+    auto v2 = serialize_vec(object.first);
+    auto v1 = serialize_vec(v2.size());
+    auto v3 = serialize_vec(object.second);
+    v1.insert(v1.end(), v2.begin(), v2.end());
+    v1.insert(v1.end(), v3.begin(), v3.end());
+    return v1;
+}
+
+template<class A, class B>
+std::pair<A, B>
+deserialize(const std::vector<std::byte> &vec) {
+    auto sz = deserialize<std::vector::size_type>(vec);
+    auto v1 = std::vector(vec.begin() + sizeof(sz), vec.begin() + sizeof(sz) + sz);
+    auto v2 = std::vector(vec.begin() + sizeof(sz) + sz, vec.end());
+    A    a  = deserialize<A>(v1);
+    B    b  = deserialize<B>(v2);
+    return std::make_pair(a, b);
+}
+
 template<int N>
 std::array<std::byte, N>
 serialize(const std::string &str) {

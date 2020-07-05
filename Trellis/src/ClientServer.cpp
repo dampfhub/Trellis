@@ -1,3 +1,4 @@
+#include "state_manager.h"
 #include "client_server.h"
 #include "resource_manager.h"
 
@@ -54,6 +55,10 @@ Client::Start(int port_num, std::string name, std::string hostname) {
     RegisterCallback("CLIENT_ADD", [this](NetworkData &&d) { handle_client_add(std::move(d)); });
     RegisterCallback("CLIENT_DELETE", [this](NetworkData &&d) {
         handle_client_delete(std::move(d));
+    });
+    RegisterCallback("JOIN_ACCEPT", [this](NetworkData &&d) {
+        StateManager &sm = StateManager::GetInstance();
+        sm.StartNewGame(Util::deserialize<std::string>(d.Data), true, d.Uid);
     });
     Name = name;
 }

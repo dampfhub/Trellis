@@ -149,15 +149,13 @@ void
 MainMenu::load_game(uint64_t id, const std::string &name) {
     StateManager &sm = StateManager::GetInstance();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
-    sm.StartNewGame(name, false, id);
+    sm.StartNewGame(name, false, id, true);
     cs.Start(port_buf);
 }
 
 void
 MainMenu::join_game() {
-    StateManager &sm = StateManager::GetInstance();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
-    sm.StartNewGame("", true);
     cs.Start(port_buf, client_name_buf, host_name_buf);
 }
 

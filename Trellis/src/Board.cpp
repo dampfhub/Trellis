@@ -109,6 +109,7 @@ Board::snap_callback(int action) {
 Board::Board(string name, uint64_t uid)
     : Name(std::move(name))
     , Uid(uid ? uid : Util::generate_uid()) {
+    std::cout << "Starting \"" << Name << "\" with UID " << Uid << std::endl;
     init_shaders();
     init_objects();
     // Set projection matrix
@@ -309,10 +310,6 @@ Board::Update(float dt) {
         pg.Update(MousePos);
     }
     UpdateMouse();
-    if (ClientServer::Started()) {
-        static ClientServer &cs = ClientServer::GetInstance();
-        cs.Update();
-    }
 }
 
 void
@@ -488,7 +485,10 @@ Board::register_network_callbacks() {
         handle_page_resize_piece(std::move(d));
     });
     cs.RegisterCallback("NEW_IMAGE", [this](NetworkData &&d) { handle_new_image(std::move(d)); });
-    cs.RegisterCallback("JOIN", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
+    cs.RegisterCallback("JOIN", [this, &cs](NetworkData &&d) {
+        cs.RegisterPageChange("JOIN_ACCEPT", this->Uid, this->Name, d.Uid);
+        handle_client_join(std::move(d));
+    });
     cs.RegisterCallback("ADD_PAGE", [this](NetworkData &&d) { handle_add_page(std::move(d)); });
     cs.RegisterCallback("PLAYER_VIEW", [this](NetworkData &&d) {
         handle_change_player_view(std::move(d));
