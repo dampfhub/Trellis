@@ -116,11 +116,13 @@ UI::draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
         EndTooltip();
     }
     if (Button("Page Settings", {-1, 0})) {
-        PageSettingsOpen = !PageSettingsOpen;
-        page_name_buf    = (**active_page).Name;
-        auto pg_dims     = (*active_page)->getCellDims();
-        PageX            = pg_dims.x;
-        PageY            = pg_dims.y;
+        if (active_page != pages.end()) {
+            PageSettingsOpen = !PageSettingsOpen;
+            page_name_buf    = (**active_page).Name;
+            auto pg_dims     = (*active_page)->getCellDims();
+            PageX            = pg_dims.x;
+            PageY            = pg_dims.y;
+        }
     }
     if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
         BeginTooltip();
