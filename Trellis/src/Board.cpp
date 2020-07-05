@@ -20,7 +20,7 @@ using std::unique_ptr, std::make_unique, std::make_pair, std::ref, std::move, st
 using Data::ImageData, Data::NetworkData;
 
 void
-Board::esc_handler() {
+Board::esc_callback() {
     static StateManager &sm   = StateManager::GetInstance();
     static GLFW &        glfw = GLFW::GetInstance();
     if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) { return; }
@@ -108,7 +108,13 @@ Board::snap_callback(int action) {
 
 Board::Board(string name, uint64_t uid)
     : Name(std::move(name))
-    , Uid(uid ? uid : Util::generate_uid()) {
+    , Uid(uid ? uid : Util::generate_uid())
+    , MousePos{}
+    , ScrollDirection{}
+    , LeftClick{}
+    , RightClick{}
+    , MiddleClick{}
+    , CurrentHoverType{} {
     std::cout << "Starting \"" << Name << "\" with UID " << Uid << std::endl;
     init_shaders();
     init_objects();
@@ -160,7 +166,7 @@ Board::RegisterKeyCallbacks() {
     static GLFW &glfw = GLFW::GetInstance();
     glfw.RegisterWindowSizeCallback(
         [this](int width, int height) { this->window_size_callback(width, height); });
-    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, [this](int, int, int, int) { this->esc_handler(); });
+    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, [this](int, int, int, int) { this->esc_callback(); });
     glfw.RegisterKeyPress(GLFW_KEY_RIGHT, [this](int key, int, int, int) {
         this->arrow_press(key);
     });
@@ -256,13 +262,13 @@ Board::UpdateMouse() {
     switch (LeftClick) {
         case PRESS:
             pg.HandleLeftClickPress(MousePos);
-            current_hover_type = pg.CurrentHoverType(MousePos);
+            CurrentHoverType   = pg.CurrentHoverType(MousePos);
             LeftClick          = HOLD;
             break;
         case HOLD: pg.HandleLeftClickHold(MousePos); break;
         case RELEASE:
             pg.HandleLeftClickRelease(MousePos);
-            current_hover_type = pg.CurrentHoverType(MousePos);
+            CurrentHoverType = pg.CurrentHoverType(MousePos);
             break;
         default: break;
     }
@@ -283,7 +289,7 @@ Board::UpdateMouse() {
         pg.HandleScrollWheel(MousePos, ScrollDirection);
         ScrollDirection = 0;
     }
-    switch (current_hover_type) {
+    switch (CurrentHoverType) {
         case Page::MouseHoverType::CENTER: gui.SetCursor(ImGuiMouseCursor_Hand); break;
         case Page::MouseHoverType::E:
         case Page::MouseHoverType::W: gui.SetCursor(ImGuiMouseCursor_ResizeEW); break;
@@ -351,13 +357,6 @@ void
 Board::AddPage(unique_ptr<Page> &&pg) {
     PagesMap.insert(make_pair(pg->Uid, ref(*pg)));
     Pages.push_back(move(pg));
-}
-
-void
-Board::AddPage(const CorePage &core_page) {
-    auto page = make_unique<Page>(core_page);
-    PagesMap.insert(make_pair(core_page.Uid, ref(*page)));
-    Pages.push_back(move(page));
 }
 
 void
@@ -519,4 +518,10 @@ Board::WriteToDB(const SQLite::Database &db) const {
     }
     stmt.Step();
     for (auto &page : Pages) { page->WriteToDB(db, Uid); }
+}
+
+void
+Board::ClearPages() {
+    Pages.clear();
+    PagesMap.clear();
 }

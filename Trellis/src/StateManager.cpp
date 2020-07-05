@@ -90,8 +90,7 @@ StateManager::StartNewGame(const std::string &name, bool is_client, uint64_t uid
         b = make_unique<Board>(name, uid);
     }
     if (is_client) {
-        b->Pages.clear();
-        b->PagesMap.clear();
+        b->ClearPages();
     }
     current_state.get().UnregisterKeyCallbacks();
     current_state = *b;
