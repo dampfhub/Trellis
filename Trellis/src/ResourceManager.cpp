@@ -12,11 +12,6 @@
 using Data::ImageData;
 using std::make_pair, std::make_shared, std::shared_ptr;
 
-// Instantiate static variables
-std::unordered_map<std::string, Texture2D>          ResourceManager::Textures;
-std::unordered_map<std::string, shared_ptr<Shader>> ResourceManager::Shaders;
-std::unordered_map<uint64_t, ImageData>             ResourceManager::Images;
-
 ResourceManager &
 ResourceManager::GetInstance() {
     static ResourceManager instance; // Guaranteed to be destroyed.
