@@ -16,11 +16,10 @@ using nlohmann::json;
 
 using namespace ImGui;
 
-static std::string to_lower(const std::string &str) {
+static std::string
+to_lower(const std::string &str) {
     std::string ret = str;
-    std::for_each(ret.begin(), ret.end(), [](char & c) {
-      c = tolower(c);
-    });
+    std::for_each(ret.begin(), ret.end(), [](char &c) { c = tolower(c); });
     return ret;
 }
 
@@ -34,7 +33,7 @@ UI::UI() {
     cs.RegisterCallback("CHAT_MSG", [this](NetworkData &&d) { handle_chat_msg(std::move(d)); });
     cs.RegisterCallback("JOIN", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
 
-    NetworkManager &nm = NetworkManager::GetInstance();
+    NetworkManager &         nm        = NetworkManager::GetInstance();
     std::vector<std::string> api_calls = {"Spells", "Monsters"};
     for (auto &s : api_calls) {
         std::string res;

@@ -219,7 +219,8 @@ NetworkManager::network_object::http_get(std::string hostname, std::string path)
 
         // Process the response headers.
         std::string header;
-        while (std::getline(response_stream, header) && header != "\r");
+        while (std::getline(response_stream, header) && header != "\r")
+            ;
 
         std::stringstream ss;
         // Write whatever content we already have to output.

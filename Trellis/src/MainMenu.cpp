@@ -20,9 +20,9 @@ MainMenu::Update(float dt) {}
 void
 MainMenu::Draw() {
     GLFW &glfw = GLFW::GetInstance();
-    GUI &gui  = GUI::GetInstance();
+    GUI & gui  = GUI::GetInstance();
     // ImGui::ShowDemoWindow();
-    auto  no_border = ImStyleResource(ImGuiStyleVar_FrameBorderSize, 0.0f);
+    auto no_border = ImStyleResource(ImGuiStyleVar_FrameBorderSize, 0.0f);
     SetNextWindowPos(
         ImVec2((float)glfw.GetScreenWidth() / 2, (float)glfw.GetScreenHeight() / 2),
         0,
@@ -124,9 +124,7 @@ MainMenu::Draw() {
             Dummy(ImVec2(0.0f, 10.0f));
             if (Button("Back", glm::vec2(GetWindowSize().x, 0.0f))) { clear_flags(); }
         } else {
-            if (Button("New Game", glm::vec2(-1, 0.0f))) {
-                starting_new_game = true;
-            }
+            if (Button("New Game", glm::vec2(-1, 0.0f))) { starting_new_game = true; }
             Dummy(ImVec2(0.0f, 10.0f));
             if (Button("Load Game", glm::vec2(-1, 0.0f))) { loading_game = true; }
             Dummy(ImVec2(0.0f, 10.0f));
