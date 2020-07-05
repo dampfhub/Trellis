@@ -48,10 +48,11 @@ public:
 
     static constexpr float TILE_DIMENSIONS = 100.0f;
 
-    glm::mat4                 View = glm::mat4(1.0f);
-    std::unique_ptr<Camera2D> Camera;
-    std::unique_ptr<PageUI>   UserInterface;
-    bool                      Snapping = true;
+    bool                                                             Snapping = true;
+    std::list<std::unique_ptr<GameObject>>                           Pieces;
+    std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
+
+    std::list<std::unique_ptr<GameObject>>::iterator CurrentSelection = Pieces.end();
 
     Page(const CorePage &other);
     Page(const SQLite::Database &db, uint64_t uid);
@@ -99,16 +100,9 @@ public:
 
     MouseHoverType CurrentHoverType(glm::ivec2 mouse_pos);
 
-    // Network related functions
-    void SendAllPieces(uint64_t target_uid = 0);
-
     // If page has an active selection, deselect it and return true. Otherwise,
     // return false. If a new piece is being placed, delete it.
     bool Deselect();
-
-    std::list<std::unique_ptr<GameObject>>                           Pieces;
-    std::unordered_map<uint64_t, std::reference_wrapper<GameObject>> PiecesMap;
-    std::list<std::unique_ptr<GameObject>>::iterator CurrentSelection = Pieces.end();
 
     glm::ivec2 getCellDims() const;
     void       setCellDims(glm::ivec2 cellDims);
@@ -116,13 +110,16 @@ public:
     void WriteToDB(const SQLite::Database &db, uint64_t game_id) const;
 
 private:
-    BoardRenderer       board_renderer;
-    glm::ivec2          DragOrigin = glm::ivec2(0);
-    MouseHoldType       mouse_hold = MouseHoldType::NONE;
-    std::pair<int, int> ScaleEdges = {0, 0};
-    glm::vec2           initialSize;
-    glm::vec2           initialPos;
-    int                 BorderWidth = 5;
+    BoardRenderer             board_renderer;
+    glm::ivec2                DragOrigin = glm::ivec2(0);
+    MouseHoldType             mouse_hold = MouseHoldType::NONE;
+    std::pair<int, int>       ScaleEdges = {0, 0};
+    glm::vec2                 initialSize;
+    glm::vec2                 initialPos;
+    int                       BorderWidth = 5;
+    glm::mat4                 View        = glm::mat4(1.0f);
+    std::unique_ptr<Camera2D> Camera;
+    std::unique_ptr<PageUI>   UserInterface;
 
     void SnapPieceToGrid(GameObject &piece, int increments);
 
@@ -133,6 +130,8 @@ private:
     void MoveCurrentSelection(glm::vec2 mouse_pos);
 
     void HandleUIEvents();
+    // Network related functions
+    void SendAllPieces(uint64_t target_uid = 0);
 };
 
 #endif
