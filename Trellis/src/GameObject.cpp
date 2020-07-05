@@ -117,6 +117,13 @@ GameObject::WriteToDB(const SQLite::Database &db, uint64_t page_id) const {
     stmt.Bind(12, Color.z);
     stmt.Step();
 }
+void
+GameObject::UpdateSprite(uint64_t sprite_uid) {
+    if (SpriteUid == sprite_uid) {
+        static ResourceManager &rm = ResourceManager::GetInstance();
+        Sprite = ResourceManager::GetTexture(sprite_uid);
+    }
+}
 
 CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
     using SQLite::from_uint64_t;

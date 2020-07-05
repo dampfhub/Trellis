@@ -49,11 +49,17 @@ public:
     NetworkData() = default;
 
     template<class T>
-    NetworkData(const T &data, uint64_t uid, uint64_t client_uid = 0);
+    NetworkData(const T &data, uint64_t uid, uint64_t client_uid = 0)
+        : Data(Util::serialize_vec(data))
+        , Uid(uid)
+        , ClientUid(client_uid) {}
+
     NetworkData(std::vector<std::byte> data, uint64_t uid, uint64_t client_uid = 0);
 
     template<class T>
-    T Parse();
+    T Parse() {
+        return Util::deserialize<T>(Data);
+    }
 
     std::vector<std::byte> Serialize() const override;
 

@@ -4,12 +4,6 @@
 
 using std::make_unique, std::vector, std::byte, std::string;
 
-template<class T>
-Data::NetworkData::NetworkData(const T &data, uint64_t uid, uint64_t client_uid)
-    : Data(Util::serialize_vec(data))
-    , Uid(uid)
-    , ClientUid(client_uid) {}
-
 Data::NetworkData::NetworkData(std::vector<std::byte> data, uint64_t uid, uint64_t client_uid)
     : Data(std::move(data))
     , Uid(uid)
@@ -33,12 +27,6 @@ Data::NetworkData::deserialize_impl(const vector<byte> &vec) {
     d.ClientUid     = Util::deserialize<uint64_t>(ptr += sizeof(d.Uid));
     d.Data          = vector<byte>(ptr + sizeof(d.ClientUid), end);
     return d;
-}
-
-template<class T>
-T
-Data::NetworkData::Parse() {
-    return Util::deserialize<T>(Data);
 }
 
 Data::ClientInfo::ClientInfo(uint64_t uid, std::string name)

@@ -427,7 +427,7 @@ Board::handle_new_image(NetworkData &&q) {
     // Check which gameobjects need this texture and apply it.
     for (auto &pg : Pages) {
         for (auto &go : pg->Pieces) {
-            if (go->SpriteUid == q.Uid) { go->Sprite = ResourceManager::GetTexture(q.Uid); }
+            go->UpdateSprite(q.Uid);
         }
     }
 }
