@@ -3,14 +3,15 @@ project(Trellis)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(include include/imgui include/stb_image)
-
 find_package(asio REQUIRED)
 find_package(glm REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(freetype CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(SQLite3 CONFIG REQUIRED)
+
+include_directories(include include/imgui include/stb_image ${SQLITE3_INCLUDE_DIRS})
 
 file(GLOB_RECURSE SRC "src/*.cpp")
 
@@ -22,6 +23,7 @@ target_link_libraries(Trellis glfw)
 target_link_libraries(Trellis freetype)
 target_link_libraries(Trellis asio)
 target_link_libraries(Trellis nlohmann_json)
+target_link_libraries(Trellis sqlite3)
 
 if (MINGW)
     target_link_libraries(Trellis ws2_32)

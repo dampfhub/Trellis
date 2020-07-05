@@ -8,7 +8,7 @@ BoardRenderer::BoardRenderer(
     glm::ivec2 &     cell_dims,
     float            line_width,
     glm::vec3        color)
-    : Renderer(ResourceManager::GetShader("board"), transform, view)
+    : Renderer(ResourceManager::GetInstance().GetShader("board"), transform, view)
     , LineWidth(line_width)
     , Color(color)
     , CellDims(cell_dims) {

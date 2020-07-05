@@ -6,6 +6,7 @@
 #include "page_ui.h"
 #include "util.h"
 #include "board_renderer.h"
+#include "sqlite_handler.h"
 
 #include <functional>
 #include <list>
@@ -27,6 +28,8 @@ public:
     std::vector<std::byte> Serialize() const override;
 
 protected:
+    CorePage(const SQLite::Database &db, uint64_t page_id);
+
     Transform  board_transform;
     glm::ivec2 cell_dims = glm::ivec2(20);
 
@@ -51,6 +54,7 @@ public:
     bool                      Snapping = true;
 
     Page(const CorePage &other);
+    Page(const SQLite::Database &db, uint64_t uid);
     Page &operator=(const CorePage &other);
 
     ~Page();
@@ -108,6 +112,8 @@ public:
 
     glm::ivec2 getCellDims() const;
     void       setCellDims(glm::ivec2 cellDims);
+
+    void WriteToDB(const SQLite::Database &db, uint64_t game_id) const;
 
 private:
     BoardRenderer       board_renderer;

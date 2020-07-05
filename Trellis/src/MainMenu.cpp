@@ -64,7 +64,7 @@ MainMenu::Draw() {
             Dummy(ImVec2(0.0f, 10.0f));
             InputInt("Port", &port_buf);
             Dummy(ImVec2(0.0f, 10.0f));
-            if (Button("Create", glm::vec2(GetWindowSize().x, 0.0f))) { new_game(); }
+            if (Button("Create", glm::vec2(GetWindowSize().x, 0.0f))) { new_game(client_name_buf); }
             Dummy(ImVec2(0.0f, 10.0f));
             if (Button("Back", glm::vec2(GetWindowSize().x, 0.0f))) { clear_flags(); }
         } else if (loading_game) {
@@ -75,6 +75,30 @@ MainMenu::Draw() {
                 SetCursorPosX(
                     (((glm::vec2)GetWindowSize() - (glm::vec2)CalcTextSize("Load Game")) * 0.5f).x);
                 Text("Load Game");
+                BeginChild("##load_game", ImVec2(GetWindowSize().x, -100));
+                {
+                    static StateManager &sm = StateManager::GetInstance();
+                    auto callback = [](void *udp, int count, char **values, char **names) -> int {
+                        using SQLite::to_uint64_t;
+                        auto name_ids =
+                            reinterpret_cast<std::vector<std::pair<std::string, uint64_t>> *>(udp);
+                        name_ids->push_back(
+                            std::make_pair(std::string(values[1]), to_uint64_t(values[0])));
+                        return 0;
+                    };
+                    std::string                                   error;
+                    std::vector<std::pair<std::string, uint64_t>> name_ids;
+                    int                                           result =
+                        sm.getDatabase().Exec("SELECT * FROM Games;", error, callback, &name_ids);
+                    if (result) { std::cerr << error << std::endl; }
+                    assert(!result);
+                    for (auto &name_id : name_ids) {
+                        if (Selectable(name_id.first.c_str())) {
+                            load_game(name_id.second, name_id.first);
+                        }
+                    }
+                }
+                EndChild();
             }
             if (Button("Back", glm::vec2(GetWindowSize().x, 0.0f))) { clear_flags(); }
         } else if (joining_game) {
@@ -115,22 +139,25 @@ MainMenu::Draw() {
 }
 
 void
-MainMenu::new_game() {
+MainMenu::new_game(const std::string &name) {
     StateManager &sm = StateManager::GetInstance();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
     cs.Start(port_buf);
-    sm.StartNewGame();
+    sm.StartNewGame(name, false);
 }
 
 void
-MainMenu::load_game() {}
+MainMenu::load_game(uint64_t id, const std::string &name) {
+    StateManager &sm = StateManager::GetInstance();
+    ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
+    cs.Start(port_buf);
+    sm.StartNewGame(name, false, id, true);
+}
 
 void
 MainMenu::join_game() {
-    StateManager &sm = StateManager::GetInstance();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
     cs.Start(port_buf, client_name_buf, host_name_buf);
-    sm.StartNewGame(true);
 }
 
 void
@@ -154,4 +181,9 @@ MainMenu::clear_flags() {
     host_name_buf     = "";
     // TODO only for testing purposes so don't have to retype
     host_name_buf = "localhost";
+}
+void
+MainMenu::WriteToDB(const SQLite::Database &db) const {
+    // No Main Menu state needs to be written to the database
+    return;
 }
