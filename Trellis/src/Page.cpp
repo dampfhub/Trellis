@@ -6,7 +6,8 @@
 #include "resource_manager.h"
 
 using std::make_unique, std::move, std::string, std::exchange, std::unique_ptr, std::make_pair,
-    std::ref, std::find_if, std::vector, std::byte, std::to_string, std::stod, std::stof, std::stoi;
+    std::ref, std::find_if, std::vector, std::byte, std::to_string, std::stof, std::stoi,
+    std::shared_ptr;
 
 using Data::NetworkData;
 
@@ -36,8 +37,8 @@ Page::AddPiece(const CoreGameObject &core_piece) {
 }
 
 void
-Page::BeginPlacePiece(const Transform &transform, Texture2D sprite) {
-    auto  core       = CoreGameObject(transform, sprite.ImageUID, 0, true, glm::vec3(1));
+Page::BeginPlacePiece(const Transform &transform, const shared_ptr<Texture2D> &sprite) {
+    auto  core       = CoreGameObject(transform, sprite->ImageUID, 0, true, glm::vec3(1));
     auto &piece      = AddPiece(core);
     mouse_hold       = MouseHoldType::PLACING;
     initialSize      = piece.transform.scale;
@@ -194,7 +195,7 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                         piece.transform.scale.x =
                             fmax(initialSize.x + diff.x, TILE_DIMENSIONS / (float)inc);
                         closest =
-                            floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5f);
                         piece.transform.scale.x = closest * TILE_DIMENSIONS / (float)inc - 2;
                         break;
                     case -1:
@@ -202,7 +203,7 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                             DragOrigin.x + initialSize.x - world_mouse.x,
                             TILE_DIMENSIONS / (float)inc);
                         closest =
-                            floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.x / (TILE_DIMENSIONS / (float)inc) + 0.5f);
                         piece.transform.scale.x = closest * TILE_DIMENSIONS / (float)inc - 2;
                         piece.transform.position.x =
                             initialPos.x + initialSize.x - piece.transform.scale.x;
@@ -213,7 +214,7 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                         piece.transform.scale.y =
                             fmax(initialSize.y + diff.y, TILE_DIMENSIONS / (float)inc);
                         closest =
-                            floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5f);
                         piece.transform.scale.y = closest * TILE_DIMENSIONS / (float)inc - 2;
                         break;
                     case -1:
@@ -221,7 +222,7 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
                             DragOrigin.y + initialSize.y - world_mouse.y,
                             TILE_DIMENSIONS / (float)inc);
                         closest =
-                            floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5);
+                            floor(piece.transform.scale.y / (TILE_DIMENSIONS / (float)inc) + 0.5f);
                         piece.transform.scale.y = closest * TILE_DIMENSIONS / (float)inc - 2;
                         piece.transform.position.y =
                             initialPos.y + initialSize.y - piece.transform.scale.y;
@@ -456,16 +457,16 @@ CorePage::CorePage(const SQLite::Database &db, uint64_t page_id)
         //[2] = "game_id"
 
         assert(!strcmp(names[3], "t_pos_x"));
-        core->board_transform.position.x = stod(values[3]);
+        core->board_transform.position.x = stof(values[3]);
 
         assert(!strcmp(names[4], "t_pos_y"));
-        core->board_transform.position.y = stod(values[4]);
+        core->board_transform.position.y = stof(values[4]);
 
         assert(!strcmp(names[5], "t_scale_x"));
-        core->board_transform.scale.x = stod(values[5]);
+        core->board_transform.scale.x = stof(values[5]);
 
         assert(!strcmp(names[6], "t_scale_y"));
-        core->board_transform.scale.y = stod(values[6]);
+        core->board_transform.scale.y = stof(values[6]);
 
         assert(!strcmp(names[7], "t_rotation"));
         core->board_transform.rotation = stof(values[7]);

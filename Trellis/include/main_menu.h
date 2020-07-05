@@ -9,7 +9,7 @@ public:
     MainMenu();
     ~MainMenu() override = default;
 
-    void Update(float dt) override;
+    void Update() override;
     void Draw() override;
     void RegisterKeyCallbacks() override;
     void UnregisterKeyCallbacks() override;
@@ -20,10 +20,10 @@ private:
     bool loading_game      = false;
     bool joining_game      = false;
 
-    void new_game(const std::string &name);
-    void load_game(uint64_t id, const std::string &name);
-    void join_game();
-    void exit();
+    void new_game(const std::string &name) const;
+    void load_game(uint64_t id, const std::string &name) const;
+    void join_game() const;
+    void exit() const;
 
     void clear_flags();
 

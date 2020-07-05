@@ -15,7 +15,7 @@ public:
 
     static StateManager &GetInstance();
 
-    void Update(float dt);
+    void Update();
     void Draw();
 
     void

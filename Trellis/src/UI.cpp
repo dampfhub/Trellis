@@ -212,17 +212,17 @@ UI::draw_client_list() {
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         if (main_menu_open) {
-            if (cs.ConnectedClients.size() > 0) {
+            if (cs.ClientCount() > 0) {
                 SetNextWindowSizeConstraints(ImVec2(0, 50), ImVec2(FLT_MAX, 50)); // Horizontal only
                 Begin(
                     "Clients",
                     nullptr,
                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
                         ImGuiWindowFlags_NoMove);
-                SetWindowPos(ImVec2(150.0f, (float)glfw.GetScreenHeight() - 50));
-                SetWindowSize(ImVec2(100 * cs.ConnectedClients.size(), 50.0f));
-                BeginColumns("Columns", cs.ConnectedClients.size(), ImGuiColumnsFlags_NoResize);
-                for (ClientInfo &inf : cs.ConnectedClients) {
+                SetWindowPos(ImVec2(150.0f, (float)GLFW::GetScreenHeight() - 50));
+                SetWindowSize(ImVec2(100.0f * cs.ClientCount(), 50.0f));
+                BeginColumns("Columns", cs.ClientCount(), ImGuiColumnsFlags_NoResize);
+                for (auto &inf : cs.getConnectedClients()) {
                     Text("%s", inf.Name.c_str());
                     NextColumn();
                 }
@@ -244,7 +244,7 @@ UI::draw_chat() {
     {
         ImVec2 win_size = GetContentRegionAvail();
         win_size.y -= 20;
-        BeginChild("##chat_text", ImVec2(win_size.x, win_size.y * 0.8));
+        BeginChild("##chat_text", ImVec2(win_size.x, win_size.y * 0.8f));
         {
             std::string last_sender = "";
             for (auto &m : chat_messages) {
@@ -277,7 +277,7 @@ UI::draw_chat() {
         if (InputTextMultiline(
                 "##send_msg",
                 &send_msg_buf,
-                ImVec2(win_size.x, win_size.y * 0.15),
+                ImVec2(win_size.x, win_size.y * 0.15f),
                 ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine)) {
             SetKeyboardFocusHere(-1);
             if (!send_msg_buf.empty()) { send_msg(); }
@@ -377,7 +377,7 @@ UI::draw_query_response(std::string query_type) {
     if (nm.HttpGetResults(res)) {
         try {
             http_response = json::parse(res);
-        } catch (std::exception &e) {}
+        } catch ([[maybe_unused]] std::exception &e) {}
     }
     if (!http_response.empty()) {
         Separator();

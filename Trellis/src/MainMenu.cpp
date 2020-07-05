@@ -1,10 +1,10 @@
+#include "imgui_impl_glfw.h"
+#include "glfw_handler.h"
 #include "main_menu.h"
-#include "imgui.h"
+#include "imconfig.h"
 #include "imgui_stdlib.h"
 #include "imgui_helpers.h"
-#include "glfw_handler.h"
 #include "GUI.h"
-#include "imconfig.h"
 #include "state_manager.h"
 #include "client_server.h"
 
@@ -15,7 +15,7 @@ MainMenu::MainMenu() {
 }
 
 void
-MainMenu::Update(float dt) {}
+MainMenu::Update() {}
 
 void
 MainMenu::Draw() {
@@ -24,7 +24,7 @@ MainMenu::Draw() {
     // ImGui::ShowDemoWindow();
     auto no_border = ImStyleResource(ImGuiStyleVar_FrameBorderSize, 0.0f);
     SetNextWindowPos(
-        ImVec2((float)glfw.GetScreenWidth() / 2, (float)glfw.GetScreenHeight() / 2),
+        ImVec2(GLFW::GetScreenWidth() / 2.0f, GLFW::GetScreenHeight() / 2.0f),
         0,
         ImVec2(0.5f, 0.5f));
     SetNextWindowSize(ImVec2(500.0f, 500.0f));
@@ -79,6 +79,8 @@ MainMenu::Draw() {
                 {
                     static StateManager &sm = StateManager::GetInstance();
                     auto callback = [](void *udp, int count, char **values, char **names) -> int {
+                        (void)count;
+                        (void)names;
                         using SQLite::to_uint64_t;
                         auto name_ids =
                             reinterpret_cast<std::vector<std::pair<std::string, uint64_t>> *>(udp);
@@ -137,7 +139,7 @@ MainMenu::Draw() {
 }
 
 void
-MainMenu::new_game(const std::string &name) {
+MainMenu::new_game(const std::string &name) const {
     StateManager &sm = StateManager::GetInstance();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
     cs.Start(port_buf);
@@ -145,7 +147,7 @@ MainMenu::new_game(const std::string &name) {
 }
 
 void
-MainMenu::load_game(uint64_t id, const std::string &name) {
+MainMenu::load_game(uint64_t id, const std::string &name) const {
     StateManager &sm = StateManager::GetInstance();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
     cs.Start(port_buf);
@@ -153,13 +155,13 @@ MainMenu::load_game(uint64_t id, const std::string &name) {
 }
 
 void
-MainMenu::join_game() {
+MainMenu::join_game() const {
     ClientServer &cs = ClientServer::GetInstance(ClientServer::CLIENT);
     cs.Start(port_buf, client_name_buf, host_name_buf);
 }
 
 void
-MainMenu::exit() {
+MainMenu::exit() const {
     GLFW &glfw = GLFW::GetInstance();
     glfw.SetWindowShouldClose(1);
 }
@@ -181,7 +183,6 @@ MainMenu::clear_flags() {
     host_name_buf = "localhost";
 }
 void
-MainMenu::WriteToDB(const SQLite::Database &db) const {
+MainMenu::WriteToDB([[maybe_unused]] const SQLite::Database &db) const {
     // No Main Menu state needs to be written to the database
-    return;
 }

@@ -4,6 +4,7 @@
 #include "util.h"
 #include <chrono>
 #include <ctime>
+#include <utility>
 
 namespace Data {
 class ClientInfo : public Util::Serializable<ClientInfo> {
@@ -12,10 +13,7 @@ public:
     std::string Name;
 
     ClientInfo() = default;
-
-    ClientInfo(uint64_t uid, std::string name)
-        : Uid(uid)
-        , Name(std::move(name)) {}
+    ClientInfo(uint64_t uid, std::string name);
 
     std::vector<std::byte> Serialize() const override;
 
@@ -27,23 +25,12 @@ private:
 
 class ImageData : public Util::Serializable<ImageData> {
 public:
-    size_t                     Hash;
-    bool                       Alpha;
+    size_t                     Hash{};
     std::vector<unsigned char> Data;
 
     ImageData() = default;
-
-    ImageData(bool alpha, std::vector<unsigned char> data)
-        : Alpha(alpha)
-        , Data(data) {
-        Hash = Util::hash_image(data);
-    }
-
-    ImageData(const ImageData &other) {
-        Alpha = other.Alpha;
-        Data  = other.Data;
-        Hash  = Util::hash_image(Data);
-    }
+    explicit ImageData(const std::vector<unsigned char> &data);
+    ImageData(const ImageData &other);
 
     std::vector<std::byte> Serialize() const override;
 
@@ -56,8 +43,8 @@ private:
 class NetworkData : public Util::Serializable<NetworkData> {
 public:
     std::vector<std::byte> Data;
-    uint64_t               Uid;
-    uint64_t               ClientUid;
+    uint64_t               Uid{};
+    uint64_t               ClientUid{};
 
     NetworkData() = default;
 
@@ -67,10 +54,7 @@ public:
         , Uid(uid)
         , ClientUid(client_uid) {}
 
-    NetworkData(std::vector<std::byte> data, uint64_t uid, uint64_t client_uid = 0)
-        : Data(data)
-        , Uid(uid)
-        , ClientUid(client_uid) {}
+    NetworkData(std::vector<std::byte> data, uint64_t uid, uint64_t client_uid = 0);
 
     template<class T>
     T Parse() {
@@ -87,8 +71,8 @@ private:
 
 class ChatMessage : public Util::Serializable<ChatMessage> {
 public:
-    std::time_t TimeStamp;
-    uint64_t    Uid;
+    std::time_t TimeStamp{};
+    uint64_t    Uid{};
     std::string SenderName;
     std::string Msg;
 

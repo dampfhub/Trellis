@@ -20,11 +20,10 @@ using std::unique_ptr, std::make_unique, std::make_pair, std::ref, std::move, st
 using Data::ImageData, Data::NetworkData;
 
 void
-Board::esc_handler() {
+Board::esc_callback() {
     static StateManager &   sm   = StateManager::GetInstance();
     static GLFW &           glfw = GLFW::GetInstance();
     static ResourceManager &rm   = ResourceManager::GetInstance();
-
     if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) { return; }
     // TODO: Check if this is a client or server, only save on server
     // TOOD: Also, move save initiation to a better location
@@ -41,8 +40,8 @@ Board::window_size_callback(int width, int height) {
 
 void
 Board::mouse_pos_callback(double x, double y) {
-    MousePos.x = x;
-    MousePos.y = y;
+    MousePos.x = static_cast<int>(x);
+    MousePos.y = static_cast<int>(y);
 }
 
 void
@@ -110,8 +109,13 @@ Board::snap_callback(int action) {
 
 Board::Board(string name, uint64_t uid)
     : Name(std::move(name))
-    , Uid(uid ? uid : Util::generate_uid()) {
-    std::cout << "Starting \"" << Name << "\" with UID " << Uid << std::endl;
+    , Uid(uid ? uid : Util::generate_uid())
+    , MousePos{}
+    , ScrollDirection{}
+    , LeftClick{}
+    , RightClick{}
+    , MiddleClick{}
+    , CurrentHoverType{} {
     init_shaders();
     init_objects();
     // Set projection matrix
@@ -128,7 +132,7 @@ Board::Board(const SQLite::Database &db, uint64_t uid, const std::string &name)
     using SQLite::from_uint64_t;
     using SQLite::to_uint64_t;
 
-    auto page_callback = [](void *udp, int count, char **values, char **names) -> int {
+    auto page_callback = [](void *udp, int, char **values, char **names) -> int {
         auto page_uids = static_cast<std::list<uint64_t> *>(udp);
 
         assert(!strcmp(names[0], "id"));
@@ -163,7 +167,7 @@ Board::RegisterKeyCallbacks() {
     static GLFW &glfw = GLFW::GetInstance();
     glfw.RegisterWindowSizeCallback(
         [this](int width, int height) { this->window_size_callback(width, height); });
-    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, [this](int, int, int, int) { this->esc_handler(); });
+    glfw.RegisterKeyPress(GLFW_KEY_ESCAPE, [this](int, int, int, int) { this->esc_callback(); });
     glfw.RegisterKeyPress(GLFW_KEY_RIGHT, [this](int key, int, int, int) {
         this->arrow_press(key);
     });
@@ -261,13 +265,13 @@ Board::UpdateMouse() {
     switch (LeftClick) {
         case PRESS:
             pg.HandleLeftClickPress(MousePos);
-            current_hover_type = pg.CurrentHoverType(MousePos);
-            LeftClick          = HOLD;
+            CurrentHoverType = pg.CurrentHoverType(MousePos);
+            LeftClick        = HOLD;
             break;
         case HOLD: pg.HandleLeftClickHold(MousePos); break;
         case RELEASE:
             pg.HandleLeftClickRelease(MousePos);
-            current_hover_type = pg.CurrentHoverType(MousePos);
+            CurrentHoverType = pg.CurrentHoverType(MousePos);
             break;
         default: break;
     }
@@ -288,7 +292,7 @@ Board::UpdateMouse() {
         pg.HandleScrollWheel(MousePos, ScrollDirection);
         ScrollDirection = 0;
     }
-    switch (current_hover_type) {
+    switch (CurrentHoverType) {
         case Page::MouseHoverType::CENTER: gui.SetCursor(ImGuiMouseCursor_Hand); break;
         case Page::MouseHoverType::E:
         case Page::MouseHoverType::W: gui.SetCursor(ImGuiMouseCursor_ResizeEW); break;
@@ -308,7 +312,7 @@ Board::UpdateMouse() {
 }
 
 void
-Board::Update(float dt) {
+Board::Update() {
     ProcessUIEvents();
     if (ActivePage != Pages.end()) {
         Page &pg = **ActivePage;
@@ -335,15 +339,9 @@ Board::ProcessUIEvents() {
     }
     if (UserInterface.FileDialog->HasSelected()) {
         if (ActivePage != Pages.end()) {
-            string file_name = Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
-            rm.LoadTexture(
-                UserInterface.FileDialog->GetSelected().string().c_str(),
-                Util::IsPng(file_name),
-                file_name);
+            auto tex = rm.LoadTexture(UserInterface.FileDialog->GetSelected().string().c_str());
             (**ActivePage)
-                .BeginPlacePiece(
-                    Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
-                    rm.GetTexture(file_name));
+                .BeginPlacePiece(Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0), tex);
             UserInterface.FileDialog->ClearSelected();
         }
     }
@@ -359,13 +357,6 @@ void
 Board::AddPage(unique_ptr<Page> &&pg) {
     PagesMap.insert(make_pair(pg->Uid, ref(*pg)));
     Pages.push_back(move(pg));
-}
-
-void
-Board::AddPage(const CorePage &core_page) {
-    auto page = make_unique<Page>(core_page);
-    PagesMap.insert(make_pair(core_page.Uid, ref(*page)));
-    Pages.push_back(move(page));
 }
 
 void
@@ -437,9 +428,7 @@ Board::handle_new_image(NetworkData &&q) {
     rm.Images[q.Uid]           = q.Parse<ImageData>();
     // Check which gameobjects need this texture and apply it.
     for (auto &pg : Pages) {
-        for (auto &go : pg->Pieces) {
-            if (go->SpriteUid == q.Uid) { go->Sprite = rm.GetTexture(q.Uid); }
-        }
+        for (auto &go : pg->Pieces) { go->UpdateSprite(q.Uid); }
     }
 }
 
@@ -496,6 +485,8 @@ Board::register_network_callbacks() {
     cs.RegisterCallback("NEW_IMAGE", [this](NetworkData &&d) { handle_new_image(std::move(d)); });
     cs.RegisterCallback("JOIN", [this, &cs](NetworkData &&d) {
         cs.RegisterPageChange("JOIN_ACCEPT", this->Uid, this->Name, d.Uid);
+    });
+    cs.RegisterCallback("JOIN_DONE", [this, &cs](NetworkData &&d) {
         handle_client_join(std::move(d));
     });
     cs.RegisterCallback("ADD_PAGE", [this](NetworkData &&d) { handle_add_page(std::move(d)); });
@@ -528,4 +519,10 @@ Board::WriteToDB(const SQLite::Database &db) const {
     }
     stmt.Step();
     for (auto &page : Pages) { page->WriteToDB(db, Uid); }
+}
+
+void
+Board::ClearPages() {
+    Pages.clear();
+    PagesMap.clear();
 }

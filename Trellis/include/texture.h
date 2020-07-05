@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <glad/glad.h>
+#include <memory>
 
 #include "sqlite_handler.h"
 
@@ -10,9 +11,19 @@
 // It also hosts utility functions for easy management.
 class Texture2D {
 public:
-    // holds the ID of the texture object, used for all texture operations to reference to this
-    // particular texture
-    unsigned int ID;
+    static std::shared_ptr<Texture2D> Create(
+        unsigned int   width,
+        unsigned int   height,
+        unsigned char *data,
+        uint64_t       ImageUid,
+        unsigned int   internal_format = GL_RGB,
+        unsigned int   image_format    = GL_RGB);
+
+    Texture2D(const Texture2D &) = delete;
+    Texture2D &operator=(const Texture2D &) = delete;
+
+    ~Texture2D();
+
     // texture image dimensions
     unsigned int Width, Height; // width and height of loaded image in pixels
     // Image uid for server lookup
@@ -25,16 +36,20 @@ public:
     unsigned int Wrap_T;     // wrapping mode on T axis
     unsigned int Filter_Min; // filtering mode if texture pixels < screen pixels
     unsigned int Filter_Max; // filtering mode if texture pixels > screen pixels
-    // constructor (sets default texture modes)
-    Texture2D();
-    Texture2D(const SQLite::Database &db, uint64_t uid);
-
-    // generates texture from image data
-    void Generate(unsigned int width, unsigned int height, unsigned char *data, uint64_t ImageUid);
 
     // binds the texture as the current active GL_TEXTURE_2D texture object
     void Bind() const;
-    void WriteToDB(const SQLite::Database &db) const;
+
+private:
+    Texture2D(
+        unsigned int   height,
+        unsigned int   width,
+        unsigned char *data,
+        uint64_t       ImageUid,
+        unsigned int   internal_format = GL_RGB,
+        unsigned int   image_format    = GL_RGB);
+
+    unsigned int ID{};
 };
 
 #endif

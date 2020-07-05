@@ -37,8 +37,6 @@ private:
 
 class GameObject : public CoreGameObject {
 public:
-    Texture2D Sprite;
-
     GameObject(const CoreGameObject &other, glm::mat4 &View);
     GameObject(const GameObject &) = delete;
     GameObject &operator=(const GameObject &) = delete;
@@ -49,13 +47,17 @@ public:
     GameObject &operator=(const CoreGameObject &other);
 
     void Draw(int border_pixel_width);
-    void swap(GameObject &other);
     void WriteToDB(const SQLite::Database &db, uint64_t page_id) const;
 
-    std::unique_ptr<Renderer> renderer;
+    void UpdateSprite(uint64_t sprite_uid);
+
+    void swap(GameObject &other);
 
 private:
-    GameObject(const CoreGameObject &other);
+    explicit GameObject(const CoreGameObject &other);
+
+    std::shared_ptr<Texture2D> Sprite;
+    std::unique_ptr<Renderer>  renderer;
 };
 
 void swap(GameObject &a, GameObject &b);

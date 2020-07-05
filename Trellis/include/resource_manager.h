@@ -25,20 +25,18 @@ public:
     // geometry) sprite_shader's source code. If gShaderFile is not nullptr, it also loads a
     // geometry sprite_shader
     std::shared_ptr<Shader> LoadShader(
-        const char *vShaderFile,
-        const char *fShaderFile,
-        const char *gShaderFile,
-        std::string name);
+        const char *       vShaderFile,
+        const char *       fShaderFile,
+        const char *       gShaderFile,
+        const std::string &name);
 
     // retrieves a stored sader
-    std::shared_ptr<Shader> GetShader(std::string name);
+    std::shared_ptr<Shader> GetShader(const std::string &name);
 
     // loads (and generates) a texture from file
-    Texture2D LoadTexture(const char *file, bool alpha, std::string name);
+    std::shared_ptr<Texture2D> LoadTexture(const char *file);
 
-    // retrieves a stored texture
-    Texture2D GetTexture(std::string name);
-    Texture2D GetTexture(uint64_t uid);
+    std::shared_ptr<Texture2D> GetTexture(uint64_t uid);
 
     void SetGlobalFloat(const char *name, float value);
     void SetGlobalInteger(const char *name, int value);
@@ -64,13 +62,13 @@ private:
         const char *gShaderFile = nullptr);
 
     // loads a single texture from file
-    Texture2D loadTextureFromFile(const char *file, bool alpha);
+    std::shared_ptr<Texture2D> loadTextureFromFile(const char *file);
 
     // loads a single texture from a cached texture uid
-    Texture2D loadTextureFromUID(uint64_t uid);
+    std::shared_ptr<Texture2D> loadTextureFromUID(uint64_t uid);
 
     std::unordered_map<std::string, std::shared_ptr<Shader>> Shaders;
-    std::unordered_map<std::string, Texture2D>               Textures;
+    std::unordered_map<uint64_t, std::shared_ptr<Texture2D>> Textures;
 };
 
 #endif

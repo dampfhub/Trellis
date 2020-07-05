@@ -1,5 +1,5 @@
-#include "GUI.h"
 #include "glfw_handler.h"
+#include "GUI.h"
 #include "stb_image.h"
 #include "state_manager.h"
 
@@ -48,7 +48,7 @@ main() {
 
         // update game state
         // -----------------
-        sm.Update(deltaTime);
+        sm.Update();
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);

@@ -7,7 +7,7 @@
 #include <string>
 
 using std::move, std::exchange, std::make_unique, std::vector, std::byte, std::to_string, std::stoi,
-    std::stod, std::stof;
+    std::stof;
 
 CoreGameObject::CoreGameObject(
     const Transform &transform,
@@ -118,11 +118,18 @@ GameObject::WriteToDB(const SQLite::Database &db, uint64_t page_id) const {
     stmt.Bind(12, Color.z);
     stmt.Step();
 }
+void
+GameObject::UpdateSprite(uint64_t sprite_uid) {
+    if (SpriteUid == sprite_uid) {
+        static ResourceManager &rm = ResourceManager::GetInstance();
+        Sprite                     = rm.GetTexture(sprite_uid);
+    }
+}
 
 CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
     static ResourceManager &rm = ResourceManager::GetInstance();
     using SQLite::from_uint64_t;
-    auto callback = [](void *udp, int count, char **values, char **names) -> int {
+    auto callback = [](void *udp, int, char **values, char **names) -> int {
         using SQLite::to_uint64_t;
 
         auto core = static_cast<CoreGameObject *>(udp);
@@ -139,28 +146,28 @@ CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
         //[3] = "page_id"
 
         assert(!strcmp(names[4], "t_pos_x"));
-        core->transform.position.x = stod(values[4]);
+        core->transform.position.x = stof(values[4]);
 
         assert(!strcmp(names[5], "t_pos_y"));
-        core->transform.position.y = stod(values[5]);
+        core->transform.position.y = stof(values[5]);
 
         assert(!strcmp(names[6], "t_scale_x"));
-        core->transform.scale.x = stod(values[6]);
+        core->transform.scale.x = stof(values[6]);
 
         assert(!strcmp(names[7], "t_scale_y"));
-        core->transform.scale.y = stod(values[7]);
+        core->transform.scale.y = stof(values[7]);
 
         assert(!strcmp(names[8], "t_rotation"));
         core->transform.rotation = stof(values[8]);
 
         assert(!strcmp(names[9], "color_x"));
-        core->Color.x = stod(values[9]);
+        core->Color.x = stof(values[9]);
 
         assert(!strcmp(names[10], "color_y"));
-        core->Color.y = stod(values[10]);
+        core->Color.y = stof(values[10]);
 
         assert(!strcmp(names[11], "color_z"));
-        core->Color.z = stod(values[11]);
+        core->Color.z = stof(values[11]);
         return 0;
     };
     std::string err;

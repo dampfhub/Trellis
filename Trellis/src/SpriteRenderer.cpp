@@ -1,11 +1,15 @@
+#include <utility>
+
 #include "glfw_handler.h"
 #include "resource_manager.h"
 #include "sprite_renderer.h"
 
+using std::shared_ptr;
+
 SpriteRenderer::SpriteRenderer(
-    const Transform &transform,
-    const glm::mat4 &view,
-    const Texture2D &sprite)
+    const Transform &      transform,
+    const glm::mat4 &      view,
+    shared_ptr<Texture2D> &sprite)
     : Renderer(ResourceManager::GetInstance().GetShader("sprite"), transform, view)
     , Sprite(sprite) {
     unsigned int VBO;
@@ -35,8 +39,10 @@ SpriteRenderer::Draw() {
     shader->SetVector2f("screenRes", glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
     shader->SetVector3f("spriteColor", glm::vec3(1));
 
-    glActiveTexture(GL_TEXTURE0);
-    Sprite.get().Bind();
+    if (Sprite.get() != nullptr) {
+        glActiveTexture(GL_TEXTURE0);
+        Sprite.get()->Bind();
+    }
 
     glBindVertexArray(quad_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -45,8 +51,4 @@ SpriteRenderer::Draw() {
 
 SpriteRenderer::~SpriteRenderer() {
     glDeleteVertexArrays(1, &quad_VAO);
-}
-void
-SpriteRenderer::setSprite(const Texture2D &sprite) {
-    Sprite = sprite;
 }
