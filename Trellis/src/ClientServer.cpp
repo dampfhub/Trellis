@@ -142,6 +142,7 @@ Server::handle_client_join(NetworkData d) {
     auto new_client = ClientInfo(d.Uid, d.Parse<std::string>());
     // Send new client out to all connected clients
     RegisterPageChange("CLIENT_ADD", uid, new_client);
+    RegisterPageChange("JOIN_ACCEPT", uid, "asdf", d.Uid);
     // Send all clients to the client that just connected
     for (auto &c : ConnectedClients) { RegisterPageChange("CLIENT_ADD", uid, c, d.Uid); }
     ConnectedClients.emplace_back(new_client);
