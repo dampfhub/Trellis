@@ -17,6 +17,8 @@ public:
     void SetCursor(ImGuiMouseCursor_ cursor);
 
     ImFont *DefaultFont;
+    ImFont *DefaultFontBold;
+    ImFont *DefaultFontIt;
     ImFont *MediumFont;
     ImFont *BigFont;
 

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 class UI {
 public:
@@ -39,19 +40,25 @@ public:
     void ClearFlags();
 
 private:
-    std::string                    page_name_buf;
-    std::string                    send_msg_buf;
-    std::vector<Data::ChatMessage> chat_messages;
-    bool                           main_menu_open    = true;
-    bool                           input_needs_focus = true;
-    bool                           scroll_to_bottom  = false;
-    bool                           chat_open         = false;
+    std::string                           page_name_buf;
+    std::string                           send_msg_buf;
+    std::string                           query_buf;
+    nlohmann::json                        http_response;
+    std::map<std::string, nlohmann::json> cached_results;
+    std::vector<Data::ChatMessage>        chat_messages;
+
+    bool main_menu_open   = true;
+    bool scroll_to_bottom = false;
+    bool chat_open        = false;
+    bool http_window_open = false;
 
     void draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page);
     void draw_page_select(Page::page_list_t &pages, Page::page_list_it_t &active_page);
     void draw_page_settings(Page::page_list_it_t &active_page);
     void draw_chat();
     void draw_client_list();
+    void draw_http_window();
+    void draw_query_response(std::string query_type);
 
     void send_msg();
 

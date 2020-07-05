@@ -31,6 +31,10 @@ public:
 
     void StartClient(std::string client_name, uint64_t client_uid, std::string hostname, int port);
 
+    void HttpGetRequest(std::string hostname, std::string path);
+
+    bool HttpGetResults(std::string &res);
+
     class NetworkQueue {
     public:
         static std::shared_ptr<NetworkQueue> Subscribe(std::string cname);
@@ -162,6 +166,8 @@ private:
         virtual void
         handle_write(const socket_ptr &sock, const asio::error_code &error, size_t bytes);
 
+        void http_get(std::string hostname, std::string path);
+
         void handle_read_header(
             const socket_ptr &      sock,
             Message &               buf,
@@ -177,7 +183,9 @@ private:
         virtual void
         handle_error(const socket_ptr &sock, Message &buf, const asio::error_code &error){};
 
-        uint64_t uid;
+        uint64_t    uid;
+        std::mutex  http_mtx;
+        std::string http_get_response;
 
     protected:
         asio::io_context &  context;

@@ -39,6 +39,28 @@ NetworkManager::StartClient(
     net_obj->uid = client_uid;
 }
 
+void
+NetworkManager::HttpGetRequest(std::string hostname, std::string path) {
+    asio::post(context, [this, hostname, path]() { net_obj->http_get(hostname, path); });
+}
+
+bool
+NetworkManager::HttpGetResults(std::string &res) {
+    if (net_obj) {
+        if (net_obj->http_mtx.try_lock()) {
+            if (net_obj->http_get_response.empty()) {
+                net_obj->http_mtx.unlock();
+                return false;
+            }
+            res                        = net_obj->http_get_response;
+            net_obj->http_get_response = "";
+            net_obj->http_mtx.unlock();
+            return true;
+        }
+    }
+    return false;
+}
+
 NetworkManager::NetworkQueue::NetworkQueue()
     : should_clear(false) {}
 
@@ -49,6 +71,7 @@ NetworkManager::NetworkQueue::~NetworkQueue() {
         nm.queues[channel_name].end(),
         [this](std::weak_ptr<NetworkQueue> p) { return p.expired() || p.lock().get() == this; });
 }
+
 std::shared_ptr<NetworkManager::NetworkQueue>
 NetworkManager::NetworkQueue::Subscribe(std::string cname) {
     auto ptr          = std::shared_ptr<NetworkQueue>(new NetworkQueue());
@@ -154,6 +177,61 @@ NetworkManager::network_object::do_write(
                 handle_write(sock, error, bytes_transferred);
             });
     }
+}
+void
+NetworkManager::network_object::http_get(std::string hostname, std::string path) {
+    const std::lock_guard<std::mutex> lock(http_mtx);
+    try {
+        tcp::resolver           res(context);
+        tcp::resolver::query    query(hostname, "http");
+        tcp::resolver::iterator endpoint_iterator = res.resolve(query);
+        tcp::socket             socket(context);
+        asio::connect(socket, endpoint_iterator);
+        asio::streambuf request;
+        std::ostream    request_stream(&request);
+        request_stream << "GET " << path << " HTTP/1.0\r\n";
+        request_stream << "Host: " << hostname << "\r\n";
+        request_stream << "Accept: */*\r\n";
+        request_stream << "Connection: close\r\n\r\n";
+        asio::write(socket, request);
+        asio::streambuf response;
+        asio::read_until(socket, response, "\r\n");
+
+        // Check that response is OK.
+        std::istream response_stream(&response);
+        std::string  http_version;
+        response_stream >> http_version;
+        unsigned int status_code;
+        response_stream >> status_code;
+        std::string status_message;
+        std::getline(response_stream, status_message);
+        if (!response_stream || http_version.substr(0, 5) != "HTTP/") {
+            std::cout << "Invalid response\n";
+            return;
+        }
+        if (status_code != 200) {
+            std::cout << "Response returned with status code " << status_code << "\n";
+            return;
+        }
+
+        // Read the response headers, which are terminated by a blank line.
+        asio::read_until(socket, response, "\r\n\r\n");
+
+        // Process the response headers.
+        std::string header;
+        while (std::getline(response_stream, header) && header != "\r");
+
+        std::stringstream ss;
+        // Write whatever content we already have to output.
+        if (response.size() > 0) { ss << &response; }
+
+        // Read until EOF, writing data to output as we go.
+        asio::error_code error;
+
+        while (asio::read(socket, response, asio::transfer_at_least(1), error)) { ss << &response; }
+        http_get_response = ss.str();
+        if (error != asio::error::eof) { std::cout << "Bad error" << std::endl; }
+    } catch (std::exception &e) { std::cout << "Botched: " << e.what() << std::endl; }
 }
 
 NetworkManager::server::server(asio::io_context &con, int port)

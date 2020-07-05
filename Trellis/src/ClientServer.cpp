@@ -55,6 +55,9 @@ Client::Start(int port_num, std::string name, std::string hostname) {
     RegisterCallback("CLIENT_DELETE", [this](NetworkData &&d) {
         handle_client_delete(std::move(d));
     });
+    RegisterCallback("JOIN_ACCEPT", [this](NetworkData &&d) {
+        std::cout << "TEST CLIENT" << std::endl;
+    });
     Name = name;
 }
 
@@ -124,6 +127,7 @@ Server::handle_client_join(NetworkData d) {
     auto new_client = ClientInfo(d.Uid, d.Parse<std::string>());
     // Send new client out to all connected clients
     RegisterPageChange("CLIENT_ADD", uid, new_client);
+    RegisterPageChange("JOIN_ACCEPT", uid, "asdf", d.Uid);
     // Send all clients to the client that just connected
     for (auto &c : ConnectedClients) { RegisterPageChange("CLIENT_ADD", uid, c, d.Uid); }
     ConnectedClients.emplace_back(new_client);
