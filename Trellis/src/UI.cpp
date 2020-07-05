@@ -30,8 +30,8 @@ UI::~UI() {
 UI::UI() {
     FileDialog       = new FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
     ClientServer &cs = ClientServer::GetInstance();
-    cs.RegisterCallback("CHAT_MSG", [this](NetworkData &&d) { handle_chat_msg(std::move(d)); });
-    cs.RegisterCallback("JOIN", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
+    cs.ChannelSubscribe("CHAT_MSG", [this](NetworkData &&d) { handle_chat_msg(std::move(d)); });
+    cs.ChannelSubscribe("JOIN", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
 
     NetworkManager &         nm        = NetworkManager::GetInstance();
     std::vector<std::string> api_calls = {"Spells", "Monsters"};
@@ -167,7 +167,7 @@ UI::draw_page_select(Page::page_list_t &pages, Page::page_list_it_t &active_page
         if (RadioButton(("##" + std::to_string(i)).c_str(), &PlayerPageView, i)) {
             if (ClientServer::Started()) {
                 static ClientServer &cs = ClientServer::GetInstance();
-                cs.RegisterPageChange("PLAYER_VIEW", page->Uid, "");
+                cs.ChannelPublish("PLAYER_VIEW", page->Uid, "");
             }
         }
         i++;
@@ -294,7 +294,7 @@ UI::send_msg() {
     ChatMessage          m(cs.Name, send_msg_buf);
     chat_messages.push_back(m);
     send_msg_buf = "";
-    cs.RegisterPageChange("CHAT_MSG", m.Uid, m);
+    cs.ChannelPublish("CHAT_MSG", m.Uid, m);
     // TODO Some sort of caching on the server side should probably happen here
 }
 
@@ -308,7 +308,7 @@ UI::handle_chat_msg(Data::NetworkData &&q) {
 void
 UI::handle_client_join(NetworkData &&q) {
     static ClientServer &cs = ClientServer::GetInstance();
-    for (auto &m : chat_messages) { cs.RegisterPageChange("CHAT_MSG", m.Uid, m, q.Uid); }
+    for (auto &m : chat_messages) { cs.ChannelPublish("CHAT_MSG", m.Uid, m, q.Uid); }
 }
 
 void

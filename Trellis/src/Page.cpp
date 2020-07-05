@@ -128,7 +128,7 @@ Page::HandleLeftClickPress(glm::ivec2 mouse_pos) {
         GameObject &piece = **CurrentSelection;
         if (ClientServer::Started()) {
             ClientServer &ns = ClientServer::GetInstance();
-            ns.RegisterPageChange("ADD_PIECE", Uid, (CoreGameObject)piece);
+            ns.ChannelPublish("ADD_PIECE", Uid, (CoreGameObject)piece);
         }
         CurrentSelection = Pieces.end();
         return;
@@ -237,13 +237,13 @@ Page::MoveCurrentSelection(glm::vec2 mouse_pos) {
         if (ClientServer::Started() && mouse_hold != MouseHoldType::PLACING) {
             static ClientServer &cs = ClientServer::GetInstance();
             if (piece.transform.position != prev_pos) {
-                cs.RegisterPageChange(
+                cs.ChannelPublish(
                     "MOVE_PIECE",
                     Uid,
                     NetworkData(piece.transform.position, piece.Uid));
             }
             if (piece.transform.scale != prev_size) {
-                cs.RegisterPageChange(
+                cs.ChannelPublish(
                     "RESIZE_PIECE",
                     Uid,
                     NetworkData(piece.transform.scale, piece.Uid));
@@ -336,7 +336,7 @@ Page::SendAllPieces(uint64_t target_uid) {
         for (auto piece = Pieces.rbegin(); piece != Pieces.rend(); ++piece) {
             ClientServer &  cs   = ClientServer::GetInstance();
             CoreGameObject &core = **piece;
-            cs.RegisterPageChange("ADD_PIECE", Uid, core, target_uid);
+            cs.ChannelPublish("ADD_PIECE", Uid, core, target_uid);
         }
     }
 }
@@ -370,7 +370,7 @@ Page::DeleteCurrentSelection() {
     if (CurrentSelection != Pieces.end()) {
         if (mouse_hold != MouseHoldType::PLACING) {
             static ClientServer &cs = ClientServer::GetInstance();
-            cs.RegisterPageChange(
+            cs.ChannelPublish(
                 "DELETE_PIECE",
                 Uid,
                 NetworkData(*CurrentSelection, (*CurrentSelection)->Uid));

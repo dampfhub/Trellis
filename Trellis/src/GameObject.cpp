@@ -51,7 +51,7 @@ GameObject::GameObject(const CoreGameObject &other) {
     if (Uid == 0) Uid = Util::generate_uid();
     if (rm.Images.find(SpriteUid) == rm.Images.end()) {
         // Image isn't cached, need to request it
-        cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, SpriteUid);
+        cs.ChannelPublish("IMAGE_REQUEST", cs.uid, SpriteUid);
     } else {
         // Image is cached, just grab it from the resource manager
         Sprite = rm.GetTexture(SpriteUid);

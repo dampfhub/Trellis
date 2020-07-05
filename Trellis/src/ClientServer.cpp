@@ -40,7 +40,7 @@ ClientServer::PublishPageChanges() {
 }
 
 void
-ClientServer::RegisterCallback(const std::string &channel_name, ClientServer::queue_handler_f cb) {
+ClientServer::ChannelSubscribe(const std::string &channel_name, ClientServer::queue_handler_f cb) {
     sub_queues[channel_name].push_back(NetworkQueueCallback(channel_name, std::move(cb)));
 }
 
@@ -61,18 +61,18 @@ Client::Start(int port_num, std::string name, std::string hostname) {
     NetworkManager &nm = NetworkManager::GetInstance();
     nm.StartClient(name, uid, std::move(hostname), port_num);
     started = true;
-    RegisterCallback("IMAGE_REQUEST", [this](NetworkData &&d) {
+    ChannelSubscribe("IMAGE_REQUEST", [this](NetworkData &&d) {
         handle_image_request(std::move(d));
     });
-    RegisterCallback("CLIENT_ADD", [this](NetworkData &&d) { handle_client_add(std::move(d)); });
-    RegisterCallback("CLIENT_DELETE", [this](NetworkData &&d) {
+    ChannelSubscribe("CLIENT_ADD", [this](NetworkData &&d) { handle_client_add(std::move(d)); });
+    ChannelSubscribe("CLIENT_DELETE", [this](NetworkData &&d) {
         handle_client_delete(std::move(d));
     });
-    RegisterCallback("JOIN_ACCEPT", [this](NetworkData &&d) {
+    ChannelSubscribe("JOIN_ACCEPT", [this](NetworkData &&d) {
         StateManager &sm = StateManager::GetInstance();
         ClientServer &cs = ClientServer::GetInstance();
         sm.StartNewGame(Util::deserialize<std::string>(d.Data), true, d.Uid);
-        cs.RegisterPageChange("JOIN_DONE", this->uid, "", d.Uid);
+        cs.ChannelPublish("JOIN_DONE", this->uid, "", d.Uid);
     });
     Name = name;
 }
@@ -87,7 +87,7 @@ Client::handle_image_request(NetworkData &&q) {
     static ResourceManager &rm     = ResourceManager::GetInstance();
     auto                    img_id = q.Parse<uint64_t>();
     if (rm.Images.find(img_id) != rm.Images.end()) {
-        RegisterPageChange("NEW_IMAGE", img_id, rm.Images[img_id]);
+        ChannelPublish("NEW_IMAGE", img_id, rm.Images[img_id]);
     }
 }
 
@@ -117,20 +117,20 @@ Server::Start(int port, std::string name, std::string hostname) {
     std::vector<std::string> forward_channels =
         {"ADD_PIECE", "DELETE_PIECE", "MOVE_PIECE", "RESIZE_PIECE", "ADD_PAGE", "CHAT_MSG"};
     for (auto &str : forward_channels) {
-        RegisterCallback(str, [this, str](NetworkData &&d) { handle_forward_data(str, d); });
+        ChannelSubscribe(str, [this, str](NetworkData &&d) { handle_forward_data(str, d); });
     }
-    RegisterCallback("JOIN", [this](NetworkData &&d) {
+    ChannelSubscribe("JOIN", [this](NetworkData &&d) {
         std::cout << "Client is joining..." << std::endl;
     });
-    RegisterCallback("JOIN_DONE", [this](NetworkData &&d) {
+    ChannelSubscribe("JOIN_DONE", [this](NetworkData &&d) {
         std::cout << "Client has joined." << std::endl;
         handle_client_join(std::move(d));
     });
-    RegisterCallback("IMAGE_REQUEST", [this](NetworkData &&d) {
+    ChannelSubscribe("IMAGE_REQUEST", [this](NetworkData &&d) {
         handle_image_request(std::move(d));
     });
-    RegisterCallback("NEW_IMAGE", [this](NetworkData &&d) { handle_new_image(std::move(d)); });
-    RegisterCallback("DISCONNECT", [this](NetworkData &&d) {
+    ChannelSubscribe("NEW_IMAGE", [this](NetworkData &&d) { handle_new_image(std::move(d)); });
+    ChannelSubscribe("DISCONNECT", [this](NetworkData &&d) {
         handle_client_disconnect(std::move(d));
     });
     started = true;
@@ -148,9 +148,9 @@ void
 Server::handle_client_join(NetworkData d) {
     auto new_client = ClientInfo(d.Uid, d.Parse<std::string>());
     // Send new client out to all connected clients
-    RegisterPageChange("CLIENT_ADD", uid, new_client);
+    ChannelPublish("CLIENT_ADD", uid, new_client);
     // Send all clients to the client that just connected
-    for (auto &c : ConnectedClients) { RegisterPageChange("CLIENT_ADD", uid, c, d.Uid); }
+    for (auto &c : ConnectedClients) { ChannelPublish("CLIENT_ADD", uid, c, d.Uid); }
     ConnectedClients.emplace_back(new_client);
     std::sort(
         ConnectedClients.begin(),
@@ -162,7 +162,7 @@ void
 Server::handle_forward_data(const std::string &channel, const NetworkData &d) {
     for (auto &client : ConnectedClients) {
         if (client.Uid != 0 && client.Uid != d.ClientUid) {
-            RegisterPageChange(channel, d.Uid, d.Data, client.Uid);
+            ChannelPublish(channel, d.Uid, d.Data, client.Uid);
         }
     }
 }
@@ -172,7 +172,7 @@ Server::handle_image_request(NetworkData &&q) {
     static ResourceManager &rm     = ResourceManager::GetInstance();
     auto                    img_id = q.Parse<uint64_t>();
     if (rm.Images.find(img_id) != rm.Images.end()) {
-        RegisterPageChange("NEW_IMAGE", img_id, rm.Images[img_id], q.Uid);
+        ChannelPublish("NEW_IMAGE", img_id, rm.Images[img_id], q.Uid);
     } else {
         // Make a pair of image uid and requesting client
         pending_image_requests.emplace_back(img_id, q.Uid);
@@ -186,7 +186,7 @@ Server::handle_new_image(NetworkData &&q) {
     // Send all pending requests if they were waiting on an image
     for (auto request : pending_image_requests) {
         if (q.Uid == request.first) {
-            RegisterPageChange("NEW_IMAGE", q.Uid, rm.Images[request.first], request.second);
+            ChannelPublish("NEW_IMAGE", q.Uid, rm.Images[request.first], request.second);
         }
     }
 }
@@ -197,7 +197,7 @@ Server::handle_client_disconnect(NetworkData &&q) {
         return c.Uid == q.Uid;
     });
     if (it != ConnectedClients.end()) { ConnectedClients.erase(it); }
-    RegisterPageChange("CLIENT_DELETE", q.Uid, 0);
+    ChannelPublish("CLIENT_DELETE", q.Uid, 0);
 }
 
 ClientServer::NetworkQueueCallback::NetworkQueueCallback(
