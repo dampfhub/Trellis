@@ -21,13 +21,15 @@ using Data::ImageData, Data::NetworkData;
 
 void
 Board::esc_handler() {
-    static StateManager &sm   = StateManager::GetInstance();
-    static GLFW &        glfw = GLFW::GetInstance();
+    static StateManager &   sm   = StateManager::GetInstance();
+    static GLFW &           glfw = GLFW::GetInstance();
+    static ResourceManager &rm   = ResourceManager::GetInstance();
+
     if (ActivePage != Pages.end() && (*ActivePage)->Deselect()) { return; }
     // TODO: Check if this is a client or server, only save on server
     // TOOD: Also, move save initiation to a better location
     WriteToDB(sm.getDatabase());
-    ResourceManager::WriteToDB(sm.getDatabase());
+    rm.WriteToDB(sm.getDatabase());
 
     glfw.SetWindowShouldClose(1);
 }
@@ -114,8 +116,9 @@ Board::Board(string name, uint64_t uid)
     init_objects();
     // Set projection matrix
     set_projection();
-    glm::mat4 view = glm::mat4(1.0f);
-    ResourceManager::SetGlobalMatrix4("view", view);
+    glm::mat4        view = glm::mat4(1.0f);
+    ResourceManager &rm   = ResourceManager::GetInstance();
+    rm.SetGlobalMatrix4("view", view);
 
     register_network_callbacks();
 }
@@ -225,9 +228,10 @@ Board::SetScreenDims(int width, int height) {
 
 void
 Board::init_shaders() {
-    ResourceManager::LoadShader("shaders/sprite.vert", "shaders/sprite.frag", nullptr, "sprite");
-    ResourceManager::LoadShader("shaders/board.vert", "shaders/board.frag", nullptr, "board");
-    ResourceManager::SetGlobalInteger("image", 0);
+    static ResourceManager &rm = ResourceManager::GetInstance();
+    rm.LoadShader("shaders/sprite.vert", "shaders/sprite.frag", nullptr, "sprite");
+    rm.LoadShader("shaders/board.vert", "shaders/board.frag", nullptr, "board");
+    rm.SetGlobalInteger("image", 0);
 }
 
 void
@@ -237,15 +241,16 @@ Board::init_objects() {
 
 void
 Board::set_projection() {
-    static GLFW &glfw       = GLFW::GetInstance();
-    glm::mat4    projection = glm::ortho(
+    static GLFW &           glfw       = GLFW::GetInstance();
+    static ResourceManager &rm         = ResourceManager::GetInstance();
+    glm::mat4               projection = glm::ortho(
         0.0f,
         static_cast<float>(glfw.GetScreenWidth()),
         static_cast<float>(glfw.GetScreenHeight()),
         0.0f,
         -1.0f,
         1.0f);
-    ResourceManager::SetGlobalMatrix4("projection", projection);
+    rm.SetGlobalMatrix4("projection", projection);
 }
 
 void
@@ -320,6 +325,7 @@ Board::Draw() {
 
 void
 Board::ProcessUIEvents() {
+    static ResourceManager &rm = ResourceManager::GetInstance();
     if (UserInterface.ActivePage == 0) {
         ActivePage = Pages.begin();
     } else {
@@ -329,14 +335,14 @@ Board::ProcessUIEvents() {
     }
     if (UserInterface.FileDialog->HasSelected()) {
         string file_name = Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
-        ResourceManager::LoadTexture(
+        rm.LoadTexture(
             UserInterface.FileDialog->GetSelected().string().c_str(),
             Util::IsPng(file_name),
             file_name);
         (**ActivePage)
             .BeginPlacePiece(
                 Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
-                ResourceManager::GetTexture(file_name));
+                rm.GetTexture(file_name));
         UserInterface.FileDialog->ClearSelected();
     }
     if (UserInterface.AddPage) {
@@ -425,11 +431,12 @@ Board::handle_page_resize_piece(NetworkData &&q) {
 
 void
 Board::handle_new_image(NetworkData &&q) {
-    ResourceManager::Images[q.Uid] = q.Parse<ImageData>();
+    static ResourceManager &rm = ResourceManager::GetInstance();
+    rm.Images[q.Uid]           = q.Parse<ImageData>();
     // Check which gameobjects need this texture and apply it.
     for (auto &pg : Pages) {
         for (auto &go : pg->Pieces) {
-            if (go->SpriteUid == q.Uid) { go->Sprite = ResourceManager::GetTexture(q.Uid); }
+            if (go->SpriteUid == q.Uid) { go->Sprite = rm.GetTexture(q.Uid); }
         }
     }
 }
