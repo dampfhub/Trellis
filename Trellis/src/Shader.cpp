@@ -65,7 +65,7 @@ Shader::SetVector2f(const char *name, const glm::vec2 &value) {
 }
 
 void
-Shader::SetVector2i(const char *name, const glm::vec2 &value) {
+Shader::SetVector2i(const char *name, const glm::ivec2 &value) {
     Use();
     glUniform2i(glGetUniformLocation(ID, name), value.x, value.y);
 }

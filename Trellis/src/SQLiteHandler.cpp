@@ -157,7 +157,7 @@ Database::Statement::Column(int index, int &value) {
 int
 Database::Statement::Column(int index, unsigned int &value) {
     if (!row) { throw runtime_error("SQLite3 Statement does not have an available row"); }
-    value = sqlite3_column_int64(stmt, index);
+    value = static_cast<unsigned int>(sqlite3_column_int64(stmt, index));
     return 0;
 }
 

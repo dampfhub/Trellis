@@ -32,7 +32,7 @@ public:
 
     void SetVector2f(const char *name, const glm::vec2 &value);
 
-    void SetVector2i(const char *name, const glm::vec2 &value);
+    void SetVector2i(const char *name, const glm::ivec2 &value);
 
     void SetVector3f(const char *name, float x, float y, float z);
 

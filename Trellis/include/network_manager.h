@@ -41,7 +41,6 @@ public:
 
         template<class T>
         void Publish(const T &data, uint64_t uid = 0) {
-            static NetworkManager &nm = NetworkManager::GetInstance();
             auto                   v  = Util::serialize_vec<T>(data);
             nm.net_obj->Write(Message(v, uid, channel_name));
         }
@@ -180,8 +179,10 @@ private:
             const asio::error_code &error,
             size_t                  bytes);
 
-        virtual void
-        handle_error(const socket_ptr &sock, Message &buf, const asio::error_code &error){};
+        virtual void handle_error(
+            [[maybe_unused]] const socket_ptr &      sock,
+            [[maybe_unused]] Message &               buf,
+            [[maybe_unused]] const asio::error_code &error){};
 
         uint64_t    uid;
         std::mutex  http_mtx;
@@ -207,7 +208,7 @@ private:
 
         server(asio::io_context &con, int port_num);
 
-        ~server();
+        ~server() override;
 
         void Write(Message msg) override;
 
@@ -244,7 +245,7 @@ private:
             std::string       hostname,
             int               port_num);
 
-        ~client();
+        ~client() override;
 
         void Write(Message msg) override;
 

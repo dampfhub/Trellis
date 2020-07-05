@@ -242,7 +242,7 @@ UI::draw_chat() {
     {
         ImVec2 win_size = GetContentRegionAvail();
         win_size.y -= 20;
-        BeginChild("##chat_text", ImVec2(win_size.x, win_size.y * 0.8));
+        BeginChild("##chat_text", ImVec2(win_size.x, win_size.y * 0.8f));
         {
             std::string last_sender = "";
             for (auto &m : chat_messages) {
@@ -275,7 +275,7 @@ UI::draw_chat() {
         if (InputTextMultiline(
                 "##send_msg",
                 &send_msg_buf,
-                ImVec2(win_size.x, win_size.y * 0.15),
+                ImVec2(win_size.x, win_size.y * 0.15f),
                 ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine)) {
             SetKeyboardFocusHere(-1);
             if (!send_msg_buf.empty()) { send_msg(); }
@@ -375,7 +375,7 @@ UI::draw_query_response(std::string query_type) {
     if (nm.HttpGetResults(res)) {
         try {
             http_response = json::parse(res);
-        } catch (std::exception &e) {}
+        } catch ([[maybe_unused]] std::exception &e) {}
     }
     if (!http_response.empty()) {
         Separator();

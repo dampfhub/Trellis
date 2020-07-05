@@ -40,8 +40,8 @@ Board::window_size_callback(int width, int height) {
 
 void
 Board::mouse_pos_callback(double x, double y) {
-    MousePos.x = x;
-    MousePos.y = y;
+    MousePos.x = static_cast<int>(x);
+    MousePos.y = static_cast<int>(y);
 }
 
 void
@@ -133,7 +133,7 @@ Board::Board(const SQLite::Database &db, uint64_t uid, const std::string &name)
     using SQLite::from_uint64_t;
     using SQLite::to_uint64_t;
 
-    auto page_callback = [](void *udp, int count, char **values, char **names) -> int {
+    auto page_callback = [](void *udp, int, char **values, char **names) -> int {
         auto page_uids = static_cast<std::list<uint64_t> *>(udp);
 
         assert(!strcmp(names[0], "id"));
@@ -313,7 +313,7 @@ Board::UpdateMouse() {
 }
 
 void
-Board::Update(float dt) {
+Board::Update() {
     ProcessUIEvents();
     if (ActivePage != Pages.end()) {
         Page &pg = **ActivePage;

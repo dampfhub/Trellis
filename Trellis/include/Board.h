@@ -27,7 +27,7 @@ public:
     void ClearPages();
 
     // GameState overrides
-    void Update(float dt) override;
+    void Update() override;
     void Draw() override;
     void RegisterKeyCallbacks() override;
     void UnregisterKeyCallbacks() override;

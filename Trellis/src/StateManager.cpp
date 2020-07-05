@@ -63,13 +63,14 @@ StateManager::StateManager()
 }
 
 void
-StateManager::WriteToDB(const SQLite::Database &db, const std::string &name) const {
+StateManager::WriteToDB(const SQLite::Database &db, [[maybe_unused]] const std::string &name)
+    const {
     current_state.get().WriteToDB(db);
 }
 
 void
-StateManager::Update(float dt) {
-    current_state.get().Update(dt);
+StateManager::Update() {
+    current_state.get().Update();
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
         cs.Update();

@@ -28,13 +28,13 @@ public:
         const char *       vShaderFile,
         const char *       fShaderFile,
         const char *       gShaderFile,
-        const std::string& name);
+        const std::string &name);
 
     // retrieves a stored sader
-    std::shared_ptr<Shader> GetShader(const std::string& name);
+    std::shared_ptr<Shader> GetShader(const std::string &name);
 
     // loads (and generates) a texture from file
-    Texture2D LoadTexture(const char *file, const std::string& name);
+    Texture2D LoadTexture(const char *file, const std::string &name);
 
     // retrieves a stored texture
     Texture2D GetTexture(const std::string &name);

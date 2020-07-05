@@ -65,11 +65,14 @@ NetworkManager::NetworkQueue::NetworkQueue()
     : should_clear(false) {}
 
 NetworkManager::NetworkQueue::~NetworkQueue() {
-    NetworkManager &nm = NetworkManager::GetInstance();
-    std::remove_if(
-        nm.queues[channel_name].begin(),
-        nm.queues[channel_name].end(),
-        [this](std::weak_ptr<NetworkQueue> p) { return p.expired() || p.lock().get() == this; });
+    nm.queues[channel_name].erase(
+        std::remove_if(
+            nm.queues[channel_name].begin(),
+            nm.queues[channel_name].end(),
+            [this](const std::weak_ptr<NetworkQueue> &p) {
+                return p.expired() || p.lock().get() == this;
+            }),
+        nm.queues[channel_name].end());
 }
 
 std::shared_ptr<NetworkManager::NetworkQueue>
@@ -100,7 +103,7 @@ void
 NetworkManager::network_object::handle_write(
     const socket_ptr &      sock,
     const asio::error_code &error,
-    size_t                  bytes) {
+    [[maybe_unused]] size_t bytes) {
     if (!error) {
         write_msgs.pop_front();
         if (!write_msgs.empty()) {
@@ -118,14 +121,14 @@ NetworkManager::network_object::handle_write(
 
 void
 NetworkManager::network_object::handle_read_header(
-    const socket_ptr &      sock,
-    Message &               buf,
-    const asio::error_code &error,
-    size_t                  bytes) {
+    [[maybe_unused]] const socket_ptr &sock,
+    Message &                          buf,
+    const asio::error_code &           error,
+    size_t                             bytes) {
     if (!error && buf.DecodeHeader()) {
         asio::async_read(
             *sock,
-            asio::buffer(buf.Body(), buf.Header.MessageLength),
+            asio::buffer(buf.Body(), static_cast<size_t>(buf.Header.MessageLength)),
             [this, sock, &buf](const asio::error_code &error, size_t bytes_transferred) {
                 handle_read_body(sock, buf, error, bytes_transferred);
             });
@@ -137,10 +140,10 @@ NetworkManager::network_object::handle_read_header(
 
 void
 NetworkManager::network_object::handle_read_body(
-    const socket_ptr &      sock,
-    Message &               buf,
-    const asio::error_code &error,
-    size_t                  bytes) {
+    [[maybe_unused]] const socket_ptr &sock,
+    Message &                          buf,
+    const asio::error_code &           error,
+    size_t                             bytes) {
     if (!error) {
         handle_header_action(sock);
         buf.DataVec = std::vector<std::byte>(MessageHeader::HeaderLength);
@@ -298,7 +301,7 @@ NetworkManager::server::handle_read_header_connect(
     if (!error && buf.DecodeHeader()) {
         asio::async_read(
             *sock,
-            asio::buffer(buf.Body(), buf.Header.MessageLength),
+            asio::buffer(buf.Body(), static_cast<size_t>(buf.Header.MessageLength)),
             [this, sock, &buf](const asio::error_code &error, size_t bytes_transferred) {
                 handle_read_body(sock, read_msgs[sock], error, bytes_transferred);
             });
@@ -514,7 +517,7 @@ NetworkManager::Message::DecodeHeader() {
     std::array<std::byte, MessageHeader::HeaderLength> t;
     std::copy(DataVec.begin(), DataVec.begin() + MessageHeader::HeaderLength, t.begin());
     Header = MessageHeader::Deserialize(t);
-    std::vector<std::byte> v(Header.MessageLength);
+    std::vector<std::byte> v(static_cast<const unsigned int>(Header.MessageLength));
     DataVec.insert(DataVec.end(), v.begin(), v.end());
     return true;
 }
@@ -538,9 +541,9 @@ NetworkManager::Message::Body() {
 
 const std::vector<std::byte> &
 NetworkManager::Message::Msg() {
-    std::vector<std::byte> t(
-        DataVec.begin() + MessageHeader::HeaderLength,
-        DataVec.begin() + MessageHeader::HeaderLength + Header.MessageLength);
+    auto                   begin = DataVec.begin() + MessageHeader::HeaderLength;
+    auto                   end   = begin + static_cast<size_t>(Header.MessageLength);
+    std::vector<std::byte> t(begin, end);
     msg = t;
     return msg;
 }
