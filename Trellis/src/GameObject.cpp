@@ -45,15 +45,16 @@ CoreGameObject::deserialize_impl(const vector<byte> &vec) {
 }
 
 GameObject::GameObject(const CoreGameObject &other) {
-    static ClientServer &cs = ClientServer::GetInstance();
-    (CoreGameObject &)*this = other;
+    static ResourceManager &rm = ResourceManager::GetInstance();
+    static ClientServer &   cs = ClientServer::GetInstance();
+    (CoreGameObject &)*this    = other;
     if (Uid == 0) Uid = Util::generate_uid();
-    if (ResourceManager::Images.find(SpriteUid) == ResourceManager::Images.end()) {
+    if (rm.Images.find(SpriteUid) == rm.Images.end()) {
         // Image isn't cached, need to request it
         cs.RegisterPageChange("IMAGE_REQUEST", cs.uid, SpriteUid);
     } else {
         // Image is cached, just grab it from the resource manager
-        Sprite = ResourceManager::GetTexture(SpriteUid);
+        Sprite = rm.GetTexture(SpriteUid);
     }
 }
 
@@ -126,6 +127,7 @@ GameObject::UpdateSprite(uint64_t sprite_uid) {
 }
 
 CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
+    static ResourceManager &rm = ResourceManager::GetInstance();
     using SQLite::from_uint64_t;
     auto callback = [](void *udp, int count, char **values, char **names) -> int {
         using SQLite::to_uint64_t;
@@ -172,7 +174,7 @@ CoreGameObject::CoreGameObject(const SQLite::Database &db, uint64_t uid) {
     int         result =
         db.Exec("SELECT * FROM GameObjects WHERE id = " + from_uint64_t(uid), err, +callback, this);
     if (result) { std::cerr << err << std::endl; }
-    ResourceManager::ReadFromDB(db, SpriteUid);
+    rm.ReadFromDB(db, SpriteUid);
 }
 
 void

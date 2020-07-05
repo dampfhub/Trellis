@@ -82,9 +82,10 @@ Client::Update() {
 
 void
 Client::handle_image_request(NetworkData &&q) {
-    auto img_id = q.Parse<uint64_t>();
-    if (ResourceManager::Images.find(img_id) != ResourceManager::Images.end()) {
-        RegisterPageChange("NEW_IMAGE", img_id, ResourceManager::Images[img_id]);
+    static ResourceManager &rm     = ResourceManager::GetInstance();
+    auto                    img_id = q.Parse<uint64_t>();
+    if (rm.Images.find(img_id) != rm.Images.end()) {
+        RegisterPageChange("NEW_IMAGE", img_id, rm.Images[img_id]);
     }
 }
 
@@ -161,9 +162,10 @@ Server::handle_forward_data(const std::string &channel, const NetworkData &d) {
 
 void
 Server::handle_image_request(NetworkData &&q) {
-    auto img_id = q.Parse<uint64_t>();
-    if (ResourceManager::Images.find(img_id) != ResourceManager::Images.end()) {
-        RegisterPageChange("NEW_IMAGE", img_id, ResourceManager::Images[img_id], q.Uid);
+    static ResourceManager &rm     = ResourceManager::GetInstance();
+    auto                    img_id = q.Parse<uint64_t>();
+    if (rm.Images.find(img_id) != rm.Images.end()) {
+        RegisterPageChange("NEW_IMAGE", img_id, rm.Images[img_id], q.Uid);
     } else {
         // Make a pair of image uid and requesting client
         pending_image_requests.emplace_back(img_id, q.Uid);
@@ -172,15 +174,12 @@ Server::handle_image_request(NetworkData &&q) {
 
 void
 Server::handle_new_image(NetworkData &&q) {
-    ResourceManager::Images[q.Uid] = q.Parse<ImageData>();
+    static ResourceManager &rm = ResourceManager::GetInstance();
+    rm.Images[q.Uid]           = q.Parse<ImageData>();
     // Send all pending requests if they were waiting on an image
     for (auto request : pending_image_requests) {
         if (q.Uid == request.first) {
-            RegisterPageChange(
-                "NEW_IMAGE",
-                q.Uid,
-                ResourceManager::Images[request.first],
-                request.second);
+            RegisterPageChange("NEW_IMAGE", q.Uid, rm.Images[request.first], request.second);
         }
     }
 }
