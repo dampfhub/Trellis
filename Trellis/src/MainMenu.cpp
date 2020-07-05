@@ -22,6 +22,7 @@ MainMenu::Draw() {
     GLFW &glfw = GLFW::GetInstance();
     GUI & gui  = GUI::GetInstance();
     // ImGui::ShowDemoWindow();
+    auto no_border = ImStyleResource(ImGuiStyleVar_FrameBorderSize, 0.0f);
     SetNextWindowPos(
         ImVec2((float)glfw.GetScreenWidth() / 2, (float)glfw.GetScreenHeight() / 2),
         0,
@@ -123,15 +124,13 @@ MainMenu::Draw() {
             Dummy(ImVec2(0.0f, 10.0f));
             if (Button("Back", glm::vec2(GetWindowSize().x, 0.0f))) { clear_flags(); }
         } else {
-            if (Button("New Game", glm::vec2(GetWindowSize().x, 0.0f))) {
-                starting_new_game = true;
-            }
+            if (Button("New Game", glm::vec2(-1, 0.0f))) { starting_new_game = true; }
             Dummy(ImVec2(0.0f, 10.0f));
-            if (Button("Load Game", glm::vec2(GetWindowSize().x, 0.0f))) { loading_game = true; }
+            if (Button("Load Game", glm::vec2(-1, 0.0f))) { loading_game = true; }
             Dummy(ImVec2(0.0f, 10.0f));
-            if (Button("Join Game", glm::vec2(GetWindowSize().x, 0.0f))) { joining_game = true; }
+            if (Button("Join Game", glm::vec2(-1, 0.0f))) { joining_game = true; }
             Dummy(ImVec2(0.0f, 10.0f));
-            if (Button("Exit", glm::vec2(GetWindowSize().x, 0.0f))) { exit(); }
+            if (Button("Exit", glm::vec2(-1, 0.0f))) { exit(); }
         }
     }
     End();
@@ -141,16 +140,16 @@ void
 MainMenu::new_game(const std::string &name) {
     StateManager &sm = StateManager::GetInstance();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
-    sm.StartNewGame(name, false);
     cs.Start(port_buf);
+    sm.StartNewGame(name, false);
 }
 
 void
 MainMenu::load_game(uint64_t id, const std::string &name) {
     StateManager &sm = StateManager::GetInstance();
     ClientServer &cs = ClientServer::GetInstance(ClientServer::SERVER);
-    sm.StartNewGame(name, false, id, true);
     cs.Start(port_buf);
+    sm.StartNewGame(name, false, id, true);
 }
 
 void
