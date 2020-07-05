@@ -334,16 +334,18 @@ Board::ProcessUIEvents() {
         });
     }
     if (UserInterface.FileDialog->HasSelected()) {
-        string file_name = Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
-        rm.LoadTexture(
-            UserInterface.FileDialog->GetSelected().string().c_str(),
-            Util::IsPng(file_name),
-            file_name);
-        (**ActivePage)
-            .BeginPlacePiece(
-                Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
-                rm.GetTexture(file_name));
-        UserInterface.FileDialog->ClearSelected();
+        if (ActivePage != Pages.end()) {
+            string file_name = Util::PathBaseName(UserInterface.FileDialog->GetSelected().string());
+            rm.LoadTexture(
+                UserInterface.FileDialog->GetSelected().string().c_str(),
+                Util::IsPng(file_name),
+                file_name);
+            (**ActivePage)
+                .BeginPlacePiece(
+                    Transform(glm::vec2(0.0f, 0.0f), glm::vec2(98.0f, 98.0f), 0),
+                    rm.GetTexture(file_name));
+            UserInterface.FileDialog->ClearSelected();
+        }
     }
     if (UserInterface.AddPage) {
         SendNewPage(UserInterface.PageName);
