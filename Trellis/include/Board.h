@@ -18,7 +18,7 @@ public:
     Board(Board const &) = delete; // Disallow copying
     void operator=(Board const &) = delete;
 
-    Board(std::string name, uint64_t uid = 0);
+    Board(std::string name, uint64_t uid = 0, bool is_client = false);
     Board(const SQLite::Database &db, uint64_t uid, const std::string &name);
     ~Board() override;
 

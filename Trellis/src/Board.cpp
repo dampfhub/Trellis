@@ -107,7 +107,7 @@ Board::snap_callback(int action) {
     }
 }
 
-Board::Board(string name, uint64_t uid)
+Board::Board(string name, uint64_t uid, bool is_client)
     : Name(std::move(name))
     , Uid(uid ? uid : Util::generate_uid())
     , MousePos{}
@@ -125,6 +125,7 @@ Board::Board(string name, uint64_t uid)
     rm.SetGlobalMatrix4("view", view);
 
     register_network_callbacks();
+    if (!is_client) { SendNewPage("Default"); }
 }
 
 Board::Board(const SQLite::Database &db, uint64_t uid, const std::string &name)
