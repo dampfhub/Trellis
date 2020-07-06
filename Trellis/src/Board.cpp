@@ -1,5 +1,4 @@
-#include "Board.h"
-
+#include "board.h"
 #include "gui.h"
 #include "client_server.h"
 #include "data.h"
