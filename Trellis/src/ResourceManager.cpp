@@ -100,9 +100,7 @@ ResourceManager::loadTextureFromFile(const char *file) {
         (std::istreambuf_iterator<char>(infile)),
         (std::istreambuf_iterator<char>()));
     for (auto &i : Images) {
-        if (i.second.Hash == Util::hash_image(buffer)) {
-            return loadTextureFromUID(i.first);
-        }
+        if (i.second.Hash == Util::hash_image(buffer)) { return loadTextureFromUID(i.first); }
     }
     unsigned char *data =
         stbi_load_from_memory(buffer.data(), buffer.size(), &width, &height, &nrChannels, 0);
