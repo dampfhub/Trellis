@@ -18,7 +18,7 @@ Texture2D::Texture2D(
     , Image_Format(image_format)
     , Wrap_S(GL_REPEAT)
     , Wrap_T(GL_REPEAT)
-    , Filter_Min(GL_NEAREST)
+    , Filter_Min(GL_LINEAR)
     , Filter_Max(GL_NEAREST) {
     // create Texture
     glGenTextures(1, &ID);

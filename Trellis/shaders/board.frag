@@ -15,60 +15,59 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+float line(float a, float b) {
+    float c1 = fract(a);
+    float c2 = fract(b);
+    int f1 = int(floor(a));
+    int f2 = int(floor(b));
+
+    bool b1 = c1 <= line_width/4 || c1 >= 1 - line_width/4;
+    bool b2 = c2 <= line_width/4 || c2 >= 1 - line_width/4;
+    float d;
+    if (f1 != f2) {
+        d = (1 - c1) + c2;
+        if (abs(f1-f2) > 1 || d > 1) {
+            return 1;
+        }
+        if (b1) {
+            if (b2) {
+                return 1;
+            }
+            float x = (1 - c1) + line_width/4;
+            return x/d;
+        }
+        if (b2) {
+            float x = line_width/4 + c2;
+            return x/d;
+        }
+        float x = line_width/2;
+        return x/d;
+    }
+    d = c2 - c1;
+    if (d > 1) {
+        return 1;
+    }
+    if (b1) {
+        if (b2) {
+            return 1;
+        } else {
+            float x = line_width/4 - c1;
+            return x/d;
+        }
+    }
+    if (b2) {
+        float x = c2 + line_width/4 - 1;
+        return x/d;
+    }
+    return 0;
+}
+
 void main() {
     vec2 coord = TexCoords.xy;
-    vec2 fs = ((gl_FragCoord.xy + vec2(1))/ screenRes) * 2 - 1;
+    vec2 fs = (vec2(gl_FragCoord.x + 1, gl_FragCoord.y - 1)/ screenRes) * 2 - 1;
     vec2 mf = (inv * vec4(fs.xy, 0, 1)).xy * num_cells;
-    vec2 c1 = fract(coord);
-    vec2 c2 = fract(mf);
 
-    vec2 d = mf - coord;
-
-    vec2 f1 = floor(coord);
-    vec2 f2 = floor(mf);
-
-    color = vec4(1);
-    float d2 = c2.x - c1.x;
-    if (f1.x != f2.x) {
-        d2 = 1 - c1.x + c2.x;
-        color.rgb = vec3(1 - line_width / d2);
-        return;
-    }
-    if (mf.x - coord.x < line_width / 2) {
-        if (c1.x <= line_width/4 || c1.x >= 1 - line_width/4) {
-            color.rgb = vec3(0);
-        }
-        return;
-    }
-
-    if (c1.x <= line_width/4) {
-        if (c2.x <= line_width/4) {
-            color.rgb = vec3(0);
-        } else {
-            color.rgb = vec3((c2.x - line_width/4) / d2);
-        }
-    } else if (c1.x >= 1 - line_width/4) {
-        color.rgb = vec3(0);
-    }
-
-    //if (c1.x >= 1 - line_width/4 || c1.x <= line_width/4) {
-    //    color.rgb = vec3((mf.x - coord.x) / line_width );
-    //}
-
-
-
-    /*
-    if (c1.x < 1 && c2.x > 1 - line_width) {
-        float a = 1 - line_width;
-        if (c1.x < 1 - line_width && c2.x > 1 - line_width) {
-            float f = (a - c1.x) / (c2.x - c1.x);
-            color.xyz = vec3(f);
-        } else if (c2.x > 1 && c1.x < 1) {
-            float f = (1 - c1.x) / (c2.x - c1.x);
-            color.xyz = vec3(f);
-        } else {
-            color.xyz = vec3(0);
-        }
-    }
-    */
+    float lx = line(coord.x, mf.x);
+    float ly = line(coord.y, mf.y);
+    color = vec4(1 - vec3(max(lx, ly)), 1);
 }
