@@ -99,10 +99,8 @@ ResourceManager::loadTextureFromFile(const char *file) {
     std::vector<unsigned char> buffer(
         (std::istreambuf_iterator<char>(infile)),
         (std::istreambuf_iterator<char>()));
-    std::cout << "Loading texture from " << file << std::endl;
     for (auto &i : Images) {
         if (i.second.Hash == Util::hash_image(buffer)) {
-            std::cout << "Found existing hash" << std::endl;
             return loadTextureFromUID(i.first);
         }
     }
@@ -128,7 +126,6 @@ ResourceManager::loadTextureFromUID(uint64_t uid) {
     unsigned char *data =
         stbi_load_from_memory(d.Data.data(), d.Data.size(), &width, &height, &nrChannels, 0);
     shared_ptr<Texture2D> texture;
-    std::cout << "Loading texture from " << uid << std::endl;
     if (nrChannels == 4) {
         texture = Texture2D::Create(width, height, data, uid, GL_RGBA, GL_RGBA);
     } else {
