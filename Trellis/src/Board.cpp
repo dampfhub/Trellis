@@ -365,7 +365,7 @@ Board::SendNewPage(const string &name) {
     auto pg = make_unique<Page>(name);
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
-        cs.RegisterPageChange("ADD_PAGE", pg->Uid, pg->Serialize());
+        cs.ChannelPublish("ADD_PAGE", pg->Uid, pg->Serialize());
     }
     AddPage(move(pg));
 }
@@ -374,7 +374,7 @@ void
 Board::SendUpdatedPage() const {
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
-        cs.RegisterPageChange("ADD_PAGE", (*ActivePage)->Uid, (*ActivePage)->Serialize());
+        cs.ChannelPublish("ADD_PAGE", (*ActivePage)->Uid, (*ActivePage)->Serialize());
     }
 }
 
@@ -471,27 +471,27 @@ Board::handle_change_player_view(NetworkData &&q) {
 void
 Board::register_network_callbacks() {
     ClientServer &cs = ClientServer::GetInstance();
-    cs.RegisterCallback("MOVE_PIECE", [this](NetworkData &&d) {
+    cs.ChannelSubscribe("MOVE_PIECE", [this](NetworkData &&d) {
         handle_page_move_piece(std::move(d));
     });
-    cs.RegisterCallback("ADD_PIECE", [this](NetworkData &&d) {
+    cs.ChannelSubscribe("ADD_PIECE", [this](NetworkData &&d) {
         handle_page_add_piece(std::move(d));
     });
-    cs.RegisterCallback("DELETE_PIECE", [this](NetworkData &&d) {
+    cs.ChannelSubscribe("DELETE_PIECE", [this](NetworkData &&d) {
         handle_page_delete_piece(std::move(d));
     });
-    cs.RegisterCallback("RESIZE_PIECE", [this](NetworkData &&d) {
+    cs.ChannelSubscribe("RESIZE_PIECE", [this](NetworkData &&d) {
         handle_page_resize_piece(std::move(d));
     });
-    cs.RegisterCallback("NEW_IMAGE", [this](NetworkData &&d) { handle_new_image(std::move(d)); });
-    cs.RegisterCallback("JOIN", [this, &cs](NetworkData &&d) {
-        cs.RegisterPageChange("JOIN_ACCEPT", this->Uid, this->Name, d.Uid);
+    cs.ChannelSubscribe("NEW_IMAGE", [this](NetworkData &&d) { handle_new_image(std::move(d)); });
+    cs.ChannelSubscribe("JOIN", [this, &cs](NetworkData &&d) {
+        cs.ChannelPublish("JOIN_ACCEPT", this->Uid, this->Name, d.Uid);
     });
-    cs.RegisterCallback("JOIN_DONE", [this, &cs](NetworkData &&d) {
+    cs.ChannelSubscribe("JOIN_DONE", [this, &cs](NetworkData &&d) {
         handle_client_join(std::move(d));
     });
-    cs.RegisterCallback("ADD_PAGE", [this](NetworkData &&d) { handle_add_page(std::move(d)); });
-    cs.RegisterCallback("PLAYER_VIEW", [this](NetworkData &&d) {
+    cs.ChannelSubscribe("ADD_PAGE", [this](NetworkData &&d) { handle_add_page(std::move(d)); });
+    cs.ChannelSubscribe("PLAYER_VIEW", [this](NetworkData &&d) {
         handle_change_player_view(std::move(d));
     });
 }
@@ -502,7 +502,7 @@ Board::SendAllPages(uint64_t client_uid) const {
         for (auto &pg : Pages) {
             ClientServer &cs   = ClientServer::GetInstance();
             CorePage &    core = *pg;
-            cs.RegisterPageChange("ADD_PAGE", core.Uid, Util::serialize_vec(core), client_uid);
+            cs.ChannelPublish("ADD_PAGE", core.Uid, Util::serialize_vec(core), client_uid);
             pg->SendAllPieces(client_uid);
         }
     }

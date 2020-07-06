@@ -22,8 +22,7 @@ public:
     virtual void Start(int port_num, std::string name = "", std::string hostname = "") = 0;
 
     template<class T>
-    void
-    RegisterPageChange(std::string name, uint64_t uid, const T &data, uint64_t target_uid = 0) {
+    void ChannelPublish(std::string name, uint64_t uid, const T &data, uint64_t target_uid = 0) {
         if (pub_queues.find(name) == pub_queues.end()) {
             pub_queues[name] = NetworkManager::NetworkQueue::Subscribe(name);
         }
@@ -31,9 +30,7 @@ public:
         changes.push(std::make_pair(name, std::make_pair(nd, target_uid)));
     }
 
-    void RegisterCallback(const std::string &channel_name, queue_handler_f cb);
-
-    virtual void handle_image_request(Data::NetworkData &&q) = 0;
+    void ChannelSubscribe(const std::string &channel_name, queue_handler_f cb);
 
     int                                  ClientCount() const;
     const std::vector<Data::ClientInfo> &getConnectedClients() const;
@@ -43,6 +40,8 @@ public:
     std::string Name;
 
 protected:
+    virtual void handle_image_request(Data::NetworkData &&q) = 0;
+
     class NetworkQueueCallback {
     public:
         NetworkQueueCallback(std::string channel_name, queue_handler_f cb);
