@@ -412,28 +412,28 @@ UI::send_msg() {
         string        substr = send_msg_buf.substr(matches[0].length());
         try {
             auto                 out_queue = parse_roll_string(substr);
-            stack<long long int> eval;
+            stack<int64_t> eval;
             while (!out_queue.empty()) {
                 Token tok = out_queue.front();
                 out_queue.pop();
                 if (tok.type == Token::ROLL) {
                     int           index = tok.token.find('d');
-                    long long int num   = stoll(tok.token.substr(0, index));
-                    long long int die   = stoll(tok.token.substr(index + 1));
-                    long long int val   = 0;
+                    int64_t num   = stoll(tok.token.substr(0, index));
+                    int64_t die   = stoll(tok.token.substr(index + 1));
+                    int64_t val   = 0;
                     for (int i = 0; i < num; i++) {
-                        val += static_cast<long long int>(1 + gen() % die);
+                        val += 1 + gen() % die;
                     }
                     eval.push(val);
                     std::cout << tok.token << " = " << val << std::endl;
                 } else if (tok.type == Token::NUM) {
-                    long long int val = stoi(tok.token);
+                    int64_t val = stoi(tok.token);
                     eval.push(val);
                 } else if (tok.type == Token::UMINUS) {
                     if (eval.empty()) {
                         throw runtime_error("error: unmatched '" + tok.token + "'");
                     }
-                    long long int b = eval.top();
+                    int64_t b = eval.top();
                     eval.pop();
                     eval.push(-b);
                     std::cout << "- " << b << " = " << -b << std::endl;
@@ -441,9 +441,9 @@ UI::send_msg() {
                     if (eval.size() < 2) {
                         throw runtime_error("error: unmatched '" + tok.token + "'");
                     }
-                    long long int b = eval.top();
+                    int64_t b = eval.top();
                     eval.pop();
-                    long long int a = eval.top();
+                    int64_t a = eval.top();
                     eval.pop();
                     if (tok.type == Token::ADD) {
                         eval.push(a + b);
