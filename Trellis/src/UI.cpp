@@ -294,61 +294,16 @@ UI::draw_chat() {
 }
 
 struct Token {
-    enum TOK_TYPE { DONE, INVALID, ROLL, NUM, ADD, MUL, SUB, LPAREN, RPAREN };
+    enum TOK_TYPE { DONE, ROLL, NUM, ADD, MUL, SUB, LPAREN, RPAREN, UMINUS };
     TOK_TYPE type;
     string   token;
     int      prec = 0;
 };
 
-Token
-tokenize_string(string &str, bool lookahead = false) {
-    smatch matches;
-    int    index = str.find_first_not_of(' ');
-    if (index != string::npos) {
-        if (!lookahead) str = str.substr(index);
-    }
-    if (str.length() == 0) { return Token{Token::DONE, ""}; }
-    if (regex_search(str, matches, regex("^[0-9]+d[0-9]+"))) {
-        Token tok{Token::ROLL, matches[0]};
-        if (!lookahead) str = matches.suffix();
-        return tok;
-    }
-    if (regex_search(str, matches, regex("^[0-9]+"))) {
-        Token tok{Token::NUM, matches[0]};
-        if (!lookahead) str = matches.suffix();
-        return tok;
-    }
-    if (str[0] == '+') {
-        Token tok{Token::ADD, "+", 2};
-        if (!lookahead) str = str.substr(1);
-        return tok;
-    }
-    if (str[0] == '-') {
-        Token tok{Token::SUB, "-", 2};
-        if (!lookahead) str = str.substr(1);
-        return tok;
-    }
-    if (str[0] == '*') {
-        Token tok{Token::MUL, "*", 3};
-        if (!lookahead) str = str.substr(1);
-        return tok;
-    }
-    if (str[0] == '(') {
-        Token tok{Token::LPAREN, "("};
-        if (!lookahead) str = str.substr(1);
-        return tok;
-    }
-    if (str[0] == ')') {
-        Token tok{Token::RPAREN, ")"};
-        if (!lookahead) str = str.substr(1);
-        return tok;
-    }
-    throw runtime_error("error: unrecognized string: " + str);
-}
-
 bool
 is_op(const Token &tok) {
-    return tok.type == Token::ADD || tok.type == Token::SUB || tok.type == Token::MUL;
+    return tok.type == Token::ADD || tok.type == Token::SUB || tok.type == Token::MUL ||
+           tok.type == Token::UMINUS;
 }
 
 bool
@@ -356,13 +311,63 @@ is_num(const Token &tok) {
     return tok.type == Token::NUM || tok.type == Token::ROLL;
 }
 
+Token
+tokenize_string(string &str, const Token *prev = nullptr) {
+    smatch matches;
+    int    index = str.find_first_not_of(' ');
+    if (index != string::npos) { str = str.substr(index); }
+    if (str.length() == 0) { return Token{Token::DONE, ""}; }
+    if (regex_search(str, matches, regex("^[1-9][0-9]*d[1-9][0-9]*"))) {
+        Token tok{Token::ROLL, matches[0]};
+        str = matches.suffix();
+        return tok;
+    }
+    if (regex_search(str, matches, regex("^[0-9]+"))) {
+        Token tok{Token::NUM, matches[0]};
+        str = matches.suffix();
+        return tok;
+    }
+    if (str[0] == '+') {
+        Token tok{Token::ADD, "+", 2};
+        str = str.substr(1);
+        return tok;
+    }
+    if (str[0] == '-') {
+        if (prev == nullptr || is_op(*prev) || prev->type == Token::LPAREN) {
+            Token tok{Token::UMINUS, "-", 2};
+            str = str.substr(1);
+            return tok;
+        }
+        Token tok{Token::SUB, "-", 2};
+        str = str.substr(1);
+        return tok;
+    }
+    if (str[0] == '*') {
+        Token tok{Token::MUL, "*", 3};
+        str = str.substr(1);
+        return tok;
+    }
+    if (str[0] == '(') {
+        Token tok{Token::LPAREN, "("};
+        str = str.substr(1);
+        return tok;
+    }
+    if (str[0] == ')') {
+        Token tok{Token::RPAREN, ")"};
+        str = str.substr(1);
+        return tok;
+    }
+    throw runtime_error("error: unrecognized string: " + str);
+}
+
 queue<Token>
 parse_roll_string(string str) {
     // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
     Token        tok;
+    Token *      prev = nullptr;
     queue<Token> out_queue;
     stack<Token> op_stack;
-    while ((tok = tokenize_string(str)).type != Token::DONE) {
+    while ((tok = tokenize_string(str, prev)).type != Token::DONE) {
         if (is_op(tok)) {
             while (!op_stack.empty() && op_stack.top().prec >= tok.prec &&
                    op_stack.top().type != Token::LPAREN) {
@@ -379,11 +384,12 @@ parse_roll_string(string str) {
                 out_queue.push(op_stack.top());
                 op_stack.pop();
             }
-            if (op_stack.empty()) { throw runtime_error("error: unmatched right parenthesis"); }
+            if (op_stack.empty()) { throw runtime_error("error: unmatched  ')'"); }
             op_stack.pop();
         } else {
             throw runtime_error("error: unrecognized \"" + tok.token + "\"");
         }
+        prev = &tok;
     }
     while (!op_stack.empty()) {
         out_queue.push(op_stack.top());
@@ -423,6 +429,14 @@ UI::send_msg() {
                 } else if (tok.type == Token::NUM) {
                     long long int val = stoi(tok.token);
                     eval.push(val);
+                } else if (tok.type == Token::UMINUS) {
+                    if (eval.empty()) {
+                        throw runtime_error("error: unmatched '" + tok.token + "'");
+                    }
+                    long long int b = eval.top();
+                    eval.pop();
+                    eval.push(-b);
+                    std::cout << "- " << b << " = " << -b << std::endl;
                 } else {
                     if (eval.size() < 2) {
                         throw runtime_error("error: unmatched '" + tok.token + "'");
@@ -445,16 +459,16 @@ UI::send_msg() {
             }
             assert(eval.size() == 1);
             string      message = to_string(eval.top());
-            ChatMessage m(cs.Name + " rolling", substr + " = " + message);
+            m = ChatMessage(cs.Name + " rolling", substr + " =\n" + message);
             chat_messages.push_back(m);
             send_msg_buf = "";
             cs.ChannelPublish("CHAT_MSG", m.Uid, m);
         } catch (runtime_error &e) {
-            ChatMessage m(cs.Name + " rolling", e.what());
+            m = ChatMessage(cs.Name + " rolling", e.what());
             chat_messages.push_back(m);
             send_msg_buf = "";
-        } catch (out_of_range &e) {
-            ChatMessage m(cs.Name + " rolling", "error: input out of range");
+        } catch ([[maybe_unused]] out_of_range &e) {
+            m = ChatMessage(cs.Name + " rolling", "error: input out of range");
             chat_messages.push_back(m);
             send_msg_buf = "";
         }
