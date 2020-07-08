@@ -58,7 +58,7 @@ private:
     void draw_chat();
     void draw_client_list();
     void draw_http_window();
-    void draw_query_response(const std::string& query_type);
+    void draw_query_response(const std::string &query_type);
 
     void send_msg();
 

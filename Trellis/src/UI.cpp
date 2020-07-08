@@ -458,8 +458,8 @@ UI::send_msg() {
                 }
             }
             assert(eval.size() == 1);
-            string      message = to_string(eval.top());
-            m = ChatMessage(cs.Name + " rolling", substr + " =\n" + message);
+            string message = to_string(eval.top());
+            m              = ChatMessage(cs.Name + " rolling", substr + " =\n" + message);
             chat_messages.push_back(m);
             send_msg_buf = "";
             cs.ChannelPublish("CHAT_MSG", m.Uid, m);
