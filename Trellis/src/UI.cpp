@@ -411,19 +411,17 @@ UI::send_msg() {
         mt19937       gen(rd());
         string        substr = send_msg_buf.substr(matches[0].length());
         try {
-            auto                 out_queue = parse_roll_string(substr);
+            auto           out_queue = parse_roll_string(substr);
             stack<int64_t> eval;
             while (!out_queue.empty()) {
                 Token tok = out_queue.front();
                 out_queue.pop();
                 if (tok.type == Token::ROLL) {
-                    int           index = tok.token.find('d');
+                    int     index = tok.token.find('d');
                     int64_t num   = stoll(tok.token.substr(0, index));
                     int64_t die   = stoll(tok.token.substr(index + 1));
                     int64_t val   = 0;
-                    for (int i = 0; i < num; i++) {
-                        val += 1 + gen() % die;
-                    }
+                    for (int i = 0; i < num; i++) { val += 1 + gen() % die; }
                     eval.push(val);
                     std::cout << tok.token << " = " << val << std::endl;
                 } else if (tok.type == Token::NUM) {
