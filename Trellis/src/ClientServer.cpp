@@ -72,7 +72,7 @@ Client::Start(int port_num, std::string name, std::string hostname) {
         StateManager &sm = StateManager::GetInstance();
         ClientServer &cs = ClientServer::GetInstance();
         sm.StartNewGame(Util::deserialize<std::string>(d.Data), true, d.Uid);
-        cs.ChannelPublish("JOIN_DONE", this->uid, "", d.Uid);
+        cs.ChannelPublish("JOIN_DONE", this->uid, this->Name, d.Uid);
     });
     Name = name;
 }
