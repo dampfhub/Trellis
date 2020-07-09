@@ -52,42 +52,105 @@ UI::UI() {
 
 void
 UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
-    ShowDemoWindow();
     // Display file dialog if it's open
     FileDialog->Display();
-    draw_menu(pages, active_page);
+    draw_main_node(pages, active_page);
     draw_page_select(pages, active_page);
     draw_page_settings(active_page);
-    draw_client_list();
     draw_chat();
     draw_http_window();
+    // ShowDemoWindow();
 }
 
 void
-UI::draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
-    (void)pages;
-    auto  no_border = ImStyleResource(ImGuiStyleVar_FrameBorderSize, 0.0f);
-    GLFW &glfw      = GLFW::GetInstance();
-    main_menu_open = Begin("Trellis", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-    SetWindowPos(ImVec2(0.0f, 0.0f));
-    SetWindowSize(ImVec2(150.0f, (float)glfw.GetScreenHeight()));
-    SetNextItemWidth(100.0f);
-    if (Button("Add", {-1, 0})) { OpenPopup("add_menu"); }
-    if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
-        BeginTooltip();
-        TextUnformatted("Add something to the page");
-        EndTooltip();
-    }
-    // Things that can be added
-    if (BeginPopup("add_menu")) {
-        Text("Add Options");
-        Separator();
-        if (Selectable("Add from File")) { FileDialog->Open(); }
-        AddFromPreset = Selectable("Add from Preset");
-        if (Selectable("Add Page##0")) { PageAddOpen = true; }
-        EndPopup();
-    }
+UI::draw_main_node(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+    ImGuiWindowFlags          window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    ImGuiViewport *           viewport     = GetMainViewport();
+    SetNextWindowPos(viewport->GetWorkPos());
+    SetNextWindowSize(viewport->GetWorkSize());
+    SetNextWindowViewport(viewport->ID);
+    PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    window_flags |= ImGuiWindowFlags_NoBackground;
 
+    PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    Begin("DockSpace Demo", nullptr, window_flags);
+    PopStyleVar();
+    PopStyleVar(2);
+
+    // DockSpace
+    ImGuiIO &io           = GetIO();
+    ImGuiID  dockspace_id = GetID("MyDockSpace");
+    DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
+    static bool open_add_popup = false;
+
+    if (BeginMenuBar()) {
+        if (BeginMenu("Actions")) {
+            if (BeginMenu("Add")) {
+                Text("Add Options");
+                Separator();
+                if (MenuItem("Add from File")) { FileDialog->Open(); }
+                AddFromPreset = MenuItem("Add from Preset");
+                if (MenuItem("Add Page##0")) { PageAddOpen = true; }
+                ImGui::EndMenu();
+            }
+            if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
+                BeginTooltip();
+                TextUnformatted("Add something to the page");
+                EndTooltip();
+            }
+            ImGui::EndMenu();
+        }
+        if (BeginMenu("Windows")) {
+            if (MenuItem("Page Settings", nullptr, PageSettingsOpen, true)) {
+                if (active_page != pages.end()) {
+                    PageSettingsOpen = !PageSettingsOpen;
+                    page_name_buf    = (**active_page).Name;
+                    auto pg_dims     = (*active_page)->getCellDims();
+                    PageX            = pg_dims.x;
+                    PageY            = pg_dims.y;
+                }
+            }
+            if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
+                BeginTooltip();
+                TextUnformatted("Change page settings");
+                EndTooltip();
+            }
+            if (MenuItem("Page Selector", nullptr, PageSelectOpen, true)) {
+                PageSelectOpen = !PageSelectOpen;
+            }
+            if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
+                BeginTooltip();
+                TextUnformatted("Select a page to view");
+                EndTooltip();
+            }
+            if (MenuItem("Chat", nullptr, chat_open, true)) { chat_open = !chat_open; }
+            if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
+                BeginTooltip();
+                TextUnformatted("Chat with other players");
+                EndTooltip();
+            }
+            if (MenuItem("Info", nullptr, http_window_open, true)) {
+                http_window_open = !http_window_open;
+            }
+            if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
+                BeginTooltip();
+                TextUnformatted("Get info for spells/monsters/other");
+                EndTooltip();
+            }
+            ImGui::EndMenu();
+        }
+        if (BeginMenu("Clients")) {
+            draw_client_list();
+            ImGui::EndMenu();
+        }
+        EndMenuBar();
+    }
     // Page name popup
     if (PageAddOpen) { OpenPopup("Add Page##1"); }
     if (BeginPopupModal("Add Page##1", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -114,39 +177,6 @@ UI::draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
             PageAddOpen = false;
         }
         EndPopup();
-    }
-    if (Button("Page Select", {-1, 0})) { PageSelectOpen = !PageSelectOpen; }
-    if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
-        BeginTooltip();
-        TextUnformatted("Select a page to view");
-        EndTooltip();
-    }
-    if (Button("Page Settings", {-1, 0})) {
-        if (active_page != pages.end()) {
-            PageSettingsOpen = !PageSettingsOpen;
-            page_name_buf    = (**active_page).Name;
-            auto pg_dims     = (*active_page)->getCellDims();
-            PageX            = pg_dims.x;
-            PageY            = pg_dims.y;
-        }
-    }
-    if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
-        BeginTooltip();
-        TextUnformatted("Change page settings");
-        EndTooltip();
-    }
-    if (Button("Chat", {-1, 0})) { chat_open = !chat_open; }
-    if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
-        BeginTooltip();
-        TextUnformatted("Chat with other players");
-        EndTooltip();
-    }
-    static NetworkManager &nm = NetworkManager::GetInstance();
-    if (Button("Query", {-1, 0})) { http_window_open = !http_window_open; }
-    if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
-        BeginTooltip();
-        TextUnformatted("Test http_get");
-        EndTooltip();
     }
     End();
 }
@@ -195,8 +225,7 @@ UI::draw_page_settings(Page::page_list_it_t &active_page) {
     Text("Board Dimensions: ");
     InputInt("X", &PageX);
     InputInt("Y", &PageY);
-    if (Button("Done", ImVec2(120, 0.0f))) {
-        PageSettingsOpen = false;
+    if (Button("Apply", ImVec2(120, 0.0f))) {
         pg.setCellDims(glm::ivec2(PageX, PageY));
         pg.Name      = page_name_buf;
         SettingsPage = true;
@@ -219,21 +248,7 @@ UI::draw_client_list() {
         static ClientServer &cs = ClientServer::GetInstance();
         if (main_menu_open) {
             if (cs.ClientCount() > 0) {
-                SetNextWindowSizeConstraints(ImVec2(0, 50), ImVec2(FLT_MAX, 50)); // Horizontal only
-                Begin(
-                    "Clients",
-                    nullptr,
-                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
-                        ImGuiWindowFlags_NoMove);
-                SetWindowPos(ImVec2(150.0f, (float)GLFW::GetScreenHeight() - 50));
-                SetWindowSize(ImVec2(100.0f * cs.ClientCount(), 50.0f));
-                BeginColumns("Columns", cs.ClientCount(), ImGuiColumnsFlags_NoResize);
-                for (auto &inf : cs.getConnectedClients()) {
-                    Text("%s", inf.Name.c_str());
-                    NextColumn();
-                }
-                EndColumns();
-                End();
+                for (auto &inf : cs.getConnectedClients()) { MenuItem(inf.Name.c_str()); }
             }
         }
     }
@@ -245,7 +260,7 @@ UI::draw_chat() {
     auto window_size = ImStyleResource(ImGuiStyleVar_WindowMinSize, ImVec2(300, 400));
     auto bg_col      = ImStyleResource(ImGuiCol_WindowBg, IM_COL32(30, 30, 30, 255));
 
-    Begin("Chat", nullptr);
+    Begin("Chat", &chat_open);
     SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
     {
         ImVec2 win_size = GetContentRegionAvail();
@@ -497,7 +512,7 @@ UI::draw_http_window() {
     auto window_size          = ImStyleResource(ImGuiStyleVar_WindowMinSize, ImVec2(300, 400));
     auto bg_col               = ImStyleResource(ImGuiCol_WindowBg, IM_COL32(30, 30, 30, 255));
 
-    Begin("Info", nullptr);
+    Begin("Info", &http_window_open);
     SetNextWindowSize(ImVec2(500, 500), ImGuiCond_Once);
     {
         ImVec2 win_size = GetContentRegionAvail();
