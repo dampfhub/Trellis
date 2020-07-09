@@ -65,5 +65,7 @@ private:
     void handle_chat_msg(Data::NetworkData &&q);
 
     void handle_client_join(Data::NetworkData &&q);
+
+    void handle_client_join_done(Data::NetworkData &&q);
 };
 #endif

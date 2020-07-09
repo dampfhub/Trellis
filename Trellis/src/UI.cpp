@@ -38,6 +38,9 @@ UI::UI() {
     ClientServer &cs = ClientServer::GetInstance();
     cs.ChannelSubscribe("CHAT_MSG", [this](NetworkData &&d) { handle_chat_msg(std::move(d)); });
     cs.ChannelSubscribe("JOIN", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
+    cs.ChannelSubscribe("JOIN_DONE", [this](NetworkData &&d) {
+        handle_client_join_done(std::move(d));
+    });
 
     NetworkManager &    nm        = NetworkManager::GetInstance();
     std::vector<string> api_calls = {"Spells", "Monsters"};
@@ -269,11 +272,31 @@ UI::draw_chat() {
         {
             string last_sender = "";
             for (auto &m : chat_messages) {
-                if (m.SenderName != last_sender) {
+                if (m.MsgType == Data::ChatMessage::CHAT) {
+                    if (m.SenderName != last_sender) {
+                        {
+                            auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(34, 139, 34, 255));
+                            Separator();
+                            last_sender          = m.SenderName;
+                            std::tm *t           = std::localtime(&m.TimeStamp);
+                            auto     hr_standard = t->tm_hour % 12;
+                            TextWrapped(
+                                "%s - %d:%02d %s",
+                                m.SenderName.c_str(),
+                                hr_standard == 0 ? 12 : hr_standard,
+                                t->tm_min,
+                                t->tm_hour >= 12 ? "PM" : "AM");
+                            Dummy(ImVec2(0.0f, 3.0f));
+                        }
+                        TextWrapped("%s", m.Msg.c_str());
+                    } else {
+                        TextWrapped("%s\n", m.Msg.c_str());
+                    }
+                } else if (m.MsgType == Data::ChatMessage::SYSTEM) {
                     {
                         auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(34, 139, 34, 255));
                         Separator();
-                        last_sender          = m.SenderName;
+                        last_sender          = "";
                         std::tm *t           = std::localtime(&m.TimeStamp);
                         auto     hr_standard = t->tm_hour % 12;
                         TextWrapped(
@@ -284,9 +307,20 @@ UI::draw_chat() {
                             t->tm_hour >= 12 ? "PM" : "AM");
                         Dummy(ImVec2(0.0f, 3.0f));
                     }
+                    auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
                     TextWrapped("%s", m.Msg.c_str());
-                } else {
-                    TextWrapped("%s\n", m.Msg.c_str());
+                } else if (m.MsgType == Data::ChatMessage::JOIN) {
+                    auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
+                    Separator();
+                    last_sender          = "";
+                    std::tm *t           = std::localtime(&m.TimeStamp);
+                    auto     hr_standard = t->tm_hour % 12;
+                    TextWrapped(
+                        "%s joined at %d:%02d %s",
+                        m.SenderName.c_str(),
+                        hr_standard == 0 ? 12 : hr_standard,
+                        t->tm_min,
+                        t->tm_hour >= 12 ? "PM" : "AM");
                 }
             }
             if (scroll_to_bottom) {
@@ -472,12 +506,15 @@ UI::send_msg() {
             }
             assert(eval.size() == 1);
             string message = to_string(eval.top());
-            m              = ChatMessage(cs.Name + " rolling", substr + " =\n" + message);
+            m              = ChatMessage(
+                cs.Name + " rolling",
+                substr + " =\n" + message,
+                Data::ChatMessage::SYSTEM);
             chat_messages.push_back(m);
             send_msg_buf = "";
             cs.ChannelPublish("CHAT_MSG", m.Uid, m);
         } catch (runtime_error &e) {
-            m = ChatMessage(cs.Name + " rolling", e.what());
+            m = ChatMessage(cs.Name + " rolling", e.what(), Data::ChatMessage::SYSTEM);
             chat_messages.push_back(m);
             send_msg_buf = "";
         } catch ([[maybe_unused]] out_of_range &e) {
@@ -503,6 +540,14 @@ void
 UI::handle_client_join(NetworkData &&q) {
     static ClientServer &cs = ClientServer::GetInstance();
     for (auto &m : chat_messages) { cs.ChannelPublish("CHAT_MSG", m.Uid, m, q.Uid); }
+}
+
+void
+UI::handle_client_join_done(NetworkData &&q) {
+    static ClientServer &cs = ClientServer::GetInstance();
+    ChatMessage          join_msg(q.Parse<std::string>(), "", Data::ChatMessage::JOIN);
+    cs.ChannelPublish("CHAT_MSG", join_msg.Uid, join_msg);
+    chat_messages.push_back(join_msg);
 }
 
 void
