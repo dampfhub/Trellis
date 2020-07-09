@@ -71,9 +71,7 @@ private:
 
 class ChatMessage : public Util::Serializable<ChatMessage> {
 public:
-    enum MsgTypeEnum {
-        CHAT, SYSTEM, JOIN
-    };
+    enum MsgTypeEnum { CHAT, SYSTEM, JOIN };
     std::time_t TimeStamp{};
     uint64_t    Uid{};
     std::string SenderName;
