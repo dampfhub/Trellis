@@ -76,10 +76,11 @@ Data::ImageData::deserialize_impl(const vector<std::byte> &vec) {
     return d;
 }
 
-Data::ChatMessage::ChatMessage(std::string sender_name, std::string msg)
+Data::ChatMessage::ChatMessage(std::string sender_name, std::string msg, MsgTypeEnum msg_type)
     : SenderName(std::move(sender_name))
     , Msg(std::move(msg))
-    , Uid(Util::generate_uid()) {
+    , Uid(Util::generate_uid())
+    , MsgType(msg_type) {
     auto t    = std::chrono::system_clock::now();
     TimeStamp = std::chrono::system_clock::to_time_t(t);
 }
@@ -93,6 +94,7 @@ Data::ChatMessage::Serialize() const {
     bytes.push_back(Util::serialize_vec(SenderName));
     bytes.push_back(Util::serialize_vec<uint64_t>(Msg.length()));
     bytes.push_back(Util::serialize_vec(Msg));
+    bytes.push_back(Util::serialize_vec(MsgType));
     return Util::flatten(bytes);
 }
 
@@ -107,6 +109,7 @@ Data::ChatMessage::deserialize_impl(const vector<std::byte> &vec) {
     m.SenderName     = Util::deserialize<std::string>(std::vector(ptr, ptr + sender_len));
     uint64_t msg_len = Util::deserialize<uint64_t>(ptr += sender_len);
     ptr += sizeof(msg_len);
-    m.Msg = Util::deserialize<std::string>(std::vector(ptr, ptr + msg_len));
+    m.Msg     = Util::deserialize<std::string>(std::vector(ptr, ptr + msg_len));
+    m.MsgType = Util::deserialize<MsgTypeEnum>(ptr += msg_len);
     return m;
 }

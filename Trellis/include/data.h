@@ -71,13 +71,15 @@ private:
 
 class ChatMessage : public Util::Serializable<ChatMessage> {
 public:
+    enum MsgTypeEnum { CHAT, SYSTEM, JOIN };
     std::time_t TimeStamp{};
     uint64_t    Uid{};
     std::string SenderName;
     std::string Msg;
+    MsgTypeEnum MsgType;
 
     ChatMessage() = default;
-    explicit ChatMessage(std::string sender_name, std::string msg);
+    explicit ChatMessage(std::string sender_name, std::string msg, MsgTypeEnum msg_type = CHAT);
 
     std::vector<std::byte> Serialize() const override;
 
