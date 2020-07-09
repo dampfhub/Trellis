@@ -46,15 +46,53 @@ UI::UI() {
 
 void
 UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
-    ShowDemoWindow();
     // Display file dialog if it's open
     FileDialog->Display();
+    draw_main_node();
     draw_menu(pages, active_page);
     draw_page_select(pages, active_page);
     draw_page_settings(active_page);
     draw_client_list();
     draw_chat();
     draw_http_window();
+    ShowDemoWindow();
+}
+
+void
+UI::draw_main_node() {
+    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+    ImGuiWindowFlags          window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    ImGuiViewport *           viewport     = GetMainViewport();
+    SetNextWindowPos(viewport->GetWorkPos());
+    SetNextWindowSize(viewport->GetWorkSize());
+    SetNextWindowViewport(viewport->ID);
+    PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    window_flags |= ImGuiWindowFlags_NoBackground;
+
+    PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    Begin("DockSpace Demo", nullptr, window_flags);
+    PopStyleVar();
+    PopStyleVar(2);
+
+    // DockSpace
+    ImGuiIO &io           = GetIO();
+    ImGuiID  dockspace_id = GetID("MyDockSpace");
+    DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
+    if (BeginMenuBar()) {
+        if (BeginMenu("Windows")) { ImGui::EndMenu(); }
+        if (BeginMenu("Clients")) {
+            draw_client_list();
+            ImGui::EndMenu();
+        }
+        EndMenuBar();
+    }
+
+    End();
 }
 
 void
@@ -62,9 +100,9 @@ UI::draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     (void)pages;
     auto  no_border = ImStyleResource(ImGuiStyleVar_FrameBorderSize, 0.0f);
     GLFW &glfw      = GLFW::GetInstance();
-    main_menu_open = Begin("Trellis", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-    SetWindowPos(ImVec2(0.0f, 0.0f));
-    SetWindowSize(ImVec2(150.0f, (float)glfw.GetScreenHeight()));
+    main_menu_open  = Begin("Trellis", nullptr);
+    SetWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_FirstUseEver);
+    SetWindowSize(ImVec2(150.0f, 200.0f), ImGuiCond_Once);
     SetNextItemWidth(100.0f);
     if (Button("Add", {-1, 0})) { OpenPopup("add_menu"); }
     if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
@@ -136,10 +174,16 @@ UI::draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
         EndTooltip();
     }
     static NetworkManager &nm = NetworkManager::GetInstance();
-    if (Button("Query", {-1, 0})) { http_window_open = !http_window_open; }
+    if (Button("Info", {-1, 0})) { http_window_open = !http_window_open; }
     if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
         BeginTooltip();
-        TextUnformatted("Test http_get");
+        TextUnformatted("Get info for spells/monsters/other");
+        EndTooltip();
+    }
+    if (Button("Multi Viewports", {-1, 0})) {}
+    if (IsItemHovered() && GImGui->HoveredIdTimer > 0.5f) {
+        BeginTooltip();
+        TextUnformatted("Toggle Multi Viewports");
         EndTooltip();
     }
     End();
@@ -213,21 +257,9 @@ UI::draw_client_list() {
         static ClientServer &cs = ClientServer::GetInstance();
         if (main_menu_open) {
             if (cs.ClientCount() > 0) {
-                SetNextWindowSizeConstraints(ImVec2(0, 50), ImVec2(FLT_MAX, 50)); // Horizontal only
-                Begin(
-                    "Clients",
-                    nullptr,
-                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
-                        ImGuiWindowFlags_NoMove);
-                SetWindowPos(ImVec2(150.0f, (float)GLFW::GetScreenHeight() - 50));
-                SetWindowSize(ImVec2(100.0f * cs.ClientCount(), 50.0f));
-                BeginColumns("Columns", cs.ClientCount(), ImGuiColumnsFlags_NoResize);
                 for (auto &inf : cs.getConnectedClients()) {
-                    Text("%s", inf.Name.c_str());
-                    NextColumn();
+                    MenuItem(inf.Name.c_str());
                 }
-                EndColumns();
-                End();
             }
         }
     }

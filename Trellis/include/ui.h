@@ -52,6 +52,7 @@ private:
     bool chat_open        = false;
     bool http_window_open = false;
 
+    void draw_main_node();
     void draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page);
     void draw_page_select(Page::page_list_t &pages, Page::page_list_it_t &active_page);
     void draw_page_settings(Page::page_list_it_t &active_page);

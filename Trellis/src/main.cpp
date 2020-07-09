@@ -54,6 +54,16 @@ main() {
         glClear(GL_COLOR_BUFFER_BIT);
         sm.Draw();
         gui.Render();
+
+        ImGuiIO& io = ImGui::GetIO();
+        /*
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            GLFWwindow* backup_current_context = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup_current_context);
+        }*/
         glfw.SwapBuffers();
     }
 
