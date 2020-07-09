@@ -49,11 +49,10 @@ private:
 
     bool main_menu_open   = true;
     bool scroll_to_bottom = false;
-    bool chat_open        = false;
-    bool http_window_open = false;
+    bool chat_open        = true;
+    bool http_window_open = true;
 
-    void draw_main_node();
-    void draw_menu(Page::page_list_t &pages, Page::page_list_it_t &active_page);
+    void draw_main_node(Page::page_list_t &pages, Page::page_list_it_t &active_page);
     void draw_page_select(Page::page_list_t &pages, Page::page_list_it_t &active_page);
     void draw_page_settings(Page::page_list_it_t &active_page);
     void draw_chat();
