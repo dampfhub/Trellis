@@ -4,7 +4,7 @@
 #include "imconfig.h"
 #include "imgui_stdlib.h"
 #include "imgui_helpers.h"
-#include "GUI.h"
+#include "gui.h"
 #include "state_manager.h"
 #include "client_server.h"
 

@@ -1,5 +1,5 @@
 #include "glfw_handler.h"
-#include "GUI.h"
+#include "gui.h"
 #include "stb_image.h"
 #include "state_manager.h"
 

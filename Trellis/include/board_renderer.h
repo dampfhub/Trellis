@@ -8,6 +8,7 @@ private:
     unsigned int quad_VAO;
     float        LineWidth;
     glm::vec3    Color;
+    glm::vec3    LineColor;
 
 public:
     glm::ivec2 &CellDims;
@@ -15,8 +16,9 @@ public:
         const Transform &transform,
         const glm::mat4 &view,
         glm::ivec2 &     cell_dims,
-        float            line_width = 0.04,
-        glm::vec3        color      = glm::vec3(1));
+        float            line_width = 0.02,
+        glm::vec3        color      = glm::vec3(1),
+        glm::vec3        line_color = glm::vec3(0));
 
     ~BoardRenderer() override;
 

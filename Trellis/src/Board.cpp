@@ -1,6 +1,5 @@
-#include "Board.h"
-
-#include "GUI.h"
+#include "board.h"
+#include "gui.h"
 #include "client_server.h"
 #include "data.h"
 #include "game_object.h"
@@ -129,7 +128,7 @@ Board::Board(string name, uint64_t uid, bool is_client)
 }
 
 Board::Board(const SQLite::Database &db, uint64_t uid, const std::string &name)
-    : Board(name, uid) {
+    : Board(name, uid, true) {
     using SQLite::from_uint64_t;
     using SQLite::to_uint64_t;
 

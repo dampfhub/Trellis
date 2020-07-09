@@ -7,10 +7,12 @@ BoardRenderer::BoardRenderer(
     const glm::mat4 &view,
     glm::ivec2 &     cell_dims,
     float            line_width,
-    glm::vec3        color)
+    glm::vec3        color,
+    glm::vec3        line_color)
     : Renderer(ResourceManager::GetInstance().GetShader("board"), transform, view)
     , LineWidth(line_width)
     , Color(color)
+    , LineColor(line_color)
     , CellDims(cell_dims) {
     unsigned int VBO;
     float vertices[] = {0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
@@ -37,6 +39,7 @@ BoardRenderer::Draw() {
     shader->SetVector2f("screenRes", glm::vec2(GLFW::GetScreenWidth(), GLFW::GetScreenHeight()));
     shader->SetFloat("line_width", LineWidth);
     shader->SetVector3f("bg_color", Color);
+    shader->SetVector3f("line_color", LineColor);
     shader->SetVector2i("num_cells", CellDims);
 
     glBindVertexArray(quad_VAO);

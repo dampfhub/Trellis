@@ -1,4 +1,4 @@
-#include "GUI.h"
+#include "gui.h"
 #include "glfw_handler.h"
 
 #include <array>

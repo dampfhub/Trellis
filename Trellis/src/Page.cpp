@@ -438,6 +438,20 @@ Page::WriteToDB(const SQLite::Database &db, uint64_t game_id) const {
     stmt.Bind(9, cell_dims.x);
     stmt.Bind(10, cell_dims.y);
     stmt.Step();
+
+    auto get_pieces = db.Prepare("SELECT id FROM GameObjects WHERE page_id = ?;");
+    get_pieces.Bind(1, Uid);
+
+    while (!get_pieces.Step()) {
+        uint64_t piece_id;
+        get_pieces.Column(0, piece_id);
+        if (PiecesMap.find(piece_id) == PiecesMap.end()) {
+            auto del_piece = db.Prepare("DELETE FROM GameObjects WHERE id = ?;");
+            del_piece.Bind(1, piece_id);
+            del_piece.Step();
+        }
+    }
+
     for (auto &piece : Pieces) { piece->WriteToDB(db, Uid); }
 }
 
