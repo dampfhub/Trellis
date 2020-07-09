@@ -99,12 +99,12 @@ Data::ChatMessage::Serialize() const {
 Data::ChatMessage
 Data::ChatMessage::deserialize_impl(const vector<std::byte> &vec) {
     ChatMessage m;
-    const byte *ptr   = vec.data();
-    m.TimeStamp       = Util::deserialize<std::time_t>(ptr);
-    m.Uid             = Util::deserialize<uint64_t>(ptr += sizeof(m.TimeStamp));
+    const byte *ptr     = vec.data();
+    m.TimeStamp         = Util::deserialize<std::time_t>(ptr);
+    m.Uid               = Util::deserialize<uint64_t>(ptr += sizeof(m.TimeStamp));
     uint64_t sender_len = Util::deserialize<uint64_t>(ptr += sizeof(m.Uid));
     ptr += sizeof(sender_len);
-    m.SenderName   = Util::deserialize<std::string>(std::vector(ptr, ptr + sender_len));
+    m.SenderName     = Util::deserialize<std::string>(std::vector(ptr, ptr + sender_len));
     uint64_t msg_len = Util::deserialize<uint64_t>(ptr += sender_len);
     ptr += sizeof(msg_len);
     m.Msg = Util::deserialize<std::string>(std::vector(ptr, ptr + msg_len));
