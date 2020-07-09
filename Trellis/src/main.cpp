@@ -55,7 +55,7 @@ main() {
         sm.Draw();
         gui.Render();
 
-        ImGuiIO& io = ImGui::GetIO();
+        ImGuiIO &io = ImGui::GetIO();
         /*
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {

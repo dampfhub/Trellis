@@ -59,7 +59,7 @@ UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     draw_page_settings(active_page);
     draw_chat();
     draw_http_window();
-    //ShowDemoWindow();
+    // ShowDemoWindow();
 }
 
 void
