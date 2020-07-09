@@ -89,9 +89,9 @@ Data::ChatMessage::Serialize() const {
     vector<vector<byte>> bytes;
     bytes.push_back(Util::serialize_vec(TimeStamp));
     bytes.push_back(Util::serialize_vec(Uid));
-    bytes.push_back(Util::serialize_vec(SenderName.length()));
+    bytes.push_back(Util::serialize_vec<uint64_t>(SenderName.length()));
     bytes.push_back(Util::serialize_vec(SenderName));
-    bytes.push_back(Util::serialize_vec(Msg.length()));
+    bytes.push_back(Util::serialize_vec<uint64_t>(Msg.length()));
     bytes.push_back(Util::serialize_vec(Msg));
     return Util::flatten(bytes);
 }
@@ -102,10 +102,10 @@ Data::ChatMessage::deserialize_impl(const vector<std::byte> &vec) {
     const byte *ptr   = vec.data();
     m.TimeStamp       = Util::deserialize<std::time_t>(ptr);
     m.Uid             = Util::deserialize<uint64_t>(ptr += sizeof(m.TimeStamp));
-    size_t sender_len = Util::deserialize<size_t>(ptr += sizeof(m.Uid));
+    uint64_t sender_len = Util::deserialize<uint64_t>(ptr += sizeof(m.Uid));
     ptr += sizeof(sender_len);
     m.SenderName   = Util::deserialize<std::string>(std::vector(ptr, ptr + sender_len));
-    size_t msg_len = Util::deserialize<size_t>(ptr += sender_len);
+    uint64_t msg_len = Util::deserialize<uint64_t>(ptr += sender_len);
     ptr += sizeof(msg_len);
     m.Msg = Util::deserialize<std::string>(std::vector(ptr, ptr + msg_len));
     return m;
