@@ -31,7 +31,7 @@ private:
 
 class ImFontResource {
 public:
-    ImFontResource(ImFont *f) {
+    explicit ImFontResource(ImFont *f) {
         ImGui::PushFont(f);
     }
     ~ImFontResource() {

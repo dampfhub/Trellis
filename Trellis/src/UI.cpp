@@ -44,13 +44,14 @@ UI::UI() {
 
     NetworkManager &    nm        = NetworkManager::GetInstance();
     std::vector<string> api_calls = {"Spells", "Monsters"};
+    /*
     for (auto &s : api_calls) {
         string res;
         nm.HttpGetRequest("www.dnd5eapi.co", "/api/" + to_lower(s));
         // Spin until we get results. TODO don't do this
         while (!nm.HttpGetResults(res)) {}
         cached_results[s] = json::parse(res);
-    }
+    }*/
 }
 
 void
@@ -310,7 +311,9 @@ UI::draw_chat() {
                     auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
                     TextWrapped("%s", m.Msg.c_str());
                 } else if (m.MsgType == Data::ChatMessage::JOIN) {
-                    auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
+                    static GUI &gui = GUI::GetInstance();
+                    auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(149, 97, 51, 255));
+                    auto f = ImFontResource(gui.DefaultFontIt);
                     Separator();
                     last_sender          = "";
                     std::tm *t           = std::localtime(&m.TimeStamp);
@@ -333,7 +336,21 @@ UI::draw_chat() {
                 "##send_msg",
                 &send_msg_buf,
                 ImVec2(win_size.x, win_size.y * 0.15f),
-                ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine)) {
+                ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine |
+                    ImGuiInputTextFlags_CallbackCompletion,
+                [](ImGuiInputTextCallbackData *data) {
+                    static ClientServer &cs = ClientServer::GetInstance();
+                    std::vector<Data::ChatMessage> v = *static_cast<std::vector<Data::ChatMessage> *>(data->UserData);
+                    for (auto m = v.rbegin(); m != v.rend(); m++) {
+                        if (m->SenderName == cs.Name) {
+                            data->DeleteChars(0, data->BufTextLen);
+                            data->InsertChars(0, m->Msg.c_str(), m->Msg.c_str() + m->Msg.length());
+                            break;
+                        }
+                    }
+                    return 0;
+                },
+                &chat_messages)) {
             SetKeyboardFocusHere(-1);
             if (!send_msg_buf.empty()) { send_msg(); }
         }
