@@ -56,7 +56,7 @@ private:
     void draw_page_select(Page::page_list_t &pages, Page::page_list_it_t &active_page);
     void draw_page_settings(Page::page_list_it_t &active_page);
     void draw_chat();
-    void draw_client_list();
+    void draw_client_list() const;
     void draw_http_window();
     void draw_query_response(const std::string &query_type);
 

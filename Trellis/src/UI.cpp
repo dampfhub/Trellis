@@ -13,10 +13,13 @@
 #include <queue>
 #include <stack>
 #include <random>
+#include <vector>
+#include <memory>
 
 using Data::ClientInfo, Data::ChatMessage, Data::NetworkData, std::regex, std::regex_match,
     std::smatch, std::string, std::stringstream, std::queue, std::stack, std::random_device,
-    std::mt19937, std::to_string, std::runtime_error, std::exception, std::out_of_range;
+    std::mt19937, std::to_string, std::runtime_error, std::exception, std::out_of_range,
+    std::vector, std::unique_ptr, std::make_unique;
 
 using nlohmann::json;
 
@@ -245,7 +248,7 @@ UI::ClearFlags() {
 }
 
 void
-UI::draw_client_list() {
+UI::draw_client_list() const {
     static GLFW &glfw = GLFW::GetInstance();
     if (ClientServer::Started()) {
         static ClientServer &cs = ClientServer::GetInstance();
@@ -270,7 +273,7 @@ UI::draw_chat() {
         win_size.y -= 20;
         BeginChild("##chat_text", ImVec2(win_size.x, win_size.y * 0.8f));
         {
-            string last_sender = "";
+            string last_sender;
             for (auto &m : chat_messages) {
                 if (m.MsgType == Data::ChatMessage::CHAT) {
                     if (m.SenderName != last_sender) {
@@ -365,7 +368,7 @@ tokenize_string(string &str, const Token *prev = nullptr) {
     smatch matches;
     int    index = str.find_first_not_of(' ');
     if (index != string::npos) { str = str.substr(index); }
-    if (str.length() == 0) { return Token{Token::DONE, ""}; }
+    if (index == string::npos || str.length() == 0) { return Token{Token::DONE, ""}; }
     if (regex_search(str, matches, regex("^[1-9][0-9]*d[1-9][0-9]*"))) {
         Token tok{Token::ROLL, matches[0]};
         str = matches.suffix();
@@ -383,7 +386,7 @@ tokenize_string(string &str, const Token *prev = nullptr) {
     }
     if (str[0] == '-') {
         if (prev == nullptr || is_op(*prev) || prev->type == Token::LPAREN) {
-            Token tok{Token::UMINUS, "-", 2};
+            Token tok{Token::UMINUS, "-", 4};
             str = str.substr(1);
             return tok;
         }
@@ -409,28 +412,235 @@ tokenize_string(string &str, const Token *prev = nullptr) {
     throw runtime_error("error: unrecognized string: " + str);
 }
 
-queue<Token>
+class AST {
+public:
+    virtual int64_t eval()                           = 0;
+    virtual string  toString(int &needs_paren) const = 0;
+};
+
+class ASTVal : public AST {
+private:
+    int64_t val;
+
+public:
+    explicit ASTVal(int64_t val)
+        : val{val} {}
+    int64_t eval() final {
+        return val;
+    }
+    string toString(int &needs_paren) const final {
+        needs_paren = 0;
+        return to_string(val);
+    }
+};
+
+class ASTRoll : public AST {
+private:
+    int64_t         count;
+    int64_t         die;
+    vector<int64_t> rolls;
+
+public:
+    explicit ASTRoll(string str) {
+        int index = str.find('d');
+        count     = stoll(str.substr(0, index));
+        die       = stoll(str.substr(index + 1));
+    }
+    int64_t eval() final {
+        random_device rd;
+        mt19937       gen(rd());
+        int64_t       sum = 0;
+        for (int64_t i = 0; i < count; i++) {
+            int64_t roll = 1 + gen() % die;
+            rolls.push_back(roll);
+            sum += roll;
+        }
+        return sum;
+    }
+    string toString(int &needs_paren) const final {
+        needs_paren = 5;
+        string sep;
+        string str;
+        for (int64_t roll : rolls) {
+            str += sep + to_string(roll);
+            sep = " + ";
+        }
+        return str;
+    }
+};
+
+class ASTUMinus : public AST {
+private:
+    unique_ptr<AST> expr;
+
+public:
+    explicit ASTUMinus(unique_ptr<AST> &&expr)
+        : expr{move(expr)} {}
+    int64_t eval() final {
+        int64_t expr_val = expr->eval();
+        return -expr_val;
+    }
+    string toString(int &needs_paren) const final {
+        needs_paren      = 1;
+        int    sub_paren = 0;
+        string sub_str   = expr->toString(sub_paren);
+        string str       = "-";
+        if (sub_paren >= 1) str += "(";
+        str += sub_str;
+        if (sub_paren >= 1) str += ")";
+        return str;
+    }
+};
+
+class ASTPlus : public AST {
+private:
+    unique_ptr<AST> lhs, rhs;
+
+public:
+    ASTPlus(unique_ptr<AST> &&lhs, unique_ptr<AST> &&rhs)
+        : lhs{move(lhs)}
+        , rhs{move(rhs)} {}
+    int64_t eval() final {
+        int64_t l = lhs->eval();
+        int64_t r = rhs->eval();
+        return l + r;
+    }
+    string toString(int &needs_paren) const final {
+        needs_paren  = 4;
+        int    paren = 0;
+        string l     = lhs->toString(paren);
+        string str;
+        if (paren > 4) str += "(";
+        str += l;
+        if (paren > 4) str += ")";
+        str += " + ";
+        paren    = 0;
+        string r = rhs->toString(paren);
+        if (paren > 4) str += "(";
+        str += r;
+        if (paren > 4) str += ")";
+        return str;
+    }
+};
+
+class ASTMinus : public AST {
+private:
+    unique_ptr<AST> lhs, rhs;
+
+public:
+    ASTMinus(unique_ptr<AST> &&lhs, unique_ptr<AST> &&rhs)
+        : lhs{move(lhs)}
+        , rhs{move(rhs)} {}
+    int64_t eval() final {
+        int64_t l = lhs->eval();
+        int64_t r = rhs->eval();
+        return l - r;
+    }
+    string toString(int &needs_paren) const final {
+        needs_paren  = 4;
+        int    paren = 0;
+        string l     = lhs->toString(paren);
+        string str;
+        if (paren > 4) str += "(";
+        str += l;
+        if (paren > 4) str += ")";
+        str += " - ";
+        paren    = 0;
+        string r = rhs->toString(paren);
+        if (paren >= 4) str += "(";
+        str += r;
+        if (paren >= 4) str += ")";
+        return str;
+    }
+};
+
+class ASTTimes : public AST {
+private:
+    unique_ptr<AST> lhs, rhs;
+
+public:
+    ASTTimes(unique_ptr<AST> &&lhs, unique_ptr<AST> &&rhs)
+        : lhs{move(lhs)}
+        , rhs{move(rhs)} {}
+    int64_t eval() final {
+        int64_t l = lhs->eval();
+        int64_t r = rhs->eval();
+        return l * r;
+    }
+    string toString(int &needs_paren) const final {
+        needs_paren  = 3;
+        int    paren = 0;
+        string l     = lhs->toString(paren);
+        string str;
+        if (paren > 3) str += "(";
+        str += l;
+        if (paren > 3) str += ")";
+        str += " * ";
+        paren    = 0;
+        string r = rhs->toString(paren);
+        if (paren > 3) str += "(";
+        str += r;
+        if (paren > 3) str += ")";
+        return str;
+    }
+};
+
+unique_ptr<AST>
+parse_reverse_polish(stack<Token> &expr) {
+    if (expr.empty()) {
+        throw runtime_error("error: failed to parse expression");
+    }
+    Token tok = expr.top();
+    expr.pop();
+    if (tok.type == Token::NUM) {
+        int64_t val = stoi(tok.token);
+        return make_unique<ASTVal>(val);
+    }
+    if (tok.type == Token::ROLL) { return make_unique<ASTRoll>(tok.token); }
+    if (tok.type == Token::UMINUS) {
+        auto rhs = parse_reverse_polish(expr);
+        return make_unique<ASTUMinus>(move(rhs));
+    }
+    if (tok.type == Token::ADD) {
+        auto rhs = parse_reverse_polish(expr);
+        auto lhs = parse_reverse_polish(expr);
+        return make_unique<ASTPlus>(move(lhs), move(rhs));
+    }
+    if (tok.type == Token::SUB) {
+        auto rhs = parse_reverse_polish(expr);
+        auto lhs = parse_reverse_polish(expr);
+        return make_unique<ASTMinus>(move(lhs), move(rhs));
+    }
+    if (tok.type == Token::MUL) {
+        auto rhs = parse_reverse_polish(expr);
+        auto lhs = parse_reverse_polish(expr);
+        return make_unique<ASTTimes>(move(lhs), move(rhs));
+    }
+    throw runtime_error("error: unrecognized token \"" + tok.token + "\"");
+}
+
+unique_ptr<AST>
 parse_roll_string(string str) {
     // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
     Token        tok;
     Token *      prev = nullptr;
-    queue<Token> out_queue;
+    stack<Token> expr;
     stack<Token> op_stack;
     while ((tok = tokenize_string(str, prev)).type != Token::DONE) {
         if (is_op(tok)) {
             while (!op_stack.empty() && op_stack.top().prec >= tok.prec &&
                    op_stack.top().type != Token::LPAREN) {
-                out_queue.push(op_stack.top());
+                expr.push(op_stack.top());
                 op_stack.pop();
             }
             op_stack.push(tok);
         } else if (is_num(tok)) {
-            out_queue.push(tok);
+            expr.push(tok);
         } else if (tok.type == Token::LPAREN) {
             op_stack.push(tok);
         } else if (tok.type == Token::RPAREN) {
             while (!op_stack.empty() && op_stack.top().type != Token::LPAREN) {
-                out_queue.push(op_stack.top());
+                expr.push(op_stack.top());
                 op_stack.pop();
             }
             if (op_stack.empty()) { throw runtime_error("error: unmatched  ')'"); }
@@ -441,10 +651,14 @@ parse_roll_string(string str) {
         prev = &tok;
     }
     while (!op_stack.empty()) {
-        out_queue.push(op_stack.top());
+        expr.push(op_stack.top());
         op_stack.pop();
     }
-    return out_queue;
+    auto ret = parse_reverse_polish(expr);
+    if (!expr.empty()) {
+        throw runtime_error("error: failed to parse expression");
+    }
+    return ret;
 }
 
 void
@@ -460,56 +674,11 @@ UI::send_msg() {
         mt19937       gen(rd());
         string        substr = send_msg_buf.substr(matches[0].length());
         try {
-            auto           out_queue = parse_roll_string(substr);
-            stack<int64_t> eval;
-            while (!out_queue.empty()) {
-                Token tok = out_queue.front();
-                out_queue.pop();
-                if (tok.type == Token::ROLL) {
-                    int     index = tok.token.find('d');
-                    int64_t num   = stoll(tok.token.substr(0, index));
-                    int64_t die   = stoll(tok.token.substr(index + 1));
-                    int64_t val   = 0;
-                    for (int i = 0; i < num; i++) { val += 1 + gen() % die; }
-                    eval.push(val);
-                    std::cout << tok.token << " = " << val << std::endl;
-                } else if (tok.type == Token::NUM) {
-                    int64_t val = stoi(tok.token);
-                    eval.push(val);
-                } else if (tok.type == Token::UMINUS) {
-                    if (eval.empty()) {
-                        throw runtime_error("error: unmatched '" + tok.token + "'");
-                    }
-                    int64_t b = eval.top();
-                    eval.pop();
-                    eval.push(-b);
-                    std::cout << "- " << b << " = " << -b << std::endl;
-                } else {
-                    if (eval.size() < 2) {
-                        throw runtime_error("error: unmatched '" + tok.token + "'");
-                    }
-                    int64_t b = eval.top();
-                    eval.pop();
-                    int64_t a = eval.top();
-                    eval.pop();
-                    if (tok.type == Token::ADD) {
-                        eval.push(a + b);
-                        std::cout << a << " + " << b << " = " << a + b << std::endl;
-                    } else if (tok.type == Token::SUB) {
-                        eval.push(a - b);
-                        std::cout << a << " - " << b << " = " << a - b << std::endl;
-                    } else if (tok.type == Token::MUL) {
-                        eval.push(a * b);
-                        std::cout << a << " * " << b << " = " << a * b << std::endl;
-                    }
-                }
-            }
-            assert(eval.size() == 1);
-            string message = to_string(eval.top());
-            m              = ChatMessage(
-                cs.Name + " rolling",
-                substr + " =\n" + message,
-                Data::ChatMessage::SYSTEM);
+            auto    out_queue = parse_roll_string(substr);
+            int64_t result    = out_queue->eval();
+            int     paren     = 0;
+            string  message   = out_queue->toString(paren);
+            m = ChatMessage(cs.Name + " rolling", message + " =\n" + to_string(result));
             chat_messages.push_back(m);
             send_msg_buf = "";
             cs.ChannelPublish("CHAT_MSG", m.Uid, m);
