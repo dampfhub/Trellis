@@ -29,6 +29,8 @@ to_lower(const string &str) {
     return ret;
 }
 
+static string msg_right_clicked_buf;
+
 UI::~UI() {
     delete FileDialog;
 }
@@ -57,9 +59,9 @@ UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     draw_main_node(pages, active_page);
     draw_page_select(pages, active_page);
     draw_page_settings(active_page);
-    draw_chat();
     draw_http_window();
-    ShowDemoWindow();
+    draw_chat();
+    // ShowDemoWindow();
 }
 
 void
@@ -286,8 +288,18 @@ UI::draw_chat() {
                             Dummy(ImVec2(0.0f, 3.0f));
                         }
                         TextWrapped("%s", m.Msg.c_str());
+                        if (IsItemClicked(ImGuiMouseButton_Right)) {
+                            msg_right_clicked_buf = m.Msg;
+                        } else if (IsItemClicked(ImGuiMouseButton_Middle)) {
+                            SetClipboardText(m.Msg.c_str());
+                        }
                     } else {
                         TextWrapped("%s\n", m.Msg.c_str());
+                        if (IsItemClicked(ImGuiMouseButton_Right)) {
+                            msg_right_clicked_buf = m.Msg;
+                        } else if (IsItemClicked(ImGuiMouseButton_Middle)) {
+                            SetClipboardText(m.Msg.c_str());
+                        }
                     }
                 } else if (m.MsgType == Data::ChatMessage::SYSTEM) {
                     {
@@ -307,7 +319,9 @@ UI::draw_chat() {
                     auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
                     TextWrapped("%s", m.Msg.c_str());
                 } else if (m.MsgType == Data::ChatMessage::JOIN) {
-                    auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
+                    static GUI &gui = GUI::GetInstance();
+                    auto        c   = ImStyleResource(ImGuiCol_Text, IM_COL32(149, 97, 51, 255));
+                    auto        f   = ImFontResource(gui.DefaultFontIt);
                     Separator();
                     last_sender          = "";
                     std::tm *t           = std::localtime(&m.TimeStamp);
@@ -346,7 +360,36 @@ UI::draw_chat() {
                 "##send_msg",
                 &send_msg_buf,
                 ImVec2(win_size.x, win_size.y * 0.15f - 15),
-                ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine)) {
+                ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine |
+                    ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackAlways,
+                [](ImGuiInputTextCallbackData *data) {
+                    if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion) {
+                        static ClientServer &          cs = ClientServer::GetInstance();
+                        std::vector<Data::ChatMessage> v =
+                            *static_cast<std::vector<Data::ChatMessage> *>(data->UserData);
+                        for (auto m = v.rbegin(); m != v.rend(); m++) {
+                            if (m->SenderName == cs.Name) {
+                                data->DeleteChars(0, data->BufTextLen);
+                                data->InsertChars(
+                                    0,
+                                    m->Msg.c_str(),
+                                    m->Msg.c_str() + m->Msg.length());
+                                break;
+                            }
+                        }
+                    } else {
+                        if (!msg_right_clicked_buf.empty()) {
+                            data->DeleteChars(0, data->BufTextLen);
+                            data->InsertChars(
+                                0,
+                                msg_right_clicked_buf.c_str(),
+                                msg_right_clicked_buf.c_str() + msg_right_clicked_buf.length());
+                            msg_right_clicked_buf = "";
+                        }
+                    }
+                    return 0;
+                },
+                &chat_messages)) {
             SetKeyboardFocusHere(-1);
             if (!send_msg_buf.empty()) { send_msg(); }
         }
