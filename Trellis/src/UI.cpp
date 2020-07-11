@@ -39,7 +39,7 @@ UI::UI() {
     FileDialog       = new FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc);
     ClientServer &cs = ClientServer::GetInstance();
     cs.ChannelSubscribe("CHAT_MSG", [this](NetworkData &&d) { handle_chat_msg(std::move(d)); });
-    cs.ChannelSubscribe("JOIN", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
+    cs.ChannelSubscribe("JOIN_DONE", [this](NetworkData &&d) { handle_client_join(std::move(d)); });
     cs.ChannelSubscribe("JOIN_DONE", [this](NetworkData &&d) {
         handle_client_join_done(std::move(d));
     });
@@ -368,7 +368,9 @@ UI::draw_chat() {
                         std::vector<Data::ChatMessage> v =
                             *static_cast<std::vector<Data::ChatMessage> *>(data->UserData);
                         for (auto m = v.rbegin(); m != v.rend(); m++) {
-                            if (m->SenderName == cs.Name) {
+                            if (m->SenderName == cs.Name &&
+                                (m->MsgType == Data::ChatMessage::CHAT ||
+                                 m->MsgType == Data::ChatMessage::INVISIBLE)) {
                                 data->DeleteChars(0, data->BufTextLen);
                                 data->InsertChars(
                                     0,
@@ -524,6 +526,8 @@ UI::send_msg(Data::ChatMessage::MsgTypeEnum msg_type) {
     ChatMessage          m(cs.Name, send_msg_buf, msg_type);
     chat_messages.push_back(m);
     if (regex_search(send_msg_buf, matches, cmd_regex)) {
+        // Change message type of last message to invisible
+        chat_messages.back().MsgType = Data::ChatMessage::INVISIBLE;
         random_device rd;
         mt19937       gen(rd());
         string        substr = send_msg_buf.substr(matches[0].length());
@@ -694,6 +698,7 @@ UI::draw_query_response(const string &query_type, std::string res) {
     if (!res.empty()) {
         http_response = json::parse(res);
         Separator();
+        Indent();
         if (query_type == "Spells") {
             {
                 auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
@@ -744,6 +749,6 @@ UI::draw_query_response(const string &query_type, std::string res) {
                     http_response.at("higher_level").front().get<std::string>().c_str());
             }
         }
-        Separator();
+        Unindent();
     }
 }
