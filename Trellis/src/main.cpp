@@ -2,6 +2,7 @@
 #include "gui.h"
 #include "stb_image.h"
 #include "state_manager.h"
+#include "network_manager.h"
 
 #include <iostream>
 
@@ -33,7 +34,8 @@ main() {
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    StateManager &sm = StateManager::GetInstance();
+    StateManager &  sm = StateManager::GetInstance();
+    NetworkManager &nm = NetworkManager::GetInstance();
 
     while (!glfw.WindowShouldClose()) {
         // calculate delta time
@@ -45,6 +47,9 @@ main() {
 
         // Start the Dear ImGui frame
         gui.NewFrame();
+
+        // update network manager. currently this calls all the callbacks for http requests
+        nm.Update();
 
         // update game state
         // -----------------

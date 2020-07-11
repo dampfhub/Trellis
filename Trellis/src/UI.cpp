@@ -41,15 +41,12 @@ UI::UI() {
     cs.ChannelSubscribe("JOIN_DONE", [this](NetworkData &&d) {
         handle_client_join_done(std::move(d));
     });
-
     NetworkManager &    nm        = NetworkManager::GetInstance();
     std::vector<string> api_calls = {"Spells", "Monsters"};
     for (auto &s : api_calls) {
-        string res;
-        nm.HttpGetRequest("www.dnd5eapi.co", "/api/" + to_lower(s));
-        // Spin until we get results. TODO don't do this
-        while (!nm.HttpGetResults(res)) {}
-        cached_results[s] = json::parse(res);
+        nm.HttpGetRequest("www.dnd5eapi.co", "/api/" + to_lower(s), [this, s](std::string str) {
+            cached_results[s] = json::parse(str);
+        });
     }
 }
 
@@ -62,7 +59,7 @@ UI::Draw(Page::page_list_t &pages, Page::page_list_it_t &active_page) {
     draw_page_settings(active_page);
     draw_chat();
     draw_http_window();
-    // ShowDemoWindow();
+    ShowDemoWindow();
 }
 
 void
@@ -267,7 +264,7 @@ UI::draw_chat() {
     SetNextWindowSize(ImVec2(300, 400), ImGuiCond_Once);
     {
         ImVec2 win_size = GetContentRegionAvail();
-        win_size.y -= 20;
+        // win_size.y -= 20;
         BeginChild("##chat_text", ImVec2(win_size.x, win_size.y * 0.8f));
         {
             string last_sender = "";
@@ -281,7 +278,7 @@ UI::draw_chat() {
                             std::tm *t           = std::localtime(&m.TimeStamp);
                             auto     hr_standard = t->tm_hour % 12;
                             TextWrapped(
-                                "%s - %d:%02d %s",
+                                "%s\t\t\t%d:%02d %s",
                                 m.SenderName.c_str(),
                                 hr_standard == 0 ? 12 : hr_standard,
                                 t->tm_min,
@@ -300,7 +297,7 @@ UI::draw_chat() {
                         std::tm *t           = std::localtime(&m.TimeStamp);
                         auto     hr_standard = t->tm_hour % 12;
                         TextWrapped(
-                            "%s - %d:%02d %s",
+                            "%s\t\t\t%d:%02d %s",
                             m.SenderName.c_str(),
                             hr_standard == 0 ? 12 : hr_standard,
                             t->tm_min,
@@ -321,6 +318,22 @@ UI::draw_chat() {
                         hr_standard == 0 ? 12 : hr_standard,
                         t->tm_min,
                         t->tm_hour >= 12 ? "PM" : "AM");
+                } else if (m.MsgType == Data::ChatMessage::INFO) {
+                    {
+                        auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(34, 139, 34, 255));
+                        Separator();
+                        last_sender          = "";
+                        std::tm *t           = std::localtime(&m.TimeStamp);
+                        auto     hr_standard = t->tm_hour % 12;
+                        TextWrapped(
+                            "%s\t\t\t%d:%02d %s",
+                            m.SenderName.c_str(),
+                            hr_standard == 0 ? 12 : hr_standard,
+                            t->tm_min,
+                            t->tm_hour >= 12 ? "PM" : "AM");
+                        Dummy(ImVec2(0.0f, 3.0f));
+                    }
+                    draw_query_response("Spells", m.Msg);
                 }
             }
             if (scroll_to_bottom) {
@@ -332,12 +345,24 @@ UI::draw_chat() {
         if (InputTextMultiline(
                 "##send_msg",
                 &send_msg_buf,
-                ImVec2(win_size.x, win_size.y * 0.15f),
+                ImVec2(win_size.x, win_size.y * 0.15f - 15),
                 ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CtrlEnterForNewLine)) {
             SetKeyboardFocusHere(-1);
             if (!send_msg_buf.empty()) { send_msg(); }
         }
-        if (Button("Send", ImVec2(win_size.x, 0)) && !send_msg_buf.empty()) { send_msg(); }
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("INFO_WINDOW_DRAG")) {
+                auto *                 t  = static_cast<string *>(payload->Data);
+                static NetworkManager &nm = NetworkManager::GetInstance();
+                nm.HttpGetRequest("www.dnd5eapi.co", *t, [this](std::string str) {
+                    send_msg_buf = str;
+                    send_msg(Data::ChatMessage::INFO);
+                });
+            }
+        }
+        if (Button("Send", ImVec2(win_size.x, win_size.y * 0.05f + 5)) && !send_msg_buf.empty()) {
+            send_msg();
+        }
     }
     End();
 }
@@ -448,12 +473,12 @@ parse_roll_string(string str) {
 }
 
 void
-UI::send_msg() {
+UI::send_msg(Data::ChatMessage::MsgTypeEnum msg_type) {
     scroll_to_bottom               = true;
     static ClientServer &cs        = ClientServer::GetInstance();
     auto                 cmd_regex = regex(R"(^\s*/roll )");
     smatch               matches;
-    ChatMessage          m(cs.Name, send_msg_buf);
+    ChatMessage          m(cs.Name, send_msg_buf, msg_type);
     chat_messages.push_back(m);
     if (regex_search(send_msg_buf, matches, cmd_regex)) {
         random_device rd;
@@ -578,14 +603,27 @@ UI::draw_http_window() {
                         if (Selectable(name.c_str(), name == selected)) {
                             // string path_str = "/api/spells/" + query_buf;
                             if (name == selected) {
-                                selected = "";
+                                selected.clear();
                             } else {
                                 selected = name;
-                                nm.HttpGetRequest("www.dnd5eapi.co", j.at("url").get<string>());
+                                current_open_info_card.clear();
+                                nm.HttpGetRequest(
+                                    "www.dnd5eapi.co",
+                                    j.at("url").get<string>(),
+                                    [this](std::string str) { current_open_info_card = str; });
                             }
                             http_response.clear();
                         }
-                        if (name == selected) { draw_query_response(kv.first); }
+                        if (BeginDragDropSource(ImGuiDragDropFlags_None)) {
+                            static string url;
+                            url = j.at("url").get<string>();
+                            SetDragDropPayload("INFO_WINDOW_DRAG", &url, sizeof(string));
+                            Text("%s", name.c_str());
+                            EndDragDropSource();
+                        }
+                        if (name == selected) {
+                            draw_query_response(kv.first, current_open_info_card);
+                        }
                     }
                 }
                 Unindent();
@@ -606,20 +644,18 @@ TextWrappedF(ImFont *font, const char *fmt, ...) {
 }
 
 void
-UI::draw_query_response(const string &query_type) {
+UI::draw_query_response(const string &query_type, std::string res) {
     // TODO support drawing other cards for api things
-    string                 res;
     static NetworkManager &nm  = NetworkManager::GetInstance();
     static GUI &           gui = GUI::GetInstance();
-    if (nm.HttpGetResults(res)) {
-        try {
-            http_response = json::parse(res);
-        } catch ([[maybe_unused]] std::exception &e) {}
-    }
-    if (!http_response.empty()) {
+    if (!res.empty()) {
+        http_response = json::parse(res);
         Separator();
         if (query_type == "Spells") {
-            TextWrappedF(gui.MediumFont, "%s", http_response.at("name").get<string>().c_str());
+            {
+                auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
+                TextWrappedF(gui.MediumFont, "%s", http_response.at("name").get<string>().c_str());
+            }
             TextWrappedF(
                 gui.DefaultFontIt,
                 "level %d %s",

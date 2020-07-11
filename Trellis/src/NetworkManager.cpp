@@ -40,25 +40,33 @@ NetworkManager::StartClient(
 }
 
 void
-NetworkManager::HttpGetRequest(std::string hostname, std::string path) {
-    asio::post(context, [this, hostname, path]() { net_obj->http_get(hostname, path); });
+NetworkManager::HttpGetRequest(
+    std::string                      hostname,
+    std::string                      path,
+    std::function<void(std::string)> callback) {
+    asio::post(context, [this, hostname, path, callback]() {
+        net_obj->http_get(hostname, path, callback);
+    });
 }
 
-bool
-NetworkManager::HttpGetResults(std::string &res) {
+void
+NetworkManager::Update() {
     if (net_obj) {
         if (net_obj->http_mtx.try_lock()) {
-            if (net_obj->http_get_response.empty()) {
-                net_obj->http_mtx.unlock();
-                return false;
+            for (auto &kv : net_obj->http_get_response) {
+                if (!kv.second.first.empty()) { kv.second.second(kv.second.first); }
             }
-            res                        = net_obj->http_get_response;
-            net_obj->http_get_response = "";
+            for (auto it = net_obj->http_get_response.begin();
+                 it != net_obj->http_get_response.end();) {
+                if (!it->second.first.empty()) {
+                    it = net_obj->http_get_response.erase(it);
+                } else {
+                    it++;
+                }
+            }
             net_obj->http_mtx.unlock();
-            return true;
         }
     }
-    return false;
 }
 
 NetworkManager::NetworkQueue::NetworkQueue()
@@ -182,7 +190,10 @@ NetworkManager::network_object::do_write(
     }
 }
 void
-NetworkManager::network_object::http_get(std::string hostname, std::string path) {
+NetworkManager::network_object::http_get(
+    std::string                      hostname,
+    std::string                      path,
+    std::function<void(std::string)> callback) {
     const std::lock_guard<std::mutex> lock(http_mtx);
     try {
         tcp::resolver           res(context);
@@ -233,7 +244,7 @@ NetworkManager::network_object::http_get(std::string hostname, std::string path)
         asio::error_code error;
 
         while (asio::read(socket, response, asio::transfer_at_least(1), error)) { ss << &response; }
-        http_get_response = ss.str();
+        http_get_response[hostname + path] = make_pair(ss.str(), callback);
         if (error != asio::error::eof) { std::cout << "Bad error" << std::endl; }
     } catch (std::exception &e) { std::cout << "Botched: " << e.what() << std::endl; }
 }
