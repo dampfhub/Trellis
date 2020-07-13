@@ -43,6 +43,7 @@ private:
     std::string                           page_name_buf;
     std::string                           send_msg_buf;
     std::string                           query_buf;
+    std::string                           current_open_info_card;
     nlohmann::json                        http_response;
     std::map<std::string, nlohmann::json> cached_results;
     std::vector<Data::ChatMessage>        chat_messages;
@@ -58,9 +59,9 @@ private:
     void draw_chat();
     void draw_client_list() const;
     void draw_http_window();
-    void draw_query_response(const std::string &query_type);
+    void draw_query_response(const std::string &query_type, std::string r = "");
 
-    void send_msg();
+    void send_msg(Data::ChatMessage::MsgTypeEnum msg_type = Data::ChatMessage::CHAT);
 
     void handle_chat_msg(Data::NetworkData &&q);
 

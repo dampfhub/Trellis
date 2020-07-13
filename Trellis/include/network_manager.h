@@ -11,12 +11,14 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <mutex>
 #include <queue>
 #include <set>
 #include <string>
 #include <vector>
+#include <functional>
 
 using asio::ip::tcp;
 
@@ -27,13 +29,16 @@ public:
 
     static NetworkManager &GetInstance();
 
+    void Update();
+
     void StartServer(int port);
 
     void StartClient(std::string client_name, uint64_t client_uid, std::string hostname, int port);
 
-    void HttpGetRequest(std::string hostname, std::string path);
-
-    bool HttpGetResults(std::string &res);
+    void HttpGetRequest(
+        std::string                      hostname,
+        std::string                      path,
+        std::function<void(std::string)> callback);
 
     class NetworkQueue {
     public:
@@ -165,7 +170,8 @@ private:
         virtual void
         handle_write(const socket_ptr &sock, const asio::error_code &error, size_t bytes);
 
-        void http_get(std::string hostname, std::string path);
+        void
+        http_get(std::string hostname, std::string path, std::function<void(std::string)> callback);
 
         void handle_read_header(
             const socket_ptr &      sock,
@@ -184,9 +190,10 @@ private:
             [[maybe_unused]] Message &               buf,
             [[maybe_unused]] const asio::error_code &error){};
 
-        uint64_t    uid;
-        std::mutex  http_mtx;
-        std::string http_get_response;
+        uint64_t   uid;
+        std::mutex http_mtx;
+        std::unordered_map<std::string, std::pair<std::string, std::function<void(std::string)>>>
+            http_get_response;
 
     protected:
         asio::io_context &  context;
