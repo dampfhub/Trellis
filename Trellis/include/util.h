@@ -157,6 +157,51 @@ slice(std::array<T, N> a) {
     return std::make_pair(head, tail);
 }
 
+template<class T>
+T
+safe_mul(T a, T b) {
+    if (a != 0) {
+        if ((numeric_limits<T>::max)() / a < b || (numeric_limits<T>::min)() / a > b) {
+            throw range_error(
+                "multiplying " + to_string(a) + " and " + to_string(b) +
+                " would cause an overflow");
+        }
+    }
+    return a * b;
+}
+
+template<class T>
+T
+safe_add(T a, T b) {
+    if (b >= 0) {
+        if (a > (numeric_limits<T>::max)() - b) {
+            throw range_error(
+                "adding " + to_string(a) + " and " + to_string(b) + " would cause an overflow");
+        }
+    } else {
+        if (a < (numeric_limits<T>::min)() - b) {
+            throw range_error(
+                "adding " + to_string(a) + " and " + to_string(b) + " would cause an underflow");
+        }
+    }
+    return a + b;
+}
+
+template<class T>
+T
+safe_negate(T a) {
+    if (a == (numeric_limits<T>::min)()) {
+        throw range_error("negating " + to_string(a) + " would cause an overflow");
+    }
+    return -a;
+}
+
+template<class T>
+T
+safe_sub(T a, T b) {
+    return safe_add(a, safe_negate(b));
+}
+
 std::vector<std::byte> flatten(std::vector<std::vector<std::byte>> vecs);
 
 uint64_t generate_uid();

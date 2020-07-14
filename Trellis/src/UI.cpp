@@ -1,5 +1,4 @@
 #include "ui.h"
-
 #include "client_server.h"
 #include "glfw_handler.h"
 #include "imgui_helpers.h"
@@ -19,7 +18,7 @@
 using Data::ClientInfo, Data::ChatMessage, Data::NetworkData, std::regex, std::regex_match,
     std::smatch, std::string, std::stringstream, std::queue, std::stack, std::random_device,
     std::mt19937, std::to_string, std::runtime_error, std::exception, std::out_of_range,
-    std::vector, std::unique_ptr, std::make_unique;
+    std::vector, std::unique_ptr, std::make_unique, std::numeric_limits, std::range_error;
 
 using nlohmann::json;
 
@@ -259,6 +258,15 @@ UI::draw_client_list() const {
     }
 }
 
+static void
+TextWrapped(const string& str) {
+    ImGui::PushTextWrapPos(0.0f);
+    const char *start = str.c_str();
+    const char *end   = start + str.length();
+    ImGui::TextUnformatted(start, end);
+    ImGui::PopTextWrapPos();
+}
+
 void
 UI::draw_chat() {
     if (!chat_open) { return; }
@@ -290,14 +298,14 @@ UI::draw_chat() {
                                 t->tm_hour >= 12 ? "PM" : "AM");
                             Dummy(ImVec2(0.0f, 3.0f));
                         }
-                        TextWrapped("%s", m.Msg.c_str());
+                        TextWrapped(m.Msg);
                         if (IsItemClicked(ImGuiMouseButton_Right)) {
                             msg_right_clicked_buf = m.Msg;
                         } else if (IsItemClicked(ImGuiMouseButton_Middle)) {
                             SetClipboardText(m.Msg.c_str());
                         }
                     } else {
-                        TextWrapped("%s\n", m.Msg.c_str());
+                        TextWrapped(m.Msg + "\n");
                         if (IsItemClicked(ImGuiMouseButton_Right)) {
                             msg_right_clicked_buf = m.Msg;
                         } else if (IsItemClicked(ImGuiMouseButton_Middle)) {
@@ -320,7 +328,7 @@ UI::draw_chat() {
                         Dummy(ImVec2(0.0f, 3.0f));
                     }
                     auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
-                    TextWrapped("%s", m.Msg.c_str());
+                    TextWrapped(m.Msg);
                 } else if (m.MsgType == Data::ChatMessage::JOIN) {
                     static GUI &gui = GUI::GetInstance();
                     auto        c   = ImStyleResource(ImGuiCol_Text, IM_COL32(149, 97, 51, 255));
@@ -417,7 +425,7 @@ UI::draw_chat() {
 
 struct Token {
     enum TOK_TYPE { DONE, ROLL, NUM, ADD, MUL, SUB, LPAREN, RPAREN, UMINUS };
-    TOK_TYPE type;
+    TOK_TYPE type = DONE;
     string   token;
     int      prec = 0;
 };
@@ -479,7 +487,7 @@ tokenize_string(string &str, const Token *prev = nullptr) {
         str = str.substr(1);
         return tok;
     }
-    throw runtime_error("error: unrecognized string: " + str);
+    throw runtime_error("unrecognized string: " + str);
 }
 
 class AST {
@@ -511,7 +519,7 @@ private:
     vector<int64_t> rolls;
 
 public:
-    explicit ASTRoll(string str) {
+    explicit ASTRoll(const string &str) {
         int index = str.find('d');
         count     = stoll(str.substr(0, index));
         die       = stoll(str.substr(index + 1));
@@ -523,7 +531,7 @@ public:
         for (int64_t i = 0; i < count; i++) {
             int64_t roll = 1 + gen() % die;
             rolls.push_back(roll);
-            sum += roll;
+            sum = Util::safe_add(sum, roll);
         }
         return sum;
     }
@@ -548,7 +556,7 @@ public:
         : expr{move(expr)} {}
     int64_t eval() final {
         int64_t expr_val = expr->eval();
-        return -expr_val;
+        return Util::safe_negate(expr_val);
     }
     string toString(int &needs_paren) const final {
         needs_paren      = 1;
@@ -573,7 +581,7 @@ public:
     int64_t eval() final {
         int64_t l = lhs->eval();
         int64_t r = rhs->eval();
-        return l + r;
+        return Util::safe_add(l, r);
     }
     string toString(int &needs_paren) const final {
         needs_paren  = 4;
@@ -604,7 +612,7 @@ public:
     int64_t eval() final {
         int64_t l = lhs->eval();
         int64_t r = rhs->eval();
-        return l - r;
+        return Util::safe_sub(l, r);
     }
     string toString(int &needs_paren) const final {
         needs_paren  = 4;
@@ -635,7 +643,7 @@ public:
     int64_t eval() final {
         int64_t l = lhs->eval();
         int64_t r = rhs->eval();
-        return l * r;
+        return Util::safe_mul(l, r);
     }
     string toString(int &needs_paren) const final {
         needs_paren  = 3;
@@ -657,13 +665,11 @@ public:
 
 unique_ptr<AST>
 parse_reverse_polish(stack<Token> &expr) {
-    if (expr.empty()) {
-        throw runtime_error("error: failed to parse expression");
-    }
+    if (expr.empty()) { throw runtime_error("failed to parse expression"); }
     Token tok = expr.top();
     expr.pop();
     if (tok.type == Token::NUM) {
-        int64_t val = stoi(tok.token);
+        int64_t val = stoll(tok.token);
         return make_unique<ASTVal>(val);
     }
     if (tok.type == Token::ROLL) { return make_unique<ASTRoll>(tok.token); }
@@ -686,7 +692,7 @@ parse_reverse_polish(stack<Token> &expr) {
         auto lhs = parse_reverse_polish(expr);
         return make_unique<ASTTimes>(move(lhs), move(rhs));
     }
-    throw runtime_error("error: unrecognized token \"" + tok.token + "\"");
+    throw runtime_error("unrecognized token \"" + tok.token + "\"");
 }
 
 unique_ptr<AST>
@@ -713,10 +719,10 @@ parse_roll_string(string str) {
                 expr.push(op_stack.top());
                 op_stack.pop();
             }
-            if (op_stack.empty()) { throw runtime_error("error: unmatched  ')'"); }
+            if (op_stack.empty()) { throw runtime_error("unmatched  ')'"); }
             op_stack.pop();
         } else {
-            throw runtime_error("error: unrecognized \"" + tok.token + "\"");
+            throw runtime_error("unrecognized \"" + tok.token + "\"");
         }
         prev = &tok;
     }
@@ -725,9 +731,7 @@ parse_roll_string(string str) {
         op_stack.pop();
     }
     auto ret = parse_reverse_polish(expr);
-    if (!expr.empty()) {
-        throw runtime_error("error: failed to parse expression");
-    }
+    if (!expr.empty()) { throw runtime_error("failed to parse expression"); }
     return ret;
 }
 
@@ -749,13 +753,16 @@ UI::send_msg(Data::ChatMessage::MsgTypeEnum msg_type) {
             auto    out_queue = parse_roll_string(substr);
             int64_t result    = out_queue->eval();
             int     paren     = 0;
-            string  message   = out_queue->toString(paren);
+            string  message   = send_msg_buf + " =\n" + out_queue->toString(paren);
             m = ChatMessage(cs.Name + " rolling", message + " =\n" + to_string(result));
             chat_messages.push_back(m);
             send_msg_buf = "";
             cs.ChannelPublish("CHAT_MSG", m.Uid, m);
         } catch (runtime_error &e) {
-            m = ChatMessage(cs.Name + " rolling", e.what(), Data::ChatMessage::SYSTEM);
+            m = ChatMessage(
+                cs.Name + " rolling",
+                string("error: ") + e.what(),
+                Data::ChatMessage::SYSTEM);
             chat_messages.push_back(m);
             send_msg_buf = "";
         } catch ([[maybe_unused]] out_of_range &e) {
@@ -850,13 +857,14 @@ UI::draw_http_window() {
     End();
 }
 
-void
-TextWrappedF(ImFont *font, const char *fmt, ...) {
-    auto    f = ImFontResource(font);
-    va_list args;
-    va_start(args, fmt);
-    TextWrappedV(fmt, args);
-    va_end(args);
+static void
+TextWrappedF(ImFont *font, string str) {
+    auto f = ImFontResource(font);
+    ImGui::PushTextWrapPos(0.0f);
+    const char *start = str.c_str();
+    const char *end   = start + str.length();
+    ImGui::TextUnformatted(start, end);
+    ImGui::PopTextWrapPos();
 }
 
 void
@@ -871,21 +879,21 @@ UI::draw_query_response(const string &query_type, std::string res) {
         if (query_type == "Spells") {
             {
                 auto c = ImStyleResource(ImGuiCol_Text, IM_COL32(15, 163, 177, 255));
-                TextWrappedF(gui.MediumFont, "%s", http_response.at("name").get<string>().c_str());
+                TextWrappedF(gui.MediumFont, http_response.at("name").get<string>());
             }
+
             TextWrappedF(
                 gui.DefaultFontIt,
-                "level %d %s",
-                http_response.at("level").get<int>(),
-                http_response.at("school").at("name").get<string>().c_str());
+                "level " + to_string(http_response.at("level").get<int>()) + " " +
+                    http_response.at("school").at("name").get<string>());
             Separator();
-            TextWrappedF(gui.DefaultFontBold, "%s", "Casting Time: ");
+            TextWrappedF(gui.DefaultFontBold, "Casting Time: ");
             SameLine();
             TextWrapped("%s", http_response.at("casting_time").get<string>().c_str());
-            TextWrappedF(gui.DefaultFontBold, "%s", "Range: ");
+            TextWrappedF(gui.DefaultFontBold, "Range: ");
             SameLine();
             TextWrapped("%s", http_response.at("range").get<string>().c_str());
-            TextWrappedF(gui.DefaultFontBold, "%s", "Components: ");
+            TextWrappedF(gui.DefaultFontBold, "Components: ");
             SameLine();
             string comps = "";
             for (auto &j : http_response.at("components")) { comps += j.get<string>() + " "; }
@@ -895,7 +903,7 @@ UI::draw_query_response(const string &query_type, std::string res) {
                 http_response.find("material") != http_response.end()
                     ? http_response.at("material").get<string>().c_str()
                     : "");
-            TextWrappedF(gui.DefaultFontBold, "%s", "Duration: ");
+            TextWrappedF(gui.DefaultFontBold, "Duration: ");
             SameLine();
             TextWrapped("%s", http_response.at("duration").get<string>().c_str());
             string classes = "";
@@ -904,7 +912,7 @@ UI::draw_query_response(const string &query_type, std::string res) {
             }
             // Get rid of the trailing comma
             classes.erase(classes.begin() + classes.length() - 2, classes.end());
-            TextWrappedF(gui.DefaultFontBold, "%s", "Classes: ");
+            TextWrappedF(gui.DefaultFontBold, "Classes: ");
             SameLine();
             TextWrapped("%s", classes.c_str());
             string desc = "";
@@ -912,7 +920,7 @@ UI::draw_query_response(const string &query_type, std::string res) {
             TextWrapped("%s", desc.c_str());
 
             if (http_response.find("higher_level") != http_response.end()) {
-                TextWrappedF(gui.DefaultFontBold, "%s", "At Higher Levels");
+                TextWrappedF(gui.DefaultFontBold, "At Higher Levels");
                 TextWrapped(
                     "%s",
                     http_response.at("higher_level").front().get<std::string>().c_str());
